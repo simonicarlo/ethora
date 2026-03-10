@@ -4,8 +4,9 @@ import uuid
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
-from app.api.v1.deps import DBSession
+from app.api.v1.deps import DBSession, get_or_404
 from app.models.models import Agent, Council, council_agents
 from app.schemas.schemas import AgentCreate, AgentResponse, CouncilCreate, CouncilResponse
 
@@ -59,14 +60,12 @@ async def create_council(payload: CouncilCreate, db: DBSession) -> Council:
 
 @router.get("/councils", response_model=list[CouncilResponse])
 async def list_councils(db: DBSession) -> list[Council]:
-    result = await db.execute(select(Council))
+    result = await db.execute(
+        select(Council).options(selectinload(Council.agents))
+    )
     return list(result.scalars().all())
 
 
 @router.get("/councils/{council_id}", response_model=CouncilResponse)
 async def get_council(council_id: uuid.UUID, db: DBSession) -> Council:
-    result = await db.execute(select(Council).where(Council.id == council_id))
-    council = result.scalar_one_or_none()
-    if council is None:
-        raise HTTPException(status_code=404, detail="Council not found")
-    return council
+    return await get_or_404(db, Council, council_id, "Council not found")

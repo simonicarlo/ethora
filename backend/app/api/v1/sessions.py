@@ -9,10 +9,10 @@ from fastapi import APIRouter, HTTPException
 from starlette.responses import StreamingResponse
 from sqlalchemy import select
 
-from app.api.v1.deps import DBSession
+from app.api.v1.deps import DBSession, get_or_404
 from app.core.database import async_session_factory
 from app.engine.council import run_council_session
-from app.models.models import Council, Session, Verdict
+from app.models.models import Council, Message, Round, Session, Verdict
 from app.schemas.schemas import (
     HumanTurnRequest,
     HumanVoteRequest,
@@ -40,19 +40,12 @@ async def create_session(payload: SessionCreate, db: DBSession) -> Session:
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
 async def get_session(session_id: uuid.UUID, db: DBSession) -> Session:
-    result = await db.execute(select(Session).where(Session.id == session_id))
-    session = result.scalar_one_or_none()
-    if session is None:
-        raise HTTPException(status_code=404, detail="Session not found")
-    return session
+    return await get_or_404(db, Session, session_id, "Session not found")
 
 
 @router.get("/sessions/{session_id}/stream")
 async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingResponse:
-    result = await db.execute(select(Session).where(Session.id == session_id))
-    session = result.scalar_one_or_none()
-    if session is None:
-        raise HTTPException(status_code=404, detail="Session not found")
+    session = await get_or_404(db, Session, session_id, "Session not found")
     if session.status != "pending":
         raise HTTPException(
             status_code=409,
@@ -82,12 +75,44 @@ async def submit_human_turn(
     payload: HumanTurnRequest,
     db: DBSession,
 ) -> dict[str, str]:
-    result = await db.execute(select(Session).where(Session.id == session_id))
-    session = result.scalar_one_or_none()
-    if session is None:
-        raise HTTPException(status_code=404, detail="Session not found")
+    session = await get_or_404(db, Session, session_id, "Session not found")
 
-    # TODO: Inject human message into the current round
+    if session.status != "awaiting_human_turn":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Session is '{session.status}', expected 'awaiting_human_turn'",
+        )
+
+    # Load council to verify human turns are enabled
+    council = await get_or_404(db, Council, session.council_id, "Council not found")
+    if not council.allow_human_turns:
+        raise HTTPException(
+            status_code=409,
+            detail="Council does not allow human turns",
+        )
+
+    # Find the latest round for this session
+    result = await db.execute(
+        select(Round)
+        .where(Round.session_id == session_id)
+        .order_by(Round.round_number.desc())
+    )
+    latest_round = result.scalars().first()
+    if latest_round is None:
+        raise HTTPException(status_code=409, detail="No rounds exist for this session")
+
+    # Store human message (agent_id=None marks it as human-authored)
+    msg = Message(
+        round_id=latest_round.id,
+        agent_id=None,
+        content=payload.content,
+    )
+    db.add(msg)
+
+    # Reset to pending so the stream can be reopened
+    session.status = "pending"
+    await db.flush()
+
     return {"status": "accepted"}
 
 
@@ -97,19 +122,13 @@ async def submit_human_vote(
     payload: HumanVoteRequest,
     db: DBSession,
 ) -> Verdict:
-    result = await db.execute(select(Session).where(Session.id == session_id))
-    session = result.scalar_one_or_none()
-    if session is None:
-        raise HTTPException(status_code=404, detail="Session not found")
+    session = await get_or_404(db, Session, session_id, "Session not found")
     # Guard: only allow human votes during the voting phase to prevent
     # double-voting or voting on already-completed sessions.
     if session.status != "voting":
         raise HTTPException(status_code=409, detail="Session is not in voting phase")
 
-    council_result = await db.execute(
-        select(Council).where(Council.id == session.council_id)
-    )
-    council = council_result.scalar_one()
+    council = await get_or_404(db, Council, session.council_id, "Council not found")
     if council.voting_mechanism != "human_in_loop":
         raise HTTPException(
             status_code=409,
@@ -130,6 +149,7 @@ async def submit_human_vote(
 
 @router.get("/sessions/{session_id}/verdict", response_model=VerdictResponse)
 async def get_verdict(session_id: uuid.UUID, db: DBSession) -> Verdict:
+    # Cannot use get_or_404 here — Verdict is queried by session_id, not by its PK
     result = await db.execute(select(Verdict).where(Verdict.session_id == session_id))
     verdict = result.scalar_one_or_none()
     if verdict is None:

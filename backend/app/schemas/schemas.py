@@ -7,7 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 VotingMechanism = Literal["majority", "weighted", "consensus", "human_in_loop"]
-SessionStatus = Literal["pending", "running", "voting", "complete", "error"]
+SessionStatus = Literal["pending", "running", "voting", "awaiting_human_turn", "complete", "error"]
 
 
 # -- Agents ------------------------------------------------------------------
@@ -70,7 +70,7 @@ class SessionResponse(BaseModel):
 class MessageResponse(BaseModel):
     id: uuid.UUID
     round_id: uuid.UUID
-    agent_id: uuid.UUID
+    agent_id: uuid.UUID | None = None
     content: str
     created_at: datetime
 

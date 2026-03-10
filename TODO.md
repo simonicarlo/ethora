@@ -12,9 +12,9 @@
 ## Backend API
 
 - [x] **Wire up SSE stream** (`sessions.py:stream_session`) — Connect `run_council_session` to the SSE event generator so real deliberation events flow to the client
-- [ ] **Implement human turn injection** (`sessions.py:submit_human_turn`) — Store human message in current round, signal the engine to continue
-- [ ] **Add `selectinload` to council list query** — `list_councils` relies on lazy="selectin" default which causes N+1; add explicit `options(selectinload(Council.agents))`
-- [ ] **Extract `get_or_404` helper** — Repeated fetch-by-ID-or-404 pattern in `sessions.py` (3x) and `councils.py` (1x); extract to `deps.py`
+- [x] **Implement human turn injection** (`sessions.py:submit_human_turn`) — Pause-resume: engine pauses after each round, human submits message, stream resumes
+- [x] **Add `selectinload` to council list query** — Added explicit `options(selectinload(Council.agents))` to `list_councils`
+- [x] **Extract `get_or_404` helper** — Generic fetch-by-ID-or-404 in `deps.py`, adopted across sessions.py and councils.py
 - [x] **SSE endpoint DB session lifetime** — `stream_session` holds a DB connection for the entire stream duration; refactor to use short-lived sessions inside the generator
 
 ## Frontend UI

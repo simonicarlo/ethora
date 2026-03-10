@@ -39,11 +39,23 @@ async def run_council_session(
         session.status = "running"
         await db.flush()
 
-        # Conversation history: list of (agent_name, agent_id, content)
-        history: list[tuple[str, uuid.UUID, str]] = []
+        # -- Determine resume point --
+        existing_rounds_result = await db.execute(
+            select(Round)
+            .where(Round.session_id == session.id)
+            .order_by(Round.round_number)
+        )
+        existing_rounds = existing_rounds_result.scalars().all()
+        start_round = len(existing_rounds) + 1
+
+        # Rebuild history from DB if resuming
+        if existing_rounds:
+            history = await _load_history_from_db(db, session.id)
+        else:
+            history: list[tuple[str, uuid.UUID | None, str]] = []
 
         # -- Round loop --
-        for round_num in range(1, council.rounds + 1):
+        for round_num in range(start_round, council.rounds + 1):
             db_round = Round(session_id=session.id, round_number=round_num)
             db.add(db_round)
             await db.flush()
@@ -70,6 +82,16 @@ async def run_council_session(
                 })
 
             yield format_sse("round_complete", {"round": round_num})
+
+            # -- Human turn pause (skip last round so voting can proceed) --
+            if council.allow_human_turns and round_num < council.rounds:
+                session.status = "awaiting_human_turn"
+                await db.commit()
+                yield format_sse("awaiting_human_turn", {
+                    "round": round_num,
+                    "message": "Waiting for human input",
+                })
+                return
 
         # -- Voting phase --
         session.status = "voting"
@@ -143,7 +165,7 @@ async def run_council_session(
 
 
 def _build_agent_messages(
-    history: list[tuple[str, uuid.UUID, str]],
+    history: list[tuple[str, uuid.UUID | None, str]],
     current_agent: Agent,
     input_claim: str,
 ) -> list[dict[str, str]]:
@@ -159,7 +181,7 @@ def _build_agent_messages(
     ]
 
     for name, agent_id, content in history:
-        if agent_id == current_agent.id:
+        if agent_id is not None and agent_id == current_agent.id:
             role = "assistant"
             text = content
         else:
@@ -184,7 +206,7 @@ def _build_agent_messages(
 
 def _build_voting_prompt(
     input_claim: str,
-    history: list[tuple[str, uuid.UUID, str]],
+    history: list[tuple[str, uuid.UUID | None, str]],
 ) -> str:
     """Summarizes the debate and asks the agent to vote."""
     debate_lines = []
@@ -218,3 +240,30 @@ def _parse_vote(raw_text: str) -> dict:
 
     # Fallback: treat entire response as reasoning
     return {"value": "abstain", "confidence": 0.0, "reasoning": raw_text}
+
+
+async def _load_history_from_db(
+    db: AsyncSession,
+    session_id: uuid.UUID,
+) -> list[tuple[str, uuid.UUID | None, str]]:
+    """Rebuild debate history from persisted messages.
+
+    Returns the same (name, agent_id, content) tuple format used by the
+    in-memory history. Human messages have agent_id=None and name="Human".
+    """
+    result = await db.execute(
+        select(Message)
+        .join(Round, Message.round_id == Round.id)
+        .where(Round.session_id == session_id)
+        .options(selectinload(Message.agent))
+        .order_by(Round.round_number, Message.created_at)
+    )
+    messages = result.scalars().all()
+
+    history: list[tuple[str, uuid.UUID | None, str]] = []
+    for msg in messages:
+        if msg.agent_id is None:
+            history.append(("Human", None, msg.content))
+        else:
+            history.append((msg.agent.name, msg.agent_id, msg.content))
+    return history
