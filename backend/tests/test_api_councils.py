@@ -42,6 +42,20 @@ class TestAgentEndpoints:
         assert isinstance(resp.json(), list)
         assert len(resp.json()) >= 1
 
+    async def test_list_agents_pagination(self, client: AsyncClient) -> None:
+        for i in range(3):
+            await client.post(
+                "/api/v1/agents",
+                json={"name": f"Agent {i}", "system_prompt": f"Prompt {i}"},
+            )
+        resp = await client.get("/api/v1/agents", params={"limit": 2})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 2
+
+        resp = await client.get("/api/v1/agents", params={"skip": 2})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+
 
 class TestCouncilEndpoints:
     async def test_create_council(self, client: AsyncClient, two_agents: list[str]) -> None:
@@ -84,3 +98,17 @@ class TestCouncilEndpoints:
     async def test_get_council_not_found(self, client: AsyncClient) -> None:
         resp = await client.get(f"/api/v1/councils/{uuid.uuid4()}")
         assert resp.status_code == 404
+
+    async def test_list_councils_pagination(self, client: AsyncClient, two_agents: list[str]) -> None:
+        for i in range(3):
+            await client.post(
+                "/api/v1/councils",
+                json={"name": f"Council {i}", "agent_ids": two_agents},
+            )
+        resp = await client.get("/api/v1/councils", params={"limit": 2})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 2
+
+        resp = await client.get("/api/v1/councils", params={"skip": 2})
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
