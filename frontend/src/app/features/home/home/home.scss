@@ -1,0 +1,66 @@
+@use 'variables' as *;
+
+:host {
+  display: block;
+  max-width: $content-max-width;
+  margin: 0 auto;
+}
+
+// ── Hero Section ──
+
+.hero {
+  text-align: center;
+  padding: $space-12 $space-4 $space-10;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: $weight-bold;
+  margin: 0 0 $space-4;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  max-width: 640px;
+  margin: 0 auto $space-8;
+  opacity: 0.8;
+}
+
+.hero-cta {
+  font-size: 1rem;
+  padding: $space-3 $space-7;
+}
+
+// ── Features Section ──
+
+.features {
+  padding: 0 $space-4 $space-12;
+}
+
+.features-heading {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: $weight-semibold;
+  margin: 0 0 $space-7;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $space-6;
+
+  @media (max-width: $bp-md) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.feature-card {
+  .feature-icon {
+    color: var(--mat-sys-primary);
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
+}
