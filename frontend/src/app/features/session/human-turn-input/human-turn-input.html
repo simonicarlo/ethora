@@ -1,0 +1,35 @@
+<mat-card class="human-turn-input" appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>Your Turn</mat-card-title>
+    <mat-card-subtitle>The council is waiting for your input before continuing the debate.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Your message</mat-label>
+      <textarea
+        matInput
+        rows="4"
+        placeholder="Share your thoughts, ask a question, or guide the discussion…"
+        [value]="content()"
+        (input)="content.set($any($event.target).value)">
+      </textarea>
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="error-text">{{ error() }}</p>
+    }
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="!content().trim() || submitting()"
+      (click)="onSubmit()">
+      @if (submitting()) {
+        Submitting…
+      } @else {
+        Send
+      }
+    </button>
+  </mat-card-actions>
+</mat-card>

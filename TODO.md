@@ -40,9 +40,9 @@
 
 > **Depends on: SSE & Type Alignment (section 1)**
 
-- [ ] **Create `HumanTurnInput` component** — Text area + submit button, shown between rounds when `awaiting_human_turn`
-- [ ] **Wire `HumanTurnInput` into `SessionView`** — Show when `sessionStatus === 'awaiting_human_turn'`, call `ApiService.sendHumanTurn()`
-- [ ] **Re-connect SSE after human turn submission** — After `POST /human-turn` returns 202, re-call `GET /stream` (session resets to `pending`)
+- [x] **Create `HumanTurnInput` component** — Text area + submit button, shown between rounds when `awaiting_human_turn`
+- [x] **Wire `HumanTurnInput` into `SessionView`** — Show when `sessionStatus === 'awaiting_human_turn'`, call `ApiService.sendHumanTurn()`
+- [x] **Re-connect SSE after human turn submission** — After `POST /human-turn` returns 202, re-call `GET /stream` (session resets to `pending`)
 
 ---
 

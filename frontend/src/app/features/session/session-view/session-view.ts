@@ -1,6 +1,6 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { switchMap, tap } from 'rxjs';
+import { Subscription, switchMap, tap } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import { SseService } from '../../../core/sse.service';
 import {
@@ -14,11 +14,12 @@ import {
 import { DebatePanel, DebateMessage } from '../debate-panel/debate-panel';
 import { VotingPanel } from '../voting-panel/voting-panel';
 import { HumanVoteForm } from '../human-vote-form/human-vote-form';
+import { HumanTurnInput } from '../human-turn-input/human-turn-input';
 import { VerdictCard } from '../verdict-card/verdict-card';
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, VerdictCard],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
 })
@@ -39,9 +40,13 @@ export class SessionView implements OnInit {
   readonly votingMechanism = signal<VotingMechanism>('majority');
   readonly agents = signal<Agent[]>([]);
   readonly waitingForHuman = signal(false);
+  private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(
     () => this.sessionStatus() === 'voting' || this.sessionStatus() === 'complete',
+  );
+  readonly showHumanTurnInput = computed(
+    () => this.sessionStatus() === 'awaiting_human_turn',
   );
   readonly showHumanForm = computed(
     () => this.waitingForHuman() && this.votingMechanism() === 'human_in_loop',
@@ -53,8 +58,16 @@ export class SessionView implements OnInit {
     this.sessionId.set(id);
     if (!id) return;
 
+    this.destroyRef.onDestroy(() => this.sseSub?.unsubscribe());
     this.loadCouncilInfo(id);
     this.connectSse(id);
+  }
+
+  onHumanTurnSubmitted(): void {
+    this.waitingForHuman.set(false);
+    this.sessionStatus.set('pending');
+    // Re-connect SSE — backend resets session to "pending" after human turn
+    this.reconnectSse();
   }
 
   onHumanVoted(verdict: Verdict): void {
@@ -77,7 +90,8 @@ export class SessionView implements OnInit {
   }
 
   private connectSse(sessionId: string): void {
-    const sub = this.sse
+    this.sseSub?.unsubscribe();
+    this.sseSub = this.sse
       .connect(`/api/v1/sessions/${sessionId}/stream`)
       .subscribe({
         next: (event) => this.handleSseEvent(event),
@@ -90,7 +104,10 @@ export class SessionView implements OnInit {
         },
       });
 
-    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private reconnectSse(): void {
+    this.connectSse(this.sessionId());
   }
 
   private handleSseEvent(event: MessageEvent): void {
