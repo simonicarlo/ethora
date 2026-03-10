@@ -13,7 +13,9 @@
       "Bash(git rev-parse *)",
       "Bash(git rev-list *)",
       "Bash(ls *)",
-      "Bash(cat *)"
+      "Bash(cat *)",
+      "Bash(git add *)",
+      "Bash(git push *)"
     ]
   },
   "companyAnnouncements": [
