@@ -1,0 +1,40 @@
+@use 'variables' as *;
+
+:host {
+  display: block;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: $space-7;
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: $weight-bold;
+  }
+}
+
+.form-card {
+  padding: $space-4;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.error-text {
+  color: var(--mat-sys-error);
+  margin: $space-4 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: $space-6;
+
+  mat-spinner {
+    display: inline-block;
+  }
+}
