@@ -1,3 +1,5 @@
+@use 'mixins' as *;
+
 .voting-panel {
   h2 {
     margin-bottom: 16px;
@@ -13,6 +15,8 @@
 }
 
 .vote-card {
+  @include glass-panel;
+
   &.pending {
     opacity: 0.6;
   }

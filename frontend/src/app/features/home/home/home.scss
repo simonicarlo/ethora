@@ -84,6 +84,7 @@
 }
 
 .feature-card {
+  @include glass-card;
   @include hover-glow;
 
   .feature-icon {
