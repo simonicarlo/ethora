@@ -257,6 +257,45 @@ GET  /api/v1/sessions/{id}/verdict     → retrieve final verdict once complete
 
 ---
 
+## TODO Tracking
+
+A `TODO.md` file in the project root tracks all pending implementation work.
+
+### Rules
+- **When you encounter or create a TODO** in code, add a corresponding entry to `TODO.md` under the appropriate section
+- **When you complete a TODO**, check it off (`[x]`) in `TODO.md` and remove the inline `# TODO` comment from the code
+- **Keep items grouped** by area (Engine, Backend API, Frontend UI, Infrastructure, Future)
+- **Order by priority** within each group — most impactful items first
+- **Never delete uncompleted items** — if something is deferred, move it to the Future section with a note
+- **Keep descriptions short** — one line per item, with the file/function reference in bold when relevant
+
+---
+
+## Workflow Conventions
+
+### Branching
+- **Never commit directly to `main`**. All work goes on a feature branch and merges via PR.
+- Branch naming: `feature/`, `fix/`, `infra/`, `docs/` prefixes (e.g., `feature/engine-core`, `fix/sse-db-lifetime`)
+- Keep branches focused — one TODO group or logical unit of work per branch
+
+### Commits
+- Use **Conventional Commit** prefixes: `feat:`, `fix:`, `refactor:`, `infra:`, `docs:`
+- Write concise messages focused on "why", not "what"
+- Stage specific files — never use `git add -A` or `git add .`
+- Claude includes `Co-Authored-By` trailer on all commits
+
+### Pull Requests (Bitbucket)
+- Claude pushes branches and prepares PR descriptions
+- PRs are created manually in the Bitbucket UI (no `gh` CLI)
+- PR description format: Summary bullets + test plan checklist
+- All work merges to `main` via PR — no direct pushes
+
+### Code Reviews
+- Ask Claude to review diffs before merging: "review the diff on branch X"
+- Claude checks for: bugs, security issues, style consistency, missing types, test coverage gaps
+
+---
+
 ## Phase 2 — Fact Checker Wrapper (future)
 
 Suggested agents: **Source Critic**, **Logical Analyst**, **Devil's Advocate**, **Synthesizer**  
