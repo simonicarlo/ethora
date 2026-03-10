@@ -39,11 +39,23 @@ async def run_council_session(
         session.status = "running"
         await db.flush()
 
-        # Conversation history: list of (agent_name, agent_id, content)
-        history: list[tuple[str, uuid.UUID | None, str]] = []
+        # -- Determine resume point --
+        existing_rounds_result = await db.execute(
+            select(Round)
+            .where(Round.session_id == session.id)
+            .order_by(Round.round_number)
+        )
+        existing_rounds = existing_rounds_result.scalars().all()
+        start_round = len(existing_rounds) + 1
+
+        # Rebuild history from DB if resuming
+        if existing_rounds:
+            history = await _load_history_from_db(db, session.id)
+        else:
+            history: list[tuple[str, uuid.UUID | None, str]] = []
 
         # -- Round loop --
-        for round_num in range(1, council.rounds + 1):
+        for round_num in range(start_round, council.rounds + 1):
             db_round = Round(session_id=session.id, round_number=round_num)
             db.add(db_round)
             await db.flush()
@@ -70,6 +82,16 @@ async def run_council_session(
                 })
 
             yield format_sse("round_complete", {"round": round_num})
+
+            # -- Human turn pause --
+            if council.allow_human_turns and round_num < council.rounds:
+                session.status = "awaiting_human_turn"
+                await db.commit()
+                yield format_sse("awaiting_human_turn", {
+                    "round": round_num,
+                    "message": "Waiting for human input",
+                })
+                return
 
         # -- Voting phase --
         session.status = "voting"

@@ -56,6 +56,7 @@ async def _seed_council(
     num_agents: int = 2,
     rounds: int = 1,
     voting_mechanism: str = "majority",
+    allow_human_turns: bool = False,
 ) -> Session:
     """Create agents, council, and session. Returns the Session."""
     agents = []
@@ -69,7 +70,7 @@ async def _seed_council(
         name="Test Council",
         rounds=rounds,
         voting_mechanism=voting_mechanism,
-        allow_human_turns=False,
+        allow_human_turns=allow_human_turns,
     )
     db.add(council)
     await db.flush()
@@ -437,3 +438,170 @@ async def test_agent_message_event_fields(db: AsyncSession) -> None:
         assert "content" in msg
         # agent_id should be a valid UUID string
         uuid.UUID(msg["agent_id"])
+
+
+# -- History Rebuild from DB --
+
+
+async def test_load_history_from_db(db: AsyncSession) -> None:
+    """Verify _load_history_from_db rebuilds history from persisted messages."""
+    from app.engine.council import _load_history_from_db
+
+    session = await _seed_council(db, num_agents=2, rounds=1)
+    agents_result = await db.execute(
+        select(Agent).join(council_agents).where(council_agents.c.council_id == session.council_id)
+    )
+    agents = agents_result.scalars().all()
+
+    # Create a round with agent messages and a human message
+    round_ = Round(session_id=session.id, round_number=1)
+    db.add(round_)
+    await db.flush()
+
+    msg1 = Message(round_id=round_.id, agent_id=agents[0].id, content="Agent 0 says hi")
+    msg2 = Message(round_id=round_.id, agent_id=None, content="Human chimes in")
+    msg3 = Message(round_id=round_.id, agent_id=agents[1].id, content="Agent 1 responds")
+    db.add_all([msg1, msg2, msg3])
+    await db.flush()
+
+    history = await _load_history_from_db(db, session.id)
+
+    assert len(history) == 3
+    # Agent messages have name and UUID
+    assert history[0] == (agents[0].name, agents[0].id, "Agent 0 says hi")
+    # Human message has name="Human" and agent_id=None
+    assert history[1] == ("Human", None, "Human chimes in")
+    assert history[2] == (agents[1].name, agents[1].id, "Agent 1 responds")
+
+
+# -- Human Turn Pause/Resume Tests --
+
+
+async def test_human_turn_pauses_after_round(db: AsyncSession) -> None:
+    """With allow_human_turns=True and 2 rounds, engine pauses after round 1."""
+    session = await _seed_council(db, num_agents=2, rounds=2, allow_human_turns=True)
+
+    async def mock_call_agent(agent, messages, system_prompt):
+        return f"Response from {agent.name}"
+
+    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+        events = []
+        async for event in run_council_session(session.id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    # Should have round 1 messages and round_complete, then pause
+    assert "agent_message" in event_types
+    assert "round_complete" in event_types
+    assert "awaiting_human_turn" in event_types
+    # Should NOT have voting or verdict (paused before round 2)
+    assert "verdict" not in event_types
+
+    # Session should be in awaiting_human_turn status
+    result = await db.execute(select(Session).where(Session.id == session.id))
+    s = result.scalar_one()
+    assert s.status == "awaiting_human_turn"
+
+
+async def test_human_turn_no_pause_on_last_round(db: AsyncSession) -> None:
+    """With allow_human_turns=True and 1 round, no pause (goes to voting)."""
+    session = await _seed_council(db, num_agents=2, rounds=1, allow_human_turns=True)
+
+    async def mock_call_agent(agent, messages, system_prompt):
+        return _mock_agent_vote_json("true", 0.9)
+
+    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+        events = []
+        async for event in run_council_session(session.id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    assert "awaiting_human_turn" not in event_types
+    assert "verdict" in event_types
+
+
+async def test_human_turn_no_pause_when_disabled(db: AsyncSession) -> None:
+    """With allow_human_turns=False, no pause even with multiple rounds."""
+    session = await _seed_council(db, num_agents=2, rounds=2, allow_human_turns=False)
+
+    async def mock_call_agent(agent, messages, system_prompt):
+        return _mock_agent_vote_json("true", 0.9)
+
+    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+        events = []
+        async for event in run_council_session(session.id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    assert "awaiting_human_turn" not in event_types
+    assert "verdict" in event_types
+
+
+async def test_resume_after_human_turn(db: AsyncSession) -> None:
+    """Engine resumes from round 2 after a human turn was injected."""
+    session = await _seed_council(db, num_agents=2, rounds=2, allow_human_turns=True)
+    session_id = session.id  # Capture before engine commit expires the ORM object
+
+    async def mock_call_agent(agent, messages, system_prompt):
+        return f"Response from {agent.name}"
+
+    # Run round 1 — engine will pause (and commit)
+    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+        async for _ in run_council_session(session_id, db):
+            pass
+
+    # Simulate human turn: add a human message and reset status.
+    # Re-fetch session after engine's commit to avoid stale ORM state.
+    result = await db.execute(
+        select(Round)
+        .where(Round.session_id == session_id)
+        .order_by(Round.round_number.desc())
+    )
+    latest_round = result.scalars().first()
+    human_msg = Message(round_id=latest_round.id, agent_id=None, content="Human input here")
+    db.add(human_msg)
+
+    sess_result = await db.execute(select(Session).where(Session.id == session_id))
+    session = sess_result.scalar_one()
+    session.status = "pending"
+    await db.flush()
+
+    # Resume — engine should run round 2 and proceed to voting
+    vote_mock_count = 0
+
+    async def mock_call_agent_vote(agent, messages, system_prompt):
+        nonlocal vote_mock_count
+        vote_mock_count += 1
+        # First 2 calls are round 2 debate, next 2 are votes
+        if vote_mock_count <= 2:
+            return f"Round 2 response from {agent.name}"
+        return _mock_agent_vote_json("true", 0.85)
+
+    with patch("app.engine.council.call_agent", side_effect=mock_call_agent_vote):
+        events = []
+        async for event in run_council_session(session_id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    # Should have round 2 messages and verdict
+    assert "agent_message" in event_types
+    assert "round_complete" in event_types
+    assert "verdict" in event_types
+    # Should NOT pause again (this is the last round)
+    assert "awaiting_human_turn" not in event_types
+
+    # Verify round 2 was created
+    result = await db.execute(
+        select(Round).where(Round.session_id == session_id).order_by(Round.round_number)
+    )
+    rounds = result.scalars().all()
+    assert len(rounds) == 2
+    assert rounds[1].round_number == 2
