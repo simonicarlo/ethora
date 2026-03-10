@@ -1,0 +1,84 @@
+# ============================================
+# Secrets & credentials — NEVER commit these
+# ============================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+credentials.json
+service-account*.json
+**/secrets/
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+*.so
+.venv/
+venv/
+env/
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+*.whl
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# ============================================
+# Node / Angular
+# ============================================
+node_modules/
+dist/
+tmp/
+out-tsc/
+.angular/
+.sass-cache/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ============================================
+# IDE & editors
+# ============================================
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.history/
+
+# ============================================
+# OS files
+# ============================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ============================================
+# Docker & databases
+# ============================================
+pgdata/
+*.sql.dump
+*.db
+
+# ============================================
+# Misc
+# ============================================
+*.log
+coverage/
+.nyc_output/
