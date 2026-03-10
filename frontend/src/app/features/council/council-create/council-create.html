@@ -1,1 +1,68 @@
-<p>council-create works!</p>
+<div class="page-header">
+  <h1>Create Council</h1>
+</div>
+
+<mat-card appearance="outlined" class="form-card">
+  <mat-card-content>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Council Name</mat-label>
+        <input matInput formControlName="name" placeholder="e.g. Fact Checker Board">
+      </mat-form-field>
+
+      <div class="form-row">
+        <mat-form-field appearance="outline">
+          <mat-label>Rounds</mat-label>
+          <input matInput type="number" formControlName="rounds" min="1" max="20">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Voting Mechanism</mat-label>
+          <mat-select formControlName="voting_mechanism">
+            @for (vm of votingMechanisms; track vm.value) {
+              <mat-option [value]="vm.value">{{ vm.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <mat-checkbox formControlName="allow_human_turns" class="human-turns-checkbox">
+        Allow human turns between rounds
+      </mat-checkbox>
+
+      <h3 class="agents-heading">Agents</h3>
+
+      @if (loadingAgents()) {
+        <div class="center">
+          <mat-spinner diameter="32"></mat-spinner>
+        </div>
+      } @else if (agents().length === 0) {
+        <p class="no-agents">No agents available. Create agents first.</p>
+      } @else {
+        <mat-selection-list formControlName="agent_ids">
+          @for (agent of agents(); track agent.id) {
+            <mat-list-option [value]="agent.id">
+              <span matListItemTitle>{{ agent.name }}</span>
+              <span matListItemLine class="agent-prompt">{{ agent.system_prompt | slice:0:100 }}{{ agent.system_prompt.length > 100 ? '...' : '' }}</span>
+            </mat-list-option>
+          }
+        </mat-selection-list>
+      }
+
+      @if (error()) {
+        <p class="error-text">{{ error() }}</p>
+      }
+
+      <div class="form-actions">
+        <button mat-flat-button type="submit" [disabled]="form.invalid || submitting()">
+          @if (submitting()) {
+            <mat-spinner diameter="20"></mat-spinner>
+          } @else {
+            Create Council
+          }
+        </button>
+      </div>
+    </form>
+  </mat-card-content>
+</mat-card>

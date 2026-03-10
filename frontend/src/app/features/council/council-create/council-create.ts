@@ -1,11 +1,96 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
+import { SlicePipe } from '@angular/common';
+import { Router } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSelectModule } from '@angular/material/select';
+
+import { ApiService } from '../../../core/api.service';
+import { Agent, VotingMechanism } from '../../../core/models';
 
 @Component({
   selector: 'app-council-create',
-  imports: [],
+  imports: [
+    SlicePipe,
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatListModule,
+    MatProgressSpinnerModule,
+    MatSelectModule,
+  ],
   templateUrl: './council-create.html',
   styleUrl: './council-create.scss',
 })
 export class CouncilCreate {
+  private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
+  readonly agents = signal<Agent[]>([]);
+  readonly loadingAgents = signal(true);
+  readonly submitting = signal(false);
+  readonly error = signal<string | null>(null);
+
+  readonly votingMechanisms: { value: VotingMechanism; label: string }[] = [
+    { value: 'majority', label: 'Majority' },
+    { value: 'weighted', label: 'Weighted' },
+    { value: 'consensus', label: 'Consensus' },
+    { value: 'human_in_loop', label: 'Human in the Loop' },
+  ];
+
+  readonly form = this.fb.nonNullable.group({
+    name: ['', Validators.required],
+    rounds: [3, [Validators.required, Validators.min(1), Validators.max(20)]],
+    voting_mechanism: ['majority' as VotingMechanism, Validators.required],
+    allow_human_turns: [false],
+    agent_ids: [[] as string[], Validators.required],
+  });
+
+  constructor() {
+    this.api.getAgents().subscribe({
+      next: (agents) => {
+        this.agents.set(agents);
+        this.loadingAgents.set(false);
+      },
+      error: () => {
+        this.error.set('Failed to load agents');
+        this.loadingAgents.set(false);
+      },
+    });
+  }
+
+  onSubmit(): void {
+    if (this.form.invalid || this.submitting()) return;
+
+    const agentIds = this.form.getRawValue().agent_ids;
+    if (agentIds.length < 2) {
+      this.error.set('Select at least 2 agents for a council');
+      return;
+    }
+
+    this.submitting.set(true);
+    this.error.set(null);
+
+    this.api.createCouncil(this.form.getRawValue()).subscribe({
+      next: () => {
+        this.router.navigate(['/councils']);
+      },
+      error: (err) => {
+        this.error.set(err?.error?.detail ?? 'Failed to create council');
+        this.submitting.set(false);
+      },
+    });
+  }
 }
