@@ -194,3 +194,31 @@ class TestParseVote:
         raw = '   \n  {"value": "false", "confidence": 0.5, "reasoning": "unsure"}  \n  '
         result = _parse_vote(raw)
         assert result["value"] == "false"
+
+
+# -- _build_agent_messages with human messages --
+
+
+class TestBuildAgentMessagesHumanTurns:
+    def test_human_message_becomes_user_role(self) -> None:
+        agent = _make_agent("Alice")
+        history: list[tuple[str, uuid.UUID | None, str]] = [
+            ("Human", None, "What about edge cases?"),
+        ]
+        msgs = _build_agent_messages(history, agent, "claim")
+        # claim (user) + human message (user) → merged into 1 user message
+        assert len(msgs) == 1
+        assert "[Human]: What about edge cases?" in msgs[0]["content"]
+
+    def test_human_message_never_becomes_assistant(self) -> None:
+        agent = _make_agent("Alice")
+        history: list[tuple[str, uuid.UUID | None, str]] = [
+            (agent.name, agent.id, "My point."),
+            ("Human", None, "Interesting, but what about X?"),
+            (agent.name, agent.id, "Good question."),
+        ]
+        msgs = _build_agent_messages(history, agent, "claim")
+        # No human message should ever have assistant role
+        for m in msgs:
+            if "Human" in m.get("content", ""):
+                assert m["role"] == "user"
