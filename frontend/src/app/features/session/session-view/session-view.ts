@@ -40,6 +40,7 @@ export class SessionView implements OnInit {
   readonly votingMechanism = signal<VotingMechanism>('majority');
   readonly agents = signal<Agent[]>([]);
   readonly waitingForHuman = signal(false);
+  private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(
     () => this.sessionStatus() === 'voting' || this.sessionStatus() === 'complete',
@@ -57,6 +58,7 @@ export class SessionView implements OnInit {
     this.sessionId.set(id);
     if (!id) return;
 
+    this.destroyRef.onDestroy(() => this.sseSub?.unsubscribe());
     this.loadCouncilInfo(id);
     this.connectSse(id);
   }
@@ -87,8 +89,6 @@ export class SessionView implements OnInit {
       });
   }
 
-  private sseSub: Subscription | null = null;
-
   private connectSse(sessionId: string): void {
     this.sseSub?.unsubscribe();
     this.sseSub = this.sse
@@ -104,7 +104,6 @@ export class SessionView implements OnInit {
         },
       });
 
-    this.destroyRef.onDestroy(() => this.sseSub?.unsubscribe());
   }
 
   private reconnectSse(): void {
