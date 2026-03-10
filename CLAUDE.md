@@ -299,14 +299,38 @@ A `TODO.md` file in the project root tracks all pending implementation work.
 - Stage specific files — never use `git add -A` or `git add .`
 - Claude includes `Co-Authored-By` trailer on all commits
 
+### Automated Workflow
+
+Claude's workflow is automated via hooks. Follow this sequence when working on tasks:
+
+1. **Branch first** — Before editing any file, create a feature branch from `main`:
+   ```
+   git checkout main && git pull origin main
+   git checkout -b feature/<descriptive-name>
+   ```
+   A `PreToolUse` hook blocks `Edit`/`Write` on `main` as a guardrail.
+
+2. **Work and commit** — Make changes, then commit with specific files staged:
+   ```
+   git add <specific-files>
+   git commit -m "feat: ..."
+   ```
+   Use `git config --local` for bot identity before committing.
+
+3. **Stop triggers PR** — When Claude finishes, the `Stop` hook automatically:
+   - Pushes the branch to origin
+   - Creates a Bitbucket PR with the configured reviewer
+   - Triggers the `review-pr` skill for automated code review
+
 ### Pull Requests (Bitbucket)
-- Claude pushes branches and prepares PR descriptions
-- PRs are created manually in the Bitbucket UI (no `gh` CLI)
-- PR description format: Summary bullets + test plan checklist
+- PRs are created automatically by the `Stop` hook when work is done on a feature branch
+- PR description is auto-generated from commit messages
+- Reviewer is configured via `BITBUCKET_REVIEWER` in `.env`
 - All work merges to `main` via PR — no direct pushes
 
 ### Code Reviews
-- Ask Claude to review diffs before merging: "review the diff on branch X"
+- The `review-pr` skill reviews PRs against `TODO.md` and posts structured feedback on Bitbucket
+- Invoke manually with `/review-pr [PR_NUMBER]`
 - Claude checks for: bugs, security issues, style consistency, missing types, test coverage gaps
 
 ---
