@@ -18,7 +18,7 @@ ARROW="${CYAN}→${RESET}"
 
 echo ""
 echo -e "${BOLD}╔════════════════════════════════════════╗${RESET}"
-echo -e "${BOLD}║       Agent Council · Backend          ║${RESET}"
+echo -e "${BOLD}║             ETHORA · Backend           ║${RESET}"
 echo -e "${BOLD}╚════════════════════════════════════════╝${RESET}"
 echo ""
 

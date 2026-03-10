@@ -12,15 +12,37 @@ from app.api.v1.sessions import router as sessions_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Run Alembic migrations on startup
-    from pathlib import Path
-    from alembic.config import Config
-    from alembic import command
+    import logging
 
-    # Resolve alembic.ini relative to the backend/ directory (two levels up from main.py)
-    alembic_ini = Path(__file__).resolve().parent.parent / "alembic.ini"
-    alembic_cfg = Config(str(alembic_ini))
-    command.upgrade(alembic_cfg, "head")
+    from app.core.config import settings
+
+    if not settings.ANTHROPIC_API_KEY:
+        logging.warning(
+            "ANTHROPIC_API_KEY is not set. "
+            "LLM calls will fail until a valid key is provided in .env or the environment."
+        )
+
+    # Run Alembic migrations as a subprocess to avoid event-loop conflicts
+    # (env.py uses asyncio.run() which cannot nest inside the running loop).
+    import asyncio
+    import subprocess
+    from pathlib import Path
+
+    backend_dir = Path(__file__).resolve().parent.parent
+
+    result = await asyncio.to_thread(
+        subprocess.run,
+        ["python", "-m", "alembic", "upgrade", "head"],
+        cwd=str(backend_dir),
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        logging.error("Alembic migration failed:\n%s", result.stderr)
+        raise RuntimeError("Alembic migration failed — refusing to start with an inconsistent schema")
+    else:
+        for line in result.stderr.strip().splitlines():
+            logging.info(line)
     yield
 
 
