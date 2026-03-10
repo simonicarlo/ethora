@@ -22,7 +22,7 @@
 - [x] **Home page** — Landing page with project description and "Start" CTA
 - [ ] **Council list page** — Display councils in a Material card grid, link to create
 - [ ] **Council create form** — Reactive form for name, rounds, voting mechanism, agent selection
-- [ ] **Session view** — Multi-panel debate UI: agent message cards per round, voting results, verdict display *(partial: voting panel, human vote form, verdict card done; debate message panel still pending)*
+- [x] **Session view** — Multi-panel debate UI: agent message cards per round, voting results, verdict display
 - [x] **SSE integration in session view** — Subscribe to `SseService.connect()` and render events in real time
 
 ## Infrastructure
