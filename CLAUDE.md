@@ -257,6 +257,21 @@ GET  /api/v1/sessions/{id}/verdict     → retrieve final verdict once complete
 
 ---
 
+## Ideas Tracking
+
+An `IDEAS.md` file in the project root is Claude's scratchpad for project ideas.
+
+### Rules
+- **Write to it whenever an interesting idea comes up** during development — don't wait to be asked
+- Ideas are things like architectural possibilities, UX improvements, new wrappers/use cases, or patterns worth exploring
+- **Not for bugs or actionable work** — those go in `TODO.md`
+- Keep entries short (2-3 sentences max) with a bold title
+- Group by area, same as TODO.md
+- Add a `---` separator between groups
+- If an idea gets promoted to real work, move it to `TODO.md` and note it was from IDEAS.md
+
+---
+
 ## TODO Tracking
 
 A `TODO.md` file in the project root tracks all pending implementation work.
