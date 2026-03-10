@@ -26,13 +26,13 @@
 
 > **Independent — no backend changes needed. Start here before other frontend work.**
 
-- [ ] **Add `awaiting_human_turn` to `SessionStatus` type** (`models.ts`) — Backend sends this status but frontend type doesn't include it
-- [ ] **Add `awaiting_human_turn` + `awaiting_human_vote` + `error` to `SSE_EVENTS`** (`sse.service.ts`) — Frontend doesn't listen for these backend events
-- [ ] **Handle `awaiting_human_turn` SSE event** (`session-view.ts`) — Replace `status` event handler with proper `awaiting_human_turn` case; set `waitingForHuman` signal
-- [ ] **Handle `awaiting_human_vote` SSE event** (`session-view.ts`) — Show human vote form when this event fires
-- [ ] **Handle `error` SSE event** (`session-view.ts`) — Set session status to `error` with message from backend
-- [ ] **Map `vote` → `value` in `voting_cast` handler** (`session-view.ts`) — Backend sends `vote` field, frontend `Vote` interface expects `value`
-- [ ] **Remove dead `status` event handling** (`session-view.ts`) — The generic `status` case is unreachable once specific events are handled
+- [x] **Add `awaiting_human_turn` to `SessionStatus` type** (`models.ts`) — Backend sends this status but frontend type doesn't include it
+- [x] **Add `awaiting_human_turn` + `awaiting_human_vote` + `error` to `SSE_EVENTS`** (`sse.service.ts`) — Frontend doesn't listen for these backend events
+- [x] **Handle `awaiting_human_turn` SSE event** (`session-view.ts`) — Replace `status` event handler with proper `awaiting_human_turn` case; set `waitingForHuman` signal
+- [x] **Handle `awaiting_human_vote` SSE event** (`session-view.ts`) — Show human vote form when this event fires
+- [x] **Handle `error` SSE event** (`session-view.ts`) — Set session status to `error` with message from backend
+- [x] **Map `vote` → `value` in `voting_cast` handler** (`session-view.ts`) — Backend sends `vote` field, frontend `Vote` interface expects `value`
+- [x] **Remove dead `status` event handling** (`session-view.ts`) — The generic `status` case is unreachable once specific events are handled
 
 ---
 

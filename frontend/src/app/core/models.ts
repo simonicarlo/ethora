@@ -29,7 +29,7 @@ export interface CouncilCreate {
 }
 
 export type VotingMechanism = 'majority' | 'weighted' | 'consensus' | 'human_in_loop';
-export type SessionStatus = 'pending' | 'running' | 'voting' | 'complete' | 'error';
+export type SessionStatus = 'pending' | 'running' | 'voting' | 'awaiting_human_turn' | 'complete' | 'error';
 
 export interface Session {
   id: string;

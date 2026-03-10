@@ -112,19 +112,25 @@ export class SessionView implements OnInit {
         break;
       case 'voting_cast':
         this.sessionStatus.set('voting');
-        this.votes.update((v) => [...v, data as Vote]);
+        this.votes.update((v) => [
+          ...v,
+          { ...data, value: data.vote ?? data.value } as Vote,
+        ]);
         break;
       case 'verdict':
         this.verdict.set(data as Verdict);
         this.sessionStatus.set('complete');
         break;
-      case 'status':
-        if (data.status === 'waiting_for_human') {
-          this.sessionStatus.set('voting');
-          this.waitingForHuman.set(true);
-        } else if (data.status) {
-          this.sessionStatus.set(data.status as SessionStatus);
-        }
+      case 'awaiting_human_turn':
+        this.sessionStatus.set('awaiting_human_turn');
+        this.waitingForHuman.set(true);
+        break;
+      case 'awaiting_human_vote':
+        this.sessionStatus.set('voting');
+        this.waitingForHuman.set(true);
+        break;
+      case 'error':
+        this.sessionStatus.set('error');
         break;
     }
   }
