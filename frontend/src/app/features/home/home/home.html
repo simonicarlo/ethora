@@ -1,1 +1,46 @@
-<p>home works!</p>
+<section class="hero">
+  <h1 class="hero-title">Agent Council</h1>
+  <p class="hero-subtitle">
+    A multi-agent deliberation framework where AI agents debate, challenge each other,
+    and reach a verdict through configurable voting mechanisms.
+  </p>
+  <a mat-flat-button color="primary" routerLink="/councils" class="hero-cta">
+    Get Started
+  </a>
+</section>
+
+<section class="features">
+  <h2 class="features-heading">How It Works</h2>
+
+  <div class="feature-grid">
+    <mat-card class="feature-card" appearance="outlined">
+      <mat-card-header>
+        <mat-icon class="feature-icon" matCardAvatar>groups</mat-icon>
+        <mat-card-title>Assemble a Council</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Create a council of AI agents, each with a unique role, personality, and area of expertise defined by a custom system prompt.</p>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="feature-card" appearance="outlined">
+      <mat-card-header>
+        <mat-icon class="feature-icon" matCardAvatar>forum</mat-icon>
+        <mat-card-title>Deliberate</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Agents debate your question across multiple rounds. Each agent sees all prior responses before replying, building a rich discussion in real time.</p>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="feature-card" appearance="outlined">
+      <mat-card-header>
+        <mat-icon class="feature-icon" matCardAvatar>how_to_vote</mat-icon>
+        <mat-card-title>Vote &amp; Decide</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>After deliberation, agents vote using majority, weighted, consensus, or human-in-the-loop mechanisms to reach a final verdict.</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</section>
