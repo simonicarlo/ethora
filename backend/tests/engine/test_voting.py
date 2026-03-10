@@ -24,7 +24,6 @@ def _make_vote(value: str, confidence: float | None = None) -> Vote:
 # -- Empty votes --
 
 
-@pytest.mark.asyncio
 async def test_tally_empty_votes() -> None:
     result = await tally_votes([], "majority")
     assert result["decision"] == "no_votes"
@@ -34,7 +33,6 @@ async def test_tally_empty_votes() -> None:
 # -- Majority --
 
 
-@pytest.mark.asyncio
 async def test_majority_unanimous() -> None:
     votes = [_make_vote("true", 0.9), _make_vote("true", 0.8), _make_vote("true", 0.7)]
     result = await tally_votes(votes, "majority")
@@ -42,7 +40,6 @@ async def test_majority_unanimous() -> None:
     assert result["confidence"] == 1.0
 
 
-@pytest.mark.asyncio
 async def test_majority_split() -> None:
     votes = [_make_vote("true"), _make_vote("false"), _make_vote("true")]
     result = await tally_votes(votes, "majority")
@@ -50,7 +47,6 @@ async def test_majority_split() -> None:
     assert result["confidence"] == pytest.approx(0.67, abs=0.01)
 
 
-@pytest.mark.asyncio
 async def test_majority_single_vote() -> None:
     votes = [_make_vote("false")]
     result = await tally_votes(votes, "majority")
@@ -61,7 +57,6 @@ async def test_majority_single_vote() -> None:
 # -- Weighted --
 
 
-@pytest.mark.asyncio
 async def test_weighted_high_confidence_wins() -> None:
     votes = [
         _make_vote("true", 0.9),
@@ -72,7 +67,6 @@ async def test_weighted_high_confidence_wins() -> None:
     assert result["decision"] == "true"
 
 
-@pytest.mark.asyncio
 async def test_weighted_none_confidence_defaults_to_one() -> None:
     votes = [_make_vote("true", None), _make_vote("false", 0.3)]
     result = await tally_votes(votes, "weighted")
@@ -80,7 +74,6 @@ async def test_weighted_none_confidence_defaults_to_one() -> None:
     assert result["decision"] == "true"
 
 
-@pytest.mark.asyncio
 async def test_weighted_equal_weights() -> None:
     votes = [_make_vote("true", 0.5), _make_vote("false", 0.5)]
     result = await tally_votes(votes, "weighted")
@@ -92,7 +85,6 @@ async def test_weighted_equal_weights() -> None:
 # -- Consensus --
 
 
-@pytest.mark.asyncio
 async def test_consensus_all_agree() -> None:
     votes = [_make_vote("true", 0.8), _make_vote("true", 0.9), _make_vote("true", 0.7)]
     result = await tally_votes(votes, "consensus")
@@ -100,7 +92,6 @@ async def test_consensus_all_agree() -> None:
     assert result["confidence"] == 0.8  # avg of 0.8, 0.9, 0.7
 
 
-@pytest.mark.asyncio
 async def test_consensus_disagreement() -> None:
     votes = [_make_vote("true", 0.9), _make_vote("false", 0.8)]
     result = await tally_votes(votes, "consensus")
@@ -108,7 +99,6 @@ async def test_consensus_disagreement() -> None:
     assert result["confidence"] == 0.0
 
 
-@pytest.mark.asyncio
 async def test_consensus_no_confidence_values() -> None:
     votes = [_make_vote("true", None), _make_vote("true", None)]
     result = await tally_votes(votes, "consensus")
@@ -119,7 +109,6 @@ async def test_consensus_no_confidence_values() -> None:
 # -- Human in loop --
 
 
-@pytest.mark.asyncio
 async def test_human_in_loop_raises() -> None:
     votes = [_make_vote("true", 0.9)]
     with pytest.raises(HumanVoteRequired):
@@ -129,7 +118,6 @@ async def test_human_in_loop_raises() -> None:
 # -- Unknown mechanism --
 
 
-@pytest.mark.asyncio
 async def test_unknown_mechanism_raises() -> None:
     votes = [_make_vote("true")]
     with pytest.raises(ValueError, match="Unknown voting mechanism"):

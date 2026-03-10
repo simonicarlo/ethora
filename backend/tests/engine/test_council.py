@@ -7,11 +7,10 @@ from __future__ import annotations
 
 import json
 import uuid
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
-import pytest_asyncio
-from sqlalchemy import event, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import Base
@@ -31,7 +30,7 @@ from app.models.models import (
 # -- Fixtures --
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def engine():
     """Create an in-memory async SQLite engine."""
     eng = create_async_engine("sqlite+aiosqlite://", echo=False)
@@ -43,13 +42,11 @@ async def engine():
     await eng.dispose()
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def db(engine):
     """Create a session bound to the test engine."""
     factory = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with factory() as session:
-        # SQLite doesn't support nested transactions well with asyncio,
-        # so we just use the session directly and commit.
         yield session
 
 
@@ -92,11 +89,6 @@ async def _seed_council(
     return session
 
 
-def _mock_agent_response(text: str) -> AsyncMock:
-    """Create a mock for call_agent that returns fixed text."""
-    return AsyncMock(return_value=text)
-
-
 def _mock_agent_vote_json(value: str = "true", confidence: float = 0.85) -> str:
     return json.dumps({"value": value, "confidence": confidence, "reasoning": "test reasoning"})
 
@@ -120,7 +112,6 @@ def _parse_sse_events(events: list[str]) -> list[tuple[str, dict]]:
 # -- Tests --
 
 
-@pytest.mark.asyncio
 async def test_full_session_majority_vote(db: AsyncSession) -> None:
     """Full flow: 1 round, 2 agents, majority vote → verdict."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="majority")
@@ -154,7 +145,6 @@ async def test_full_session_majority_vote(db: AsyncSession) -> None:
     assert s.status == "complete"
 
 
-@pytest.mark.asyncio
 async def test_session_status_transitions(db: AsyncSession) -> None:
     """Verify status goes: pending → running → voting → complete."""
     session = await _seed_council(db, num_agents=2, rounds=1)
@@ -184,7 +174,6 @@ async def test_session_status_transitions(db: AsyncSession) -> None:
     assert "complete" in statuses
 
 
-@pytest.mark.asyncio
 async def test_multiple_rounds(db: AsyncSession) -> None:
     """Verify correct number of round_complete events for multi-round session."""
     session = await _seed_council(db, num_agents=2, rounds=3)
@@ -207,7 +196,6 @@ async def test_multiple_rounds(db: AsyncSession) -> None:
     assert len(agent_messages) == 6
 
 
-@pytest.mark.asyncio
 async def test_agent_messages_persisted(db: AsyncSession) -> None:
     """Verify messages are saved to the DB."""
     session = await _seed_council(db, num_agents=2, rounds=1)
@@ -227,7 +215,6 @@ async def test_agent_messages_persisted(db: AsyncSession) -> None:
     assert any("Agent-1" in c for c in contents)
 
 
-@pytest.mark.asyncio
 async def test_votes_persisted(db: AsyncSession) -> None:
     """Verify votes are saved to the DB."""
     session = await _seed_council(db, num_agents=2, rounds=1)
@@ -246,7 +233,6 @@ async def test_votes_persisted(db: AsyncSession) -> None:
     assert all(v.confidence == 0.75 for v in votes)
 
 
-@pytest.mark.asyncio
 async def test_verdict_persisted(db: AsyncSession) -> None:
     """Verify verdict is saved to the DB."""
     session = await _seed_council(db, num_agents=2, rounds=1)
@@ -263,7 +249,6 @@ async def test_verdict_persisted(db: AsyncSession) -> None:
     assert verdict.decision == "false"
 
 
-@pytest.mark.asyncio
 async def test_rounds_persisted(db: AsyncSession) -> None:
     """Verify round rows are created in the DB."""
     session = await _seed_council(db, num_agents=2, rounds=2)
@@ -284,7 +269,6 @@ async def test_rounds_persisted(db: AsyncSession) -> None:
     assert rounds[1].round_number == 2
 
 
-@pytest.mark.asyncio
 async def test_human_in_loop_yields_awaiting_event(db: AsyncSession) -> None:
     """human_in_loop mechanism should yield awaiting_human_vote and stop."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="human_in_loop")
@@ -309,7 +293,6 @@ async def test_human_in_loop_yields_awaiting_event(db: AsyncSession) -> None:
     assert s.status == "voting"
 
 
-@pytest.mark.asyncio
 async def test_weighted_voting(db: AsyncSession) -> None:
     """Weighted voting: high-confidence minority should win."""
     session = await _seed_council(db, num_agents=3, rounds=1, voting_mechanism="weighted")
@@ -337,7 +320,6 @@ async def test_weighted_voting(db: AsyncSession) -> None:
     assert verdict_events[0][1]["decision"] == "true"
 
 
-@pytest.mark.asyncio
 async def test_consensus_disagreement(db: AsyncSession) -> None:
     """Consensus voting with disagreement → no_consensus."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="consensus")
@@ -362,7 +344,6 @@ async def test_consensus_disagreement(db: AsyncSession) -> None:
     assert verdict_events[0][1]["decision"] == "no_consensus"
 
 
-@pytest.mark.asyncio
 async def test_llm_error_sets_error_status(db: AsyncSession) -> None:
     """LLM call failure should set session to error status and yield error SSE."""
     session = await _seed_council(db, num_agents=2, rounds=1)
@@ -390,7 +371,6 @@ async def test_llm_error_sets_error_status(db: AsyncSession) -> None:
     assert s.status == "error"
 
 
-@pytest.mark.asyncio
 async def test_malformed_vote_falls_back_to_abstain(db: AsyncSession) -> None:
     """Agent returning non-JSON vote should be recorded as abstain."""
     session = await _seed_council(db, num_agents=2, rounds=1)
@@ -414,7 +394,6 @@ async def test_malformed_vote_falls_back_to_abstain(db: AsyncSession) -> None:
     assert all(v.confidence == 0.0 for v in votes)
 
 
-@pytest.mark.asyncio
 async def test_sse_event_format(db: AsyncSession) -> None:
     """Verify SSE events follow the expected format."""
     session = await _seed_council(db, num_agents=2, rounds=1)
@@ -436,7 +415,6 @@ async def test_sse_event_format(db: AsyncSession) -> None:
         json.loads(data_line)
 
 
-@pytest.mark.asyncio
 async def test_agent_message_event_fields(db: AsyncSession) -> None:
     """agent_message events should have all required fields."""
     session = await _seed_council(db, num_agents=2, rounds=1)
