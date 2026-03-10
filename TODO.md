@@ -61,9 +61,9 @@
 
 > **Independent — can be worked in parallel.**
 
-- [ ] **Create `StartSessionDialog`** — Material dialog with text input for the claim/question
-- [ ] **Add "Start Session" button to council cards** — On `CouncilList`, each card gets a button that opens the dialog
-- [ ] **Wire dialog → API → navigation** — `POST /sessions` with council_id + claim, then `router.navigate(['/sessions', id])`
+- [x] **Create `StartSessionDialog`** — Material dialog with text input for the claim/question
+- [x] **Add "Start Session" button to council cards** — On `CouncilList`, each card gets a button that opens the dialog
+- [x] **Wire dialog → API → navigation** — `POST /sessions` with council_id + claim, then `router.navigate(['/sessions', id])`
 
 ---
 
