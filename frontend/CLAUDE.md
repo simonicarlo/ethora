@@ -17,10 +17,11 @@ Angular 21 SPA for the Agent Council UI. Uses standalone components, Signals, an
 - **Proxy in dev**: `/api` requests proxy to `localhost:8000` via `proxy.conf.json`
 
 ## Testing
+- Run: `./test-frontend.sh` from the project root (or `./run-tests.sh` for both suites)
 - Test runner: Vitest (via `@angular/build:unit-test`)
 - Config: `tsconfig.spec.json` includes `vitest/globals` types
-- Run: `ng test`
 - Pattern: `*.spec.ts` alongside source files
+- Pass extra args: `./test-frontend.sh --watch`
 
 ## Conventions
 - `input.required()` for mandatory component inputs

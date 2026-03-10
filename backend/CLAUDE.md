@@ -20,10 +20,11 @@ FastAPI async backend for Agent Council. Serves REST API + SSE for real-time del
 - **PoC table creation**: `Base.metadata.create_all()` in lifespan (swap to Alembic for production)
 
 ## Testing
-- Tests in `tests/` directory, run with `pytest`
+- Run: `./test-backend.sh` from the project root (or `./run-tests.sh` for both suites)
+- Tests in `tests/` directory, uses pytest with async support
 - Uses `aiosqlite` for in-memory async SQLite in tests (no PostgreSQL needed)
 - `conftest.py` provides `db` (AsyncSession) and `client` (httpx.AsyncClient) fixtures
-- Test dependencies: pytest, pytest-asyncio, httpx, aiosqlite
+- Pass extra args: `./test-backend.sh tests/test_voting.py -v`
 
 ## Conventions
 - All functions have type annotations
