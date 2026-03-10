@@ -1,0 +1,29 @@
+@if (messages().length === 0) {
+  <div class="empty-state">
+    <mat-icon>forum</mat-icon>
+    <p>Waiting for deliberation to begin...</p>
+  </div>
+} @else {
+  @for (round of rounds(); track round.round) {
+    <div class="round-group">
+      <h3 class="round-heading">Round {{ round.round }}</h3>
+
+      @for (msg of round.messages; track $index) {
+        <mat-card class="message-card" appearance="outlined">
+          <mat-card-header>
+            <mat-icon matCardAvatar>smart_toy</mat-icon>
+            <mat-card-title>{{ msg.agentName }}</mat-card-title>
+            <mat-card-subtitle>Round {{ msg.round }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="message-content">{{ msg.content }}</p>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    @if (!$last) {
+      <mat-divider />
+    }
+  }
+}

@@ -11,13 +11,14 @@ import {
   Vote,
   VotingMechanism,
 } from '../../../core/models';
+import { DebatePanel, DebateMessage } from '../debate-panel/debate-panel';
 import { VotingPanel } from '../voting-panel/voting-panel';
 import { HumanVoteForm } from '../human-vote-form/human-vote-form';
 import { VerdictCard } from '../verdict-card/verdict-card';
 
 @Component({
   selector: 'app-session-view',
-  imports: [VotingPanel, HumanVoteForm, VerdictCard],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, VerdictCard],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
 })
@@ -30,6 +31,8 @@ export class SessionView implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly sessionId = signal('');
+  readonly messages = signal<DebateMessage[]>([]);
+  readonly currentRound = signal(0);
   readonly votes = signal<Vote[]>([]);
   readonly verdict = signal<Verdict | null>(null);
   readonly sessionStatus = signal<SessionStatus>('pending');
@@ -99,6 +102,14 @@ export class SessionView implements OnInit {
     }
 
     switch (event.type) {
+      case 'agent_message':
+        this.sessionStatus.set('running');
+        this.messages.update((m) => [...m, data as DebateMessage]);
+        this.currentRound.set(data.round);
+        break;
+      case 'round_complete':
+        this.currentRound.set(data.round);
+        break;
       case 'voting_cast':
         this.sessionStatus.set('voting');
         this.votes.update((v) => [...v, data as Vote]);
