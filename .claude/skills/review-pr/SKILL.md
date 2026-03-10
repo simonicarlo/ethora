@@ -39,7 +39,7 @@ curl -s -H "Authorization: Bearer $BITBUCKET_TOKEN" "$BITBUCKET_BASE_URL/rest/ap
 
 Load the token at the start of every run:
 ```bash
-export $(grep -E '^BITBUCKET_TOKEN=|^BITBUCKET_BASE_URL=|^BITBUCKET_PROJECT=|^BITBUCKET_REPO=' .env | xargs)
+export $(grep -E '^BITBUCKET_TOKEN=|^BITBUCKET_BASE_URL=|^BITBUCKET_PROJECT=|^BITBUCKET_REPO=' .env.bitbucket | xargs)
 ```
 
 ### Key endpoints
