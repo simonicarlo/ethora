@@ -301,7 +301,7 @@ A `TODO.md` file in the project root tracks all pending implementation work.
 
 ### Automated Workflow
 
-Claude's workflow is automated via hooks. Follow this sequence when working on tasks:
+Follow this sequence when working on tasks:
 
 1. **Sync first** — Always start by pulling the latest from `main`:
    ```
@@ -316,22 +316,33 @@ Claude's workflow is automated via hooks. Follow this sequence when working on t
    ```
    A `PreToolUse` hook blocks `Edit`/`Write` on `main` as a guardrail.
 
-3. **Work and commit** — Make changes, then commit with specific files staged:
+3. **Work and commit** — Use the `/commit` skill (`commit-commands:commit`):
    ```
-   git add <specific-files>
-   git commit -m "feat: ..."
+   /commit
    ```
-   Use `git config --local` for bot identity before committing.
+   This handles staging, bot identity, and commit message formatting.
 
-4. **Stop triggers PR** — When Claude finishes, the `Stop` hook automatically:
-   - Pushes the branch to origin
-   - Creates a Bitbucket PR with the configured reviewer
-   - Triggers the `review-pr` skill for automated code review
+4. **Check for merge conflicts** — Before pushing, always verify no conflicts with `main`:
+   ```
+   git fetch origin
+   git merge --no-commit --no-ff origin/main
+   ```
+   If conflicts exist, resolve them before pushing. If clean, abort the merge:
+   ```
+   git merge --abort
+   ```
+
+5. **Push and create PR** — Use the `/commit-push-pr` skill (`commit-commands:commit-push-pr`):
+   ```
+   /commit-push-pr
+   ```
+   This pushes the branch and creates a Bitbucket PR in one step.
+
+6. **Review** — Use `/review-pr` to post automated review feedback on the PR.
 
 ### Pull Requests (Bitbucket)
-- PRs are created automatically by the `Stop` hook when work is done on a feature branch
-- PR description is auto-generated from commit messages
-- Reviewer is configured via `BITBUCKET_REVIEWER` in `.env`
+- PRs are created via the `commit-commands:commit-push-pr` skill
+- Reviewer is configured via `BITBUCKET_REVIEWER` in `.env.bitbucket`
 - All work merges to `main` via PR — no direct pushes
 
 ### Code Reviews
