@@ -50,10 +50,10 @@
 
 > **Independent — can be worked in parallel with all other sections.**
 
-- [ ] **Create `AgentList` component** — Display agents in a Material table/card grid
-- [ ] **Create `AgentCreate` component** — Form with name, system prompt (textarea), model selector
-- [ ] **Add routes** — `/agents` → `AgentList`, `/agents/new` → `AgentCreate`
-- [ ] **Add nav link** — "Agents" item in toolbar navigation
+- [x] **Create `AgentList` component** — Display agents in a Material table/card grid
+- [x] **Create `AgentCreate` component** — Form with name, system prompt (textarea), model selector
+- [x] **Add routes** — `/agents` → `AgentList`, `/agents/new` → `AgentCreate`
+- [x] **Add nav link** — "Agents" item in toolbar navigation
 
 ---
 
