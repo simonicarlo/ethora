@@ -31,9 +31,7 @@ export class ThemeService {
   }
 
   toggle(): void {
-    this.mode.update((current) =>
-      current === 'light' ? 'dark' : current === 'dark' ? 'system' : 'light',
-    );
+    this.mode.set(this.isDark() ? 'light' : 'dark');
   }
 
   setMode(mode: ThemeMode): void {

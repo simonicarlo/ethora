@@ -4,31 +4,44 @@
     <span class="status-badge" [class]="sessionStatus()">{{ sessionStatus() }}</span>
   </header>
 
-  <app-debate-panel
-    [messages]="messages()"
-    [agents]="agents()"
-    [currentRound]="currentRound()" />
+  @if (loading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Loading session…</p>
+    </div>
+  } @else {
+    @if (sessionStatus() === 'error') {
+      <div class="error-banner">
+        <p>This session encountered an error and cannot continue.</p>
+      </div>
+    }
 
-  @if (showHumanTurnInput()) {
-    <app-human-turn-input
-      [sessionId]="sessionId()"
-      (submitted)="onHumanTurnSubmitted()" />
-  }
-
-  @if (isVotingPhase()) {
-    <app-voting-panel
-      [votes]="votes()"
+    <app-debate-panel
+      [messages]="messages()"
       [agents]="agents()"
-      [votingMechanism]="votingMechanism()" />
-  }
+      [currentRound]="currentRound()" />
 
-  @if (showHumanForm()) {
-    <app-human-vote-form
-      [sessionId]="sessionId()"
-      (voted)="onHumanVoted($event)" />
-  }
+    @if (showHumanTurnInput()) {
+      <app-human-turn-input
+        [sessionId]="sessionId()"
+        (submitted)="onHumanTurnSubmitted()" />
+    }
 
-  @if (isComplete() && verdict(); as v) {
-    <app-verdict-card [verdict]="v" />
+    @if (isVotingPhase()) {
+      <app-voting-panel
+        [votes]="votes()"
+        [agents]="agents()"
+        [votingMechanism]="votingMechanism()" />
+    }
+
+    @if (showHumanForm()) {
+      <app-human-vote-form
+        [sessionId]="sessionId()"
+        (voted)="onHumanVoted($event)" />
+    }
+
+    @if (isComplete() && verdict(); as v) {
+      <app-verdict-card [verdict]="v" />
+    }
   }
 </section>
