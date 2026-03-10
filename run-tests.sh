@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+# No set -e: we want both suites to run even if one fails
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -16,12 +16,12 @@ BACKEND_OK=0
 FRONTEND_OK=0
 
 # --- Backend ---
-"$SCRIPT_DIR/test-backend.sh" || BACKEND_OK=1
+"$SCRIPT_DIR/test-backend.sh" "$@" || BACKEND_OK=1
 
 echo ""
 
 # --- Frontend ---
-"$SCRIPT_DIR/test-frontend.sh" || FRONTEND_OK=1
+"$SCRIPT_DIR/test-frontend.sh" "$@" || FRONTEND_OK=1
 
 # --- Summary ---
 echo ""
