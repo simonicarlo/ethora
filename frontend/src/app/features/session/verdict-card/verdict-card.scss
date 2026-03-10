@@ -1,4 +1,7 @@
+@use 'mixins' as *;
+
 .verdict-card {
+  @include glass-card;
   max-width: 520px;
 
   &.affirm {

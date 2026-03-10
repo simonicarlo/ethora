@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'mixins' as *;
 
 :host {
   display: block;
@@ -38,6 +39,7 @@
 }
 
 .message-card {
+  @include glass-panel;
   margin-bottom: $space-4;
 
   .message-content {

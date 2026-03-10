@@ -62,6 +62,7 @@
 }
 
 .council-card {
+  @include glass-card;
   @include hover-glow;
   .council-meta {
     margin-bottom: $space-3;

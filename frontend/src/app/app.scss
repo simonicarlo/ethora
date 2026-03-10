@@ -1,6 +1,8 @@
 @use 'variables' as *;
+@use 'mixins' as *;
 
 .app-toolbar {
+  @include glass-panel-heavy;
   position: sticky;
   top: 0;
   z-index: $z-dropdown;
