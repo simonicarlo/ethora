@@ -53,6 +53,8 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
         # TODO: Wire up run_council_session and yield real SSE events.
         yield format_sse("status", {"message": "Session streaming not yet implemented"})
 
+    # media_type="text/event-stream" is the standard SSE content type;
+    # browsers and EventSource clients rely on it to enable streaming parsing.
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
@@ -81,6 +83,8 @@ async def submit_human_vote(
     session = result.scalar_one_or_none()
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
+    # Guard: only allow human votes during the voting phase to prevent
+    # double-voting or voting on already-completed sessions.
     if session.status != "voting":
         raise HTTPException(status_code=409, detail="Session is not in voting phase")
 

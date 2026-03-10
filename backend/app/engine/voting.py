@@ -45,6 +45,8 @@ def _majority(votes: list[Vote]) -> dict[str, str | float]:
 def _weighted(votes: list[Vote]) -> dict[str, str | float]:
     weights: dict[str, float] = {}
     for v in votes:
+        # Default to 1.0 so agents without a confidence score are counted equally
+        # rather than silently ignored (which would skew results).
         w = v.confidence if v.confidence is not None else 1.0
         weights[v.value] = weights.get(v.value, 0.0) + w
 
@@ -75,6 +77,8 @@ def _consensus(votes: list[Vote]) -> dict[str, str | float]:
             "confidence": avg_confidence,
             "summary": f"All {len(votes)} agents reached consensus on '{decision}'",
         }
+    # Deliberately returns no_consensus rather than falling back to majority.
+    # Consensus means unanimity — partial agreement is not consensus by design.
     return {
         "decision": "no_consensus",
         "confidence": 0.0,

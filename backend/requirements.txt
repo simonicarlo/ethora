@@ -6,3 +6,9 @@ sqlalchemy[asyncio]
 asyncpg
 alembic
 python-dotenv
+
+# Testing
+pytest
+pytest-asyncio
+httpx
+aiosqlite
