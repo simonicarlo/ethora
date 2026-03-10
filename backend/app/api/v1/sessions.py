@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncGenerator
 
 import uuid
@@ -20,6 +21,8 @@ from app.schemas.schemas import (
     VerdictResponse,
 )
 from app.sse.emitter import format_sse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
 
@@ -64,6 +67,7 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
                 async for event in run_council_session(session_id, engine_db):
                     yield event
             except Exception:
+                logger.exception("Stream error for session %s", session_id)
                 await engine_db.rollback()
                 yield format_sse("error", {"message": "Stream error"})
 

@@ -82,11 +82,16 @@ async def run_council_session(
             raw_vote = await call_agent(agent, vote_messages, agent.system_prompt)
             parsed = _parse_vote(raw_vote)
 
+            try:
+                confidence = float(parsed.get("confidence", 0.0))
+            except (TypeError, ValueError):
+                confidence = 0.0
+
             vote = Vote(
                 session_id=session.id,
                 agent_id=agent.id,
                 value=parsed.get("value", "abstain"),
-                confidence=parsed.get("confidence"),
+                confidence=confidence,
                 reasoning=parsed.get("reasoning"),
             )
             db.add(vote)
@@ -131,6 +136,7 @@ async def run_council_session(
 
     except Exception:
         logger.exception("Council session %s failed", session_id)
+        await db.rollback()
         session.status = "error"
         await db.commit()
         yield format_sse("error", {"message": "Internal engine error"})
@@ -202,14 +208,13 @@ def _parse_vote(raw_text: str) -> dict:
     """Parse JSON vote from agent response, with fallback."""
     text = raw_text.strip()
     # Try to extract JSON from the response
-    for start_char, end_char in [("{", "}"), ]:
-        start = text.find(start_char)
-        end = text.rfind(end_char)
-        if start != -1 and end != -1 and end > start:
-            try:
-                return json.loads(text[start:end + 1])
-            except json.JSONDecodeError:
-                pass
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            return json.loads(text[start:end + 1])
+        except json.JSONDecodeError:
+            pass
 
     # Fallback: treat entire response as reasoning
     return {"value": "abstain", "confidence": 0.0, "reasoning": raw_text}
