@@ -1,7 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { of } from 'rxjs';
 
 import { CouncilList } from './council-list';
 import { Council } from '../../../core/models';
@@ -35,7 +38,7 @@ describe('CouncilList', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [CouncilList],
+      imports: [CouncilList, NoopAnimationsModule, MatDialogModule],
       providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
@@ -135,5 +138,76 @@ describe('CouncilList', () => {
     httpTesting.expectOne('/api/v1/councils').flush([]);
     expect(component.votingLabel('human_in_loop')).toBe('human in loop');
     expect(component.votingLabel('majority')).toBe('majority');
+  });
+
+  it('should show a Start Session button on each council card', () => {
+    const fixture = TestBed.createComponent(CouncilList);
+    httpTesting.expectOne('/api/v1/councils').flush(mockCouncils);
+    fixture.detectChanges();
+
+    const buttons = fixture.nativeElement.querySelectorAll('[data-testid="start-session-btn"]');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0].textContent).toContain('Start Session');
+  });
+
+  it('should open dialog and navigate to session on Start Session', () => {
+    const fixture = TestBed.createComponent(CouncilList);
+    httpTesting.expectOne('/api/v1/councils').flush(mockCouncils);
+    fixture.detectChanges();
+
+    const dialog = TestBed.inject(MatDialog);
+    const mockDialogRef = { afterClosed: () => of('Is the earth flat?') } as MatDialogRef<unknown>;
+    vi.spyOn(dialog, 'open').mockReturnValue(mockDialogRef);
+
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="start-session-btn"]');
+    btn.click();
+    fixture.detectChanges();
+
+    expect(dialog.open).toHaveBeenCalled();
+
+    const router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const req = httpTesting.expectOne('/api/v1/sessions');
+    expect(req.request.body).toEqual({ council_id: 'c1', input_claim: 'Is the earth flat?' });
+    req.flush({ id: 's1', council_id: 'c1', input_claim: 'Is the earth flat?', status: 'pending', created_at: '2026-01-01T00:00:00Z' });
+
+    expect(router.navigate).toHaveBeenCalledWith(['/sessions', 's1']);
+  });
+
+  it('should set error when session creation fails', () => {
+    const fixture = TestBed.createComponent(CouncilList);
+    httpTesting.expectOne('/api/v1/councils').flush(mockCouncils);
+    fixture.detectChanges();
+
+    const dialog = TestBed.inject(MatDialog);
+    const mockDialogRef = { afterClosed: () => of('Test claim') } as MatDialogRef<unknown>;
+    vi.spyOn(dialog, 'open').mockReturnValue(mockDialogRef);
+
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="start-session-btn"]');
+    btn.click();
+    fixture.detectChanges();
+
+    httpTesting.expectOne('/api/v1/sessions').error(new ProgressEvent('error'));
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.error()).toBeTruthy();
+  });
+
+  it('should not call API when dialog is cancelled', () => {
+    const fixture = TestBed.createComponent(CouncilList);
+    httpTesting.expectOne('/api/v1/councils').flush(mockCouncils);
+    fixture.detectChanges();
+
+    const dialog = TestBed.inject(MatDialog);
+    const mockDialogRef = { afterClosed: () => of(undefined) } as MatDialogRef<unknown>;
+    vi.spyOn(dialog, 'open').mockReturnValue(mockDialogRef);
+
+    const btn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="start-session-btn"]');
+    btn.click();
+    fixture.detectChanges();
+
+    // No session creation request should be made
+    httpTesting.expectNone('/api/v1/sessions');
   });
 });

@@ -48,6 +48,12 @@
             </div>
           }
         </mat-card-content>
+        <mat-card-actions>
+          <button mat-flat-button data-testid="start-session-btn" (click)="startSession(council)">
+            <mat-icon>play_arrow</mat-icon>
+            Start Session
+          </button>
+        </mat-card-actions>
       </mat-card>
     }
   </div>
