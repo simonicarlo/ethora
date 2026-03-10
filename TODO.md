@@ -6,7 +6,7 @@
 ## Engine (core deliberation logic)
 
 - [ ] **Implement `engine/council.py`** — Orchestrate rounds: loop through agents sequentially per round, collect messages, emit SSE events, trigger voting after final round
-- [ ] **Implement `engine/agent.py`** — Call Claude API via `anthropic` SDK, pass system prompt + conversation history, return completed response
+- [x] **Implement `engine/agent.py`** — Call Claude API via `anthropic` SDK, pass system prompt + conversation history, return completed response
 - [ ] **Implement `engine/voting.py`** — Implement all four mechanisms: `majority`, `weighted`, `consensus`, `human_in_loop`
 
 ## Backend API
