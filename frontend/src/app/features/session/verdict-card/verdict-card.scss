@@ -1,0 +1,55 @@
+.verdict-card {
+  max-width: 520px;
+
+  &.affirm {
+    border-left: 4px solid #2e7d32;
+  }
+
+  &.oppose {
+    border-left: 4px solid #c62828;
+  }
+
+  &.neutral {
+    border-left: 4px solid #e65100;
+  }
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.decision-text {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 8px 0 16px;
+  text-transform: capitalize;
+}
+
+.confidence-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+}
+
+.confidence-label {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.confidence-value {
+  font-weight: 500;
+}
+
+mat-progress-bar {
+  margin-bottom: 16px;
+}
+
+.summary {
+  font-size: 0.9375rem;
+  color: var(--mat-sys-on-surface-variant);
+  line-height: 1.5;
+  margin: 0;
+}

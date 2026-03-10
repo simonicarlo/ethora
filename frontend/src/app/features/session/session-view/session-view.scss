@@ -1,0 +1,51 @@
+.session-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.session-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  &.pending {
+    background-color: #e0e0e0;
+    color: #616161;
+  }
+
+  &.running {
+    background-color: #e3f2fd;
+    color: #1565c0;
+  }
+
+  &.voting {
+    background-color: #fff3e0;
+    color: #e65100;
+  }
+
+  &.complete {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.error {
+    background-color: #ffebee;
+    color: #c62828;
+  }
+}

@@ -9,9 +9,10 @@ from starlette.responses import StreamingResponse
 from sqlalchemy import select
 
 from app.api.v1.deps import DBSession
-from app.models.models import Session, Verdict
+from app.models.models import Council, Session, Verdict
 from app.schemas.schemas import (
     HumanTurnRequest,
+    HumanVoteRequest,
     SessionCreate,
     SessionResponse,
     VerdictResponse,
@@ -29,6 +30,15 @@ async def create_session(payload: SessionCreate, db: DBSession) -> Session:
     )
     db.add(session)
     await db.flush()
+    return session
+
+
+@router.get("/sessions/{session_id}", response_model=SessionResponse)
+async def get_session(session_id: uuid.UUID, db: DBSession) -> Session:
+    result = await db.execute(select(Session).where(Session.id == session_id))
+    session = result.scalar_one_or_none()
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
     return session
 
 
@@ -59,6 +69,41 @@ async def submit_human_turn(
 
     # TODO: Inject human message into the current round
     return {"status": "accepted"}
+
+
+@router.post("/sessions/{session_id}/human-vote", response_model=VerdictResponse, status_code=201)
+async def submit_human_vote(
+    session_id: uuid.UUID,
+    payload: HumanVoteRequest,
+    db: DBSession,
+) -> Verdict:
+    result = await db.execute(select(Session).where(Session.id == session_id))
+    session = result.scalar_one_or_none()
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if session.status != "voting":
+        raise HTTPException(status_code=409, detail="Session is not in voting phase")
+
+    council_result = await db.execute(
+        select(Council).where(Council.id == session.council_id)
+    )
+    council = council_result.scalar_one()
+    if council.voting_mechanism != "human_in_loop":
+        raise HTTPException(
+            status_code=409,
+            detail="Session does not use human_in_loop voting",
+        )
+
+    verdict = Verdict(
+        session_id=session_id,
+        decision=payload.decision,
+        confidence=payload.confidence,
+        summary=payload.reasoning,
+    )
+    db.add(verdict)
+    session.status = "complete"
+    await db.flush()
+    return verdict
 
 
 @router.get("/sessions/{session_id}/verdict", response_model=VerdictResponse)

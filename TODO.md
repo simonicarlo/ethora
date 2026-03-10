@@ -7,7 +7,7 @@
 
 - [ ] **Implement `engine/council.py`** — Orchestrate rounds: loop through agents sequentially per round, collect messages, emit SSE events, trigger voting after final round
 - [x] **Implement `engine/agent.py`** — Call Claude API via `anthropic` SDK, pass system prompt + conversation history, return completed response
-- [ ] **Implement `engine/voting.py`** — Implement all four mechanisms: `majority`, `weighted`, `consensus`, `human_in_loop`
+- [x] **Implement `engine/voting.py`** — Implement all four mechanisms: `majority`, `weighted`, `consensus`, `human_in_loop`
 
 ## Backend API
 
@@ -22,8 +22,8 @@
 - [ ] **Home page** — Landing page with project description and "Start" CTA
 - [ ] **Council list page** — Display councils in a Material card grid, link to create
 - [ ] **Council create form** — Reactive form for name, rounds, voting mechanism, agent selection
-- [ ] **Session view** — Multi-panel debate UI: agent message cards per round, voting results, verdict display
-- [ ] **SSE integration in session view** — Subscribe to `SseService.connect()` and render events in real time
+- [ ] **Session view** — Multi-panel debate UI: agent message cards per round, voting results, verdict display *(partial: voting panel, human vote form, verdict card done; debate message panel still pending)*
+- [x] **SSE integration in session view** — Subscribe to `SseService.connect()` and render events in real time
 
 ## Infrastructure
 

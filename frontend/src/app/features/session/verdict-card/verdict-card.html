@@ -1,0 +1,23 @@
+<mat-card class="verdict-card" [class]="decisionClass()" appearance="outlined">
+  <mat-card-header>
+    <mat-icon mat-card-avatar>{{ decisionIcon() }}</mat-icon>
+    <mat-card-title>Verdict</mat-card-title>
+    <mat-card-subtitle>{{ verdict().created_at | date:'medium' }}</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <p class="decision-text">{{ verdict().decision }}</p>
+
+    <div class="confidence-row">
+      <span class="confidence-label">Confidence</span>
+      <span class="confidence-value">{{ confidencePercent() }}%</span>
+    </div>
+    <mat-progress-bar
+      mode="determinate"
+      [value]="confidencePercent()">
+    </mat-progress-bar>
+
+    @if (verdict().summary) {
+      <p class="summary">{{ verdict().summary }}</p>
+    }
+  </mat-card-content>
+</mat-card>

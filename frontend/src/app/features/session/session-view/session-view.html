@@ -1,1 +1,23 @@
-<p>session-view works!</p>
+<section class="session-view">
+  <header class="session-header">
+    <h1>Session</h1>
+    <span class="status-badge" [class]="sessionStatus()">{{ sessionStatus() }}</span>
+  </header>
+
+  @if (isVotingPhase()) {
+    <app-voting-panel
+      [votes]="votes()"
+      [agents]="agents()"
+      [votingMechanism]="votingMechanism()" />
+  }
+
+  @if (showHumanForm()) {
+    <app-human-vote-form
+      [sessionId]="sessionId()"
+      (voted)="onHumanVoted($event)" />
+  }
+
+  @if (isComplete() && verdict(); as v) {
+    <app-verdict-card [verdict]="v" />
+  }
+</section>

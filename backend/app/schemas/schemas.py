@@ -106,3 +106,9 @@ class VerdictResponse(BaseModel):
 
 class HumanTurnRequest(BaseModel):
     content: str = Field(min_length=1)
+
+
+class HumanVoteRequest(BaseModel):
+    decision: str = Field(min_length=1)
+    confidence: float = Field(ge=0.0, le=1.0)
+    reasoning: str | None = None

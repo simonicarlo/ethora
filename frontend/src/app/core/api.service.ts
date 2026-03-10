@@ -60,11 +60,22 @@ export class ApiService {
     return this.post<Session>('/sessions', data);
   }
 
+  getSession(id: string): Observable<Session> {
+    return this.get<Session>(`/sessions/${id}`);
+  }
+
   getVerdict(sessionId: string): Observable<Verdict> {
     return this.get<Verdict>(`/sessions/${sessionId}/verdict`);
   }
 
   sendHumanTurn(sessionId: string, content: string): Observable<{ status: string }> {
     return this.post<{ status: string }>(`/sessions/${sessionId}/human-turn`, { content });
+  }
+
+  submitHumanVote(
+    sessionId: string,
+    data: { decision: string; confidence: number; reasoning?: string },
+  ): Observable<Verdict> {
+    return this.post<Verdict>(`/sessions/${sessionId}/human-vote`, data);
   }
 }

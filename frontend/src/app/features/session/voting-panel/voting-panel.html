@@ -1,0 +1,42 @@
+<section class="voting-panel">
+  <h2>Votes ({{ votingMechanism() }})</h2>
+  <div class="vote-grid">
+    @for (agent of agents(); track agent.id) {
+      @if (voteMap().get(agent.id); as vote) {
+        <mat-card class="vote-card voted" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>{{ agent.name }}</mat-card-title>
+            <mat-chip [class]="'vote-chip ' + voteColor(vote.value)">
+              {{ vote.value }}
+            </mat-chip>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="confidence-row">
+              <span class="confidence-label">Confidence</span>
+              <span class="confidence-value">{{ confidencePercent(vote.confidence) }}%</span>
+            </div>
+            <mat-progress-bar
+              mode="determinate"
+              [value]="confidencePercent(vote.confidence)">
+            </mat-progress-bar>
+            @if (vote.reasoning) {
+              <p class="reasoning">{{ vote.reasoning }}</p>
+            }
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <mat-card class="vote-card pending" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>{{ agent.name }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="pending-row">
+              <mat-spinner diameter="24"></mat-spinner>
+              <span>Voting…</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    }
+  </div>
+</section>
