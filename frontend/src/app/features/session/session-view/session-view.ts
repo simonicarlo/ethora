@@ -25,6 +25,8 @@ export class SessionView implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly api = inject(ApiService);
   private readonly sse = inject(SseService);
+  // DestroyRef over ngOnDestroy: modern Angular pattern that works with inject()
+  // and doesn't require implementing a lifecycle interface.
   private readonly destroyRef = inject(DestroyRef);
 
   readonly sessionId = signal('');
@@ -77,7 +79,8 @@ export class SessionView implements OnInit {
       .subscribe({
         next: (event) => this.handleSseEvent(event),
         error: () => {
-          // SSE connection closed — check if session is complete
+          // SSE fires onerror on normal close too — only set error state if the
+          // session hasn't already completed (avoids false error on clean shutdown).
           if (this.sessionStatus() !== 'complete') {
             this.sessionStatus.set('error');
           }

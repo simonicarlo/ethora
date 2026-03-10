@@ -1,0 +1,186 @@
+// ============================================================
+// REUSABLE MIXINS
+// ============================================================
+@use 'sass:map';
+@use 'variables' as v;
+
+// ── Responsive Breakpoints ──
+
+/// Mobile-first media query.
+/// Usage: @include respond(md) { ... }
+@mixin respond($bp) {
+  $value: map.get(v.$breakpoints, $bp);
+  @if $value {
+    @media (min-width: $value) {
+      @content;
+    }
+  } @else {
+    @error 'Unknown breakpoint: #{$bp}. Use: sm, md, lg, xl, 2xl';
+  }
+}
+
+/// Desktop-first (max-width) variant.
+@mixin respond-down($bp) {
+  $value: map.get(v.$breakpoints, $bp);
+  @if $value {
+    @media (max-width: ($value - 0.02px)) {
+      @content;
+    }
+  }
+}
+
+// ── Glassmorphism ──
+
+/// Standard frosted glass panel.
+@mixin glass-panel {
+  background: var(--ac-glass-bg);
+  backdrop-filter: blur(var(--ac-glass-blur));
+  -webkit-backdrop-filter: blur(var(--ac-glass-blur));
+  border: 1px solid var(--ac-glass-border);
+  box-shadow: var(--ac-shadow-sm);
+}
+
+/// Heavy/opaque glass panel (for modals, nav).
+@mixin glass-panel-heavy {
+  background: var(--ac-glass-bg-heavy);
+  backdrop-filter: blur(var(--ac-glass-blur-heavy));
+  -webkit-backdrop-filter: blur(var(--ac-glass-blur-heavy));
+  border: 1px solid var(--ac-glass-border);
+  box-shadow: var(--ac-shadow-md);
+}
+
+/// Glass card — glass panel + border-radius + padding.
+@mixin glass-card($radius: v.$radius-lg, $padding: v.$space-6) {
+  @include glass-panel;
+  border-radius: $radius;
+  padding: $padding;
+}
+
+// ── Typography Helpers ──
+
+/// Monospace font for agent output / code.
+@mixin font-mono {
+  font-family: v.$font-mono;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+}
+
+/// Single-line text truncation.
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/// Multi-line truncation.
+@mixin line-clamp($lines: 3) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ── Shape Helpers ──
+
+/// Pill-shaped element (full rounding).
+@mixin pill {
+  border-radius: v.$radius-pill;
+}
+
+/// Soft rounded element.
+@mixin rounded($size: v.$radius-lg) {
+  border-radius: $size;
+}
+
+// ── Custom Scrollbar ──
+
+@mixin custom-scrollbar($width: 6px) {
+  &::-webkit-scrollbar {
+    width: $width;
+    height: $width;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--ac-border-default);
+    border-radius: v.$radius-pill;
+
+    &:hover {
+      background: var(--ac-border-strong);
+    }
+  }
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--ac-border-default) transparent;
+}
+
+// ── Interactive States ──
+
+/// Hover glow effect for cards.
+@mixin hover-glow {
+  transition:
+    box-shadow v.$duration-normal v.$easing-standard,
+    transform v.$duration-normal v.$easing-standard;
+
+  &:hover {
+    box-shadow: var(--ac-shadow-glow);
+    transform: translateY(-1px);
+  }
+}
+
+/// Focus visible ring.
+@mixin focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--ac-brand-primary);
+    outline-offset: 2px;
+  }
+}
+
+// ── Layout Helpers ──
+
+/// Flex center (both axes).
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/// Flex column with optional gap.
+@mixin flex-col($gap: 0) {
+  display: flex;
+  flex-direction: column;
+
+  @if $gap != 0 {
+    gap: $gap;
+  }
+}
+
+/// Content container with max-width.
+@mixin content-container {
+  width: 100%;
+  max-width: v.$content-max-width;
+  margin-inline: auto;
+  padding-inline: v.$space-4;
+
+  @include respond(lg) {
+    padding-inline: v.$space-6;
+  }
+}
+
+// ── Agent Timeline ──
+
+/// Agent accent color by index (wraps around).
+@mixin agent-accent($index) {
+  --_agent-color: var(--ac-agent-#{$index});
+  border-left: var(--ac-agent-border-width) solid var(--_agent-color);
+}
+
+/// Timeline connector line.
+@mixin timeline-line {
+  content: '';
+  position: absolute;
+  width: var(--ac-timeline-line-width);
+  background: var(--ac-timeline-line-color);
+}

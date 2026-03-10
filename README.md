@@ -69,6 +69,9 @@ agent-council/
 ├── docker-compose.yml  # All services (db, backend, frontend)
 ├── start-backend.sh    # Dev: Docker db + backend
 ├── start-frontend.sh   # Dev: Local Angular + Vite
+├── run-tests.sh        # Run all tests
+├── test-backend.sh     # Backend tests (pytest)
+├── test-frontend.sh    # Frontend tests (Vitest)
 ├── .env.example        # Environment template
 └── CLAUDE.md           # AI development instructions
 ```
@@ -93,6 +96,23 @@ agent-council/
 | GET    | `/api/v1/sessions/{id}/stream`     | SSE stream of debate events |
 | POST   | `/api/v1/sessions/{id}/human-turn` | Inject human input          |
 | GET    | `/api/v1/sessions/{id}/verdict`    | Get final verdict           |
+
+## Testing
+
+```bash
+./run-tests.sh          # run all tests (backend + frontend)
+./test-backend.sh       # backend only (pytest)
+./test-frontend.sh      # frontend only (Vitest)
+```
+
+Each script auto-installs dependencies if needed. Backend tests use an in-memory SQLite database — no PostgreSQL or Docker required.
+
+You can pass extra arguments through to the test runner:
+
+```bash
+./test-backend.sh tests/test_voting.py -v    # run a single file
+./test-frontend.sh --watch                   # watch mode
+```
 
 ## Voting Mechanisms
 

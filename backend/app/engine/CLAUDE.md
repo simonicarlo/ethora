@@ -26,6 +26,8 @@ Implements four voting mechanisms, each receiving a list of `Vote` ORM objects:
 - **`tally_votes(votes, mechanism)`** — Router that dispatches to the correct mechanism.
 - **`HumanVoteRequired`** — Exception raised for `human_in_loop`; caught by the council orchestrator to pause the session.
 - All functions return `{"decision": str, "confidence": float, "summary": str}`.
+- **Confidence as weight**: In weighted voting, agent-reported confidence directly scales vote weight.
+- **Consensus requires unanimity**: All agents must agree; no threshold — it's all-or-nothing.
 
 ### `council.py` — Session Orchestrator
 
@@ -70,6 +72,7 @@ The main engine entry point. `run_council_session()` is an **async generator** t
 
 ## Key Design Decisions
 
+- **Lazy client singleton**: `agent.py` creates the Anthropic client on first use (not at import time).
 - **Sequential agent calls within a round**: Each agent sees all prior responses before replying, enabling genuine back-and-forth debate.
 - **No token streaming**: SSE fires once per completed agent response (not per token), keeping the protocol simple.
 - **Dedicated DB session**: The SSE stream endpoint creates its own `AsyncSession` via `async_session_factory()` because the request-scoped session closes when the endpoint handler returns, but `StreamingResponse` keeps the generator alive after that.

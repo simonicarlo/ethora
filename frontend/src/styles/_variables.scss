@@ -1,0 +1,88 @@
+// ============================================================
+// SCSS COMPILE-TIME CONSTANTS
+// These values never change at runtime.
+// ============================================================
+
+// ── Spacing Scale (4px base, rem-based) ──
+$space-0: 0;
+$space-1: 0.25rem;  // 4px
+$space-2: 0.5rem;   // 8px
+$space-3: 0.75rem;  // 12px
+$space-4: 1rem;     // 16px
+$space-5: 1.25rem;  // 20px
+$space-6: 1.5rem;   // 24px
+$space-7: 2rem;     // 32px
+$space-8: 2.5rem;   // 40px
+$space-9: 3rem;     // 48px
+$space-10: 4rem;    // 64px
+$space-12: 6rem;    // 96px
+
+$spacing: (
+  0: $space-0,
+  1: $space-1,
+  2: $space-2,
+  3: $space-3,
+  4: $space-4,
+  5: $space-5,
+  6: $space-6,
+  7: $space-7,
+  8: $space-8,
+  9: $space-9,
+  10: $space-10,
+  12: $space-12,
+);
+
+// ── Breakpoints (mobile-first) ──
+$bp-sm: 576px;
+$bp-md: 768px;
+$bp-lg: 992px;
+$bp-xl: 1200px;
+$bp-2xl: 1440px;
+
+$breakpoints: (
+  sm: $bp-sm,
+  md: $bp-md,
+  lg: $bp-lg,
+  xl: $bp-xl,
+  2xl: $bp-2xl,
+);
+
+// ── Font Stacks ──
+$font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+$font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace;
+
+// ── Font Weights ──
+$weight-regular: 400;
+$weight-medium: 500;
+$weight-semibold: 600;
+$weight-bold: 700;
+
+// ── Z-Index Scale ──
+$z-dropdown: 100;
+$z-sticky: 200;
+$z-overlay: 300;
+$z-modal: 400;
+$z-popover: 500;
+$z-toast: 600;
+$z-tooltip: 700;
+
+// ── Layout ──
+$toolbar-height: 64px;
+$content-max-width: 1200px;
+
+// ── Border Radii (pill-shaped preference) ──
+$radius-xs: 4px;
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 20px;
+$radius-2xl: 24px;
+$radius-pill: 9999px;
+
+// ── Transitions ──
+$duration-fast: 150ms;
+$duration-normal: 250ms;
+$duration-slow: 400ms;
+$easing-standard: cubic-bezier(0.2, 0, 0, 1);
+$easing-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+$easing-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
