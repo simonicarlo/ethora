@@ -1,9 +1,30 @@
 @use 'variables' as *;
+@use 'mixins' as *;
 
 :host {
   display: block;
   max-width: $content-max-width;
   margin: 0 auto;
+  position: relative;
+  overflow: visible;
+}
+
+.bg-logo {
+  position: fixed;
+  width: 1000px;
+  height: 1000px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.2;
+  pointer-events: none;
+  z-index: -1;
+  animation: spin 120s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 // ── Hero Section ──
@@ -11,6 +32,12 @@
 .hero {
   text-align: center;
   padding: $space-12 $space-4 $space-10;
+}
+
+.hero-logo {
+  width: 120px;
+  height: 120px;
+  margin-bottom: $space-6;
 }
 
 .hero-title {
@@ -57,6 +84,8 @@
 }
 
 .feature-card {
+  @include hover-glow;
+
   .feature-icon {
     color: var(--mat-sys-primary);
     font-size: 2rem;

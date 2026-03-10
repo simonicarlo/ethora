@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Ethora Brand Icon: Five agents deliberating toward a central verdict -->
+  <!--
+    Pentagon on circle r=180, center (256,256).
+    Arcs inset ~9° from each node to clear the r=28 node circles.
+  -->
+
+  <defs>
+    <mask id="m0"><rect width="512" height="512" fill="white"/><circle cx="256" cy="76"  r="10" fill="black"/></mask>
+    <mask id="m1"><rect width="512" height="512" fill="white"/><circle cx="427" cy="200" r="10" fill="black"/></mask>
+    <mask id="m2"><rect width="512" height="512" fill="white"/><circle cx="362" cy="402" r="10" fill="black"/></mask>
+    <mask id="m3"><rect width="512" height="512" fill="white"/><circle cx="150" cy="402" r="10" fill="black"/></mask>
+    <mask id="m4"><rect width="512" height="512" fill="white"/><circle cx="85"  cy="200" r="10" fill="black"/></mask>
+  </defs>
+
+  <!-- Subtle outer ring -->
+  <circle cx="256" cy="256" r="228" stroke="#6367ff" stroke-width="14" opacity="0.4"/>
+
+  <!-- Five agent arcs — shortened to stop at node edges -->
+  <!-- Arc P0→P1: -81° to -27° -->
+  <path d="M 284 78 A 180 180 0 0 1 416 174"
+        stroke="#6367ff" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <!-- Arc P1→P2: -9° to 45° -->
+  <path d="M 434 228 A 180 180 0 0 1 383 383"
+        stroke="#8494ff" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <!-- Arc P2→P3: 63° to 117° -->
+  <path d="M 338 416 A 180 180 0 0 1 174 416"
+        stroke="#ffdbfd" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <!-- Arc P3→P4: 135° to 189° -->
+  <path d="M 129 383 A 180 180 0 0 1 78 228"
+        stroke="#c9beff" stroke-width="16" stroke-linecap="round" fill="none"/>
+  <!-- Arc P4→P0: 207° to 261° -->
+  <path d="M 96 174 A 180 180 0 0 1 228 78"
+        stroke="#7c4dff" stroke-width="16" stroke-linecap="round" fill="none"/>
+
+  <!-- Convergence lines — from node edge, stopping 45px from center -->
+  <line x1="256" y1="104" x2="256" y2="211" stroke="#6367ff" stroke-width="14" stroke-linecap="round" opacity="0.4"/>
+  <line x1="400" y1="209" x2="299" y2="242" stroke="#8494ff" stroke-width="14" stroke-linecap="round" opacity="0.4"/>
+  <line x1="345" y1="379" x2="282" y2="292" stroke="#ffdbfd" stroke-width="14" stroke-linecap="round" opacity="0.4"/>
+  <line x1="167" y1="379" x2="230" y2="292" stroke="#c9beff" stroke-width="14" stroke-linecap="round" opacity="0.4"/>
+  <line x1="112" y1="209" x2="213" y2="242" stroke="#7c4dff" stroke-width="14" stroke-linecap="round" opacity="0.4"/>
+
+  <!-- Five agent nodes with transparent cores -->
+  <circle cx="256" cy="76"  r="28" fill="#6367ff" mask="url(#m0)"/>
+  <circle cx="427" cy="200" r="28" fill="#8494ff" mask="url(#m1)"/>
+  <circle cx="362" cy="402" r="28" fill="#ffdbfd" mask="url(#m2)"/>
+  <circle cx="150" cy="402" r="28" fill="#c9beff" mask="url(#m3)"/>
+  <circle cx="85"  cy="200" r="28" fill="#7c4dff" mask="url(#m4)"/>
+
+  <!-- Central verdict diamond -->
+  <polygon points="256,226 286,256 256,286 226,256" fill="#6367ff"/>
+  <polygon points="256,236 276,256 256,276 236,256" fill="white" opacity="0.25"/>
+</svg>
