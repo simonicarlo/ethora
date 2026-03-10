@@ -31,7 +31,7 @@ async def create_agent(payload: AgentCreate, db: DBSession) -> Agent:
 
 @router.get("/agents", response_model=list[AgentResponse])
 async def list_agents(db: DBSession, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200)) -> list[Agent]:
-    result = await db.execute(select(Agent).offset(skip).limit(limit))
+    result = await db.execute(select(Agent).order_by(Agent.name).offset(skip).limit(limit))
     return list(result.scalars().all())
 
 
@@ -61,7 +61,7 @@ async def create_council(payload: CouncilCreate, db: DBSession) -> Council:
 @router.get("/councils", response_model=list[CouncilResponse])
 async def list_councils(db: DBSession, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200)) -> list[Council]:
     result = await db.execute(
-        select(Council).options(selectinload(Council.agents)).offset(skip).limit(limit)
+        select(Council).options(selectinload(Council.agents)).order_by(Council.name).offset(skip).limit(limit)
     )
     return list(result.scalars().all())
 

@@ -32,9 +32,9 @@ def upgrade() -> None:
         "councils",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("rounds", sa.Integer(), nullable=True),
-        sa.Column("voting_mechanism", sa.String(), nullable=True),
-        sa.Column("allow_human_turns", sa.Boolean(), nullable=True),
+        sa.Column("rounds", sa.Integer(), nullable=False),
+        sa.Column("voting_mechanism", sa.String(), nullable=False),
+        sa.Column("allow_human_turns", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
 
