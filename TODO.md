@@ -1,4 +1,4 @@
-# TODO — Agent Council
+# TODO — Ethora
 
 > Tracked backlog of implementation work. Updated by Claude as work progresses.
 > Items are grouped by area and ordered roughly by priority within each group.

@@ -1,7 +1,7 @@
 # Frontend — CLAUDE.md
 
 ## Overview
-Angular 21 SPA for the Agent Council UI. Uses standalone components, Signals, and Angular Material.
+Angular 21 SPA for Ethora. Uses standalone components, Signals, and Angular Material.
 
 ## Structure
 - `src/app/core/` — Shared services (API, SSE) and TypeScript interfaces

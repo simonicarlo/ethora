@@ -19,7 +19,7 @@ describe('Home', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('.hero-title')?.textContent).toContain('Agent Council');
+    expect(el.querySelector('.hero-title')?.textContent).toContain('Ethora');
   });
 
   it('should display the hero subtitle', () => {
