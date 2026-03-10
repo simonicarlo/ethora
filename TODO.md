@@ -71,9 +71,9 @@
 
 > **Depends on: SSE & Type Alignment (section 1)**
 
-- [ ] **Handle already-complete sessions** — If `GET /sessions/{id}` returns `status: 'complete'`, fetch verdict directly instead of opening SSE stream
-- [ ] **Status-aware initialization** — Check session status on load: `complete` → fetch verdict, `error` → show error, `awaiting_human_turn` → show human input, `pending` → connect SSE
-- [ ] **Display connection/loading state** — Show spinner or status indicator while SSE is connecting
+- [x] **Handle already-complete sessions** — If `GET /sessions/{id}` returns `status: 'complete'`, fetch verdict directly instead of opening SSE stream
+- [x] **Status-aware initialization** — Check session status on load: `complete` → fetch verdict, `error` → show error, `awaiting_human_turn` → show human input, `pending` → connect SSE
+- [x] **Display connection/loading state** — Show spinner or status indicator while SSE is connecting
 
 ---
 

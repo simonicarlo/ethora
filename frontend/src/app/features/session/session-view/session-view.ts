@@ -1,6 +1,7 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, switchMap, tap } from 'rxjs';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/api.service';
 import { SseService } from '../../../core/sse.service';
 import {
@@ -19,7 +20,7 @@ import { VerdictCard } from '../verdict-card/verdict-card';
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatProgressSpinnerModule],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
 })
@@ -40,6 +41,7 @@ export class SessionView implements OnInit {
   readonly votingMechanism = signal<VotingMechanism>('majority');
   readonly agents = signal<Agent[]>([]);
   readonly waitingForHuman = signal(false);
+  readonly loading = signal(true);
   private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(
@@ -59,8 +61,7 @@ export class SessionView implements OnInit {
     if (!id) return;
 
     this.destroyRef.onDestroy(() => this.sseSub?.unsubscribe());
-    this.loadCouncilInfo(id);
-    this.connectSse(id);
+    this.initializeSession(id);
   }
 
   onHumanTurnSubmitted(): void {
@@ -76,17 +77,40 @@ export class SessionView implements OnInit {
     this.waitingForHuman.set(false);
   }
 
-  private loadCouncilInfo(sessionId: string): void {
+  private initializeSession(sessionId: string): void {
+    this.loading.set(true);
     this.api
       .getSession(sessionId)
       .pipe(
-        tap((session) => this.sessionStatus.set(session.status as SessionStatus)),
+        tap((session) => this.sessionStatus.set(session.status)),
         switchMap((session) => this.api.getCouncil(session.council_id)),
       )
       .subscribe((council: Council) => {
         this.agents.set(council.agents);
         this.votingMechanism.set(council.voting_mechanism);
+        this.loading.set(false);
+        this.handleInitialStatus(sessionId);
       });
+  }
+
+  private handleInitialStatus(sessionId: string): void {
+    switch (this.sessionStatus()) {
+      case 'complete':
+        this.api.getVerdict(sessionId).subscribe((verdict) => {
+          this.verdict.set(verdict);
+        });
+        break;
+      case 'error':
+        // Already reflected in sessionStatus — nothing more to do
+        break;
+      case 'awaiting_human_turn':
+        this.waitingForHuman.set(true);
+        break;
+      default:
+        // pending, running, voting — connect SSE for live updates
+        this.connectSse(sessionId);
+        break;
+    }
   }
 
   private connectSse(sessionId: string): void {
