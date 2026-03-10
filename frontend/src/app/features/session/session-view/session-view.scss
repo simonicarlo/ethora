@@ -63,15 +63,15 @@
   padding: 48px 0;
 
   p {
-    color: #616161;
+    color: var(--mat-sys-on-surface-variant, #616161);
     font-size: 0.875rem;
   }
 }
 
 .error-banner {
-  background-color: #ffebee;
-  border: 1px solid #ef9a9a;
+  background-color: var(--mat-sys-error-container, #ffebee);
+  border: 1px solid var(--mat-sys-error, #ef9a9a);
   border-radius: 8px;
   padding: 16px;
-  color: #c62828;
+  color: var(--mat-sys-on-error-container, #c62828);
 }

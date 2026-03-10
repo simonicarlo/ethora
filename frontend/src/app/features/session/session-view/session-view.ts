@@ -85,11 +85,17 @@ export class SessionView implements OnInit {
         tap((session) => this.sessionStatus.set(session.status)),
         switchMap((session) => this.api.getCouncil(session.council_id)),
       )
-      .subscribe((council: Council) => {
-        this.agents.set(council.agents);
-        this.votingMechanism.set(council.voting_mechanism);
-        this.loading.set(false);
-        this.handleInitialStatus(sessionId);
+      .subscribe({
+        next: (council: Council) => {
+          this.agents.set(council.agents);
+          this.votingMechanism.set(council.voting_mechanism);
+          this.loading.set(false);
+          this.handleInitialStatus(sessionId);
+        },
+        error: () => {
+          this.loading.set(false);
+          this.sessionStatus.set('error');
+        },
       });
   }
 

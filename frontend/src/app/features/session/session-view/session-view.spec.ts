@@ -103,6 +103,19 @@ describe('SessionView', () => {
       const spinner = fixture.nativeElement.querySelector('mat-spinner');
       expect(spinner).toBeFalsy();
     });
+
+    it('should show error and hide spinner when session fetch fails', () => {
+      fixture.detectChanges();
+
+      const sessionReq = httpMock.expectOne('/api/v1/sessions/sess-1');
+      sessionReq.flush('Not Found', { status: 404, statusText: 'Not Found' });
+      fixture.detectChanges();
+
+      expect(component.loading()).toBe(false);
+      expect(component.sessionStatus()).toBe('error');
+      const errorBanner = fixture.nativeElement.querySelector('.error-banner');
+      expect(errorBanner).toBeTruthy();
+    });
   });
 
   describe('status-aware initialization', () => {
