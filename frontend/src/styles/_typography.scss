@@ -1,0 +1,29 @@
+// ============================================================
+// TYPOGRAPHY HELPERS
+// Inter is loaded via Google Fonts in index.html.
+// SF Mono is a system font (macOS); fallbacks cover other OSes.
+// The M3 type scale (display, headline, title, body, label)
+// is handled by Angular Material's --mat-sys-* typography tokens.
+// These classes are for project-specific needs.
+// ============================================================
+@use 'variables' as v;
+
+.font-mono {
+  font-family: v.$font-mono;
+  font-feature-settings: 'liga' 0, 'calt' 0;
+  font-size: 0.8125rem; // 13px
+  line-height: 1.625;
+  letter-spacing: -0.01em;
+}
+
+.text-brand {
+  color: var(--ac-text-brand);
+}
+
+.text-secondary {
+  color: var(--ac-text-secondary);
+}
+
+.text-tertiary {
+  color: var(--ac-text-tertiary);
+}

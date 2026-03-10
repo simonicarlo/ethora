@@ -1,0 +1,126 @@
+// ============================================================
+// RUNTIME DESIGN TOKENS (CSS Custom Properties)
+// These switch between light and dark mode via the .dark-theme class.
+// Layered ON TOP of Angular Material's --mat-sys-* variables.
+// ============================================================
+
+:root {
+  // ── Brand Colors (constant across themes) ──
+  --ac-brand-primary: #6367ff;
+  --ac-brand-secondary: #8494ff;
+  --ac-brand-lavender: #c9beff;
+  --ac-brand-pink: #ffdbfd;
+
+  // ── Semantic Surface Colors ──
+  --ac-surface-primary: #ffffff;
+  --ac-surface-secondary: #f6f2f7;
+  --ac-surface-elevated: #ffffff;
+  --ac-surface-inset: #f0edf1;
+
+  // ── Text Colors ──
+  --ac-text-primary: #1c1b1f;
+  --ac-text-secondary: #47464a;
+  --ac-text-tertiary: #78767a;
+  --ac-text-inverse: #ffffff;
+  --ac-text-brand: #4547e1;
+  --ac-text-on-brand: #ffffff;
+
+  // ── Border Colors ──
+  --ac-border-default: #e4e1ec;
+  --ac-border-subtle: #f0edf1;
+  --ac-border-strong: #c7c5d0;
+  --ac-border-brand: #c0c1ff;
+
+  // ── Glassmorphism ──
+  --ac-glass-bg: rgba(255, 255, 255, 0.72);
+  --ac-glass-bg-heavy: rgba(255, 255, 255, 0.88);
+  --ac-glass-border: rgba(255, 255, 255, 0.5);
+  --ac-glass-blur: 16px;
+  --ac-glass-blur-heavy: 24px;
+
+  // ── Shadows (layered for realism) ──
+  --ac-shadow-xs: 0 1px 2px rgba(28, 27, 31, 0.05);
+  --ac-shadow-sm: 0 1px 3px rgba(28, 27, 31, 0.08), 0 1px 2px rgba(28, 27, 31, 0.04);
+  --ac-shadow-md: 0 4px 6px rgba(28, 27, 31, 0.06), 0 2px 4px rgba(28, 27, 31, 0.04);
+  --ac-shadow-lg: 0 10px 15px rgba(28, 27, 31, 0.06), 0 4px 6px rgba(28, 27, 31, 0.04);
+  --ac-shadow-xl: 0 20px 25px rgba(28, 27, 31, 0.08), 0 8px 10px rgba(28, 27, 31, 0.04);
+  --ac-shadow-glow: 0 0 20px rgba(99, 103, 255, 0.15);
+  --ac-shadow-glow-strong: 0 0 30px rgba(99, 103, 255, 0.25);
+
+  // ── Agent Accent Colors (unique per agent slot) ──
+  --ac-agent-1: #6367ff;
+  --ac-agent-2: #c9beff;
+  --ac-agent-3: #ffdbfd;
+  --ac-agent-4: #8494ff;
+  --ac-agent-5: #ffa726;
+  --ac-agent-6: #66bb6a;
+  --ac-agent-7: #ef5350;
+  --ac-agent-8: #26c6da;
+
+  // ── Agent Timeline ──
+  --ac-agent-border-width: 3px;
+  --ac-agent-avatar-size: 40px;
+  --ac-timeline-line-color: #e4e1ec;
+  --ac-timeline-line-width: 2px;
+  --ac-timeline-dot-size: 12px;
+
+  // ── Status Colors ──
+  --ac-status-success: #2e7d32;
+  --ac-status-warning: #ed6c02;
+  --ac-status-error: #d32f2f;
+  --ac-status-info: #4547e1;
+  --ac-status-pending: #78767a;
+
+  // ── Confidence Gradient (for voting visualization) ──
+  --ac-confidence-low: #ff8a78;
+  --ac-confidence-mid: #ffdbfd;
+  --ac-confidence-high: #c9beff;
+  --ac-confidence-full: #6367ff;
+}
+
+// ── DARK THEME OVERRIDES ──
+.dark-theme {
+  // ── Semantic Surface Colors ──
+  --ac-surface-primary: #131316;
+  --ac-surface-secondary: #1c1b1f;
+  --ac-surface-elevated: #201f23;
+  --ac-surface-inset: #0e0e11;
+
+  // ── Text Colors ──
+  --ac-text-primary: #e5e1e6;
+  --ac-text-secondary: #c8c5ca;
+  --ac-text-tertiary: #929094;
+  --ac-text-inverse: #1c1b1f;
+  --ac-text-brand: #c0c1ff;
+  --ac-text-on-brand: #05006c;
+
+  // ── Border Colors ──
+  --ac-border-default: #313034;
+  --ac-border-subtle: #201f23;
+  --ac-border-strong: #47464a;
+  --ac-border-brand: #4547e1;
+
+  // ── Glassmorphism ──
+  --ac-glass-bg: rgba(28, 27, 31, 0.72);
+  --ac-glass-bg-heavy: rgba(28, 27, 31, 0.88);
+  --ac-glass-border: rgba(255, 255, 255, 0.08);
+
+  // ── Shadows ──
+  --ac-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ac-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --ac-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.25), 0 2px 4px rgba(0, 0, 0, 0.15);
+  --ac-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.25), 0 4px 6px rgba(0, 0, 0, 0.15);
+  --ac-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3), 0 8px 10px rgba(0, 0, 0, 0.15);
+  --ac-shadow-glow: 0 0 20px rgba(99, 103, 255, 0.2);
+  --ac-shadow-glow-strong: 0 0 30px rgba(99, 103, 255, 0.35);
+
+  // ── Timeline ──
+  --ac-timeline-line-color: #313034;
+
+  // ── Status Colors (lighter for dark bg) ──
+  --ac-status-success: #66bb6a;
+  --ac-status-warning: #ffa726;
+  --ac-status-error: #ef5350;
+  --ac-status-info: #7f84ff;
+  --ac-status-pending: #929094;
+}

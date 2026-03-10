@@ -1,0 +1,16 @@
+// ============================================================
+// STYLES BARREL
+// Import in component SCSS files: @use 'styles' as s;
+//
+// Forwards variables, palettes, mixins, and animations
+// (no CSS output — safe to import in every component).
+//
+// CSS-emitting partials (_tokens, _reset, _typography, _utilities)
+// are imported ONLY in the global styles.scss to avoid duplication.
+// Components access token values via var(--ac-*) which are global.
+// ============================================================
+
+@forward 'variables';
+@forward 'palettes';
+@forward 'mixins';
+@forward 'animations';
