@@ -1,5 +1,6 @@
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { switchMap, tap } from 'rxjs';
 import { ApiService } from '../../../core/api.service';
 import { SseService } from '../../../core/sse.service';
 import {
@@ -58,18 +59,16 @@ export class SessionView implements OnInit {
   }
 
   private loadCouncilInfo(sessionId: string): void {
-    // Load session to get council_id, then load council for agents & mechanism
-    this.api.getSession(sessionId).subscribe({
-      next: (session) => {
-        this.sessionStatus.set(session.status as SessionStatus);
-        this.api.getCouncil(session.council_id).subscribe({
-          next: (council: Council) => {
-            this.agents.set(council.agents);
-            this.votingMechanism.set(council.voting_mechanism);
-          },
-        });
-      },
-    });
+    this.api
+      .getSession(sessionId)
+      .pipe(
+        tap((session) => this.sessionStatus.set(session.status as SessionStatus)),
+        switchMap((session) => this.api.getCouncil(session.council_id)),
+      )
+      .subscribe((council: Council) => {
+        this.agents.set(council.agents);
+        this.votingMechanism.set(council.voting_mechanism);
+      });
   }
 
   private connectSse(sessionId: string): void {
@@ -89,7 +88,12 @@ export class SessionView implements OnInit {
   }
 
   private handleSseEvent(event: MessageEvent): void {
-    const data = JSON.parse(event.data);
+    let data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    try {
+      data = JSON.parse(event.data);
+    } catch {
+      return;
+    }
 
     switch (event.type) {
       case 'voting_cast':

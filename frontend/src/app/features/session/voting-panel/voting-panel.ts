@@ -30,10 +30,6 @@ export class VotingPanel {
     return map;
   });
 
-  agentVote(agentId: string): Vote | undefined {
-    return this.voteMap().get(agentId);
-  }
-
   confidencePercent(confidence: number | null): number {
     return confidence != null ? Math.round(confidence * 100) : 0;
   }

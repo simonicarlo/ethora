@@ -17,6 +17,9 @@ async def tally_votes(
 
     Returns a dict with keys: decision (str), confidence (float), summary (str).
     """
+    if not votes:
+        return {"decision": "no_votes", "confidence": 0.0, "summary": "No votes cast"}
+
     if mechanism == "majority":
         return _majority(votes)
     if mechanism == "weighted":

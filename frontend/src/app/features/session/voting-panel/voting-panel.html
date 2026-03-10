@@ -2,7 +2,7 @@
   <h2>Votes ({{ votingMechanism() }})</h2>
   <div class="vote-grid">
     @for (agent of agents(); track agent.id) {
-      @if (agentVote(agent.id); as vote) {
+      @if (voteMap().get(agent.id); as vote) {
         <mat-card class="vote-card voted" appearance="outlined">
           <mat-card-header>
             <mat-card-title>{{ agent.name }}</mat-card-title>
