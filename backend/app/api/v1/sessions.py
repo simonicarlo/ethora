@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import AsyncGenerator
 
 import uuid
@@ -9,6 +10,8 @@ from starlette.responses import StreamingResponse
 from sqlalchemy import select
 
 from app.api.v1.deps import DBSession
+from app.core.database import async_session_factory
+from app.engine.council import run_council_session
 from app.models.models import Council, Session, Verdict
 from app.schemas.schemas import (
     HumanTurnRequest,
@@ -18,6 +21,8 @@ from app.schemas.schemas import (
     VerdictResponse,
 )
 from app.sse.emitter import format_sse
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
 
@@ -48,10 +53,23 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
     session = result.scalar_one_or_none()
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
+    if session.status != "pending":
+        raise HTTPException(
+            status_code=409,
+            detail=f"Session is '{session.status}', expected 'pending'",
+        )
 
     async def event_generator() -> AsyncGenerator[str, None]:
-        # TODO: Wire up run_council_session and yield real SSE events.
-        yield format_sse("status", {"message": "Session streaming not yet implemented"})
+        # Use a dedicated DB session — the request-scoped one closes when
+        # the endpoint returns, but StreamingResponse keeps the generator alive.
+        async with async_session_factory() as engine_db:
+            try:
+                async for event in run_council_session(session_id, engine_db):
+                    yield event
+            except Exception:
+                logger.exception("Stream error for session %s", session_id)
+                await engine_db.rollback()
+                yield format_sse("error", {"message": "Stream error"})
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
