@@ -1,15 +1,20 @@
-# CLAUDE.md — Agent Council
+# CLAUDE.md — Ethora
 
 ## Project Overview
 
-Agent Council is a multi-agent deliberation framework. AI agents (each with a custom system prompt) debate a question, challenge each other, and reach a verdict via a configurable voting mechanism. The debate is visualised in a real-time multi-panel UI.
+**Ethora** is a multi-agent deliberation framework. AI agents (each with a custom system prompt) debate a question, challenge each other, and reach a verdict via a configurable voting mechanism. The debate is visualised in a real-time multi-panel UI.
+
+### Brand
+- **App name**: Ethora
+- Use "Ethora" in all user-facing UI (toolbar, page titles, hero text)
+- Internal code can still reference domain concepts like "council", "agent", "session"
 
 ---
 
 ## Monorepo Structure
 
 ```
-agent-council/
+ethora/
 ├── frontend/          # Angular 17+ app
 ├── backend/           # FastAPI app
 ├── docker-compose.yml

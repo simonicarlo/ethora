@@ -1,8 +1,22 @@
-<mat-toolbar color="primary">
-  <span>Agent Council</span>
+<mat-toolbar color="primary" class="app-toolbar">
+  <a routerLink="/" class="brand">
+    <mat-icon class="brand-icon">hub</mat-icon>
+    <span class="brand-name">Ethora</span>
+  </a>
+
+  <nav class="nav-links">
+    <a mat-button routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{ exact: true }">
+      <mat-icon>home</mat-icon>
+      Home
+    </a>
+    <a mat-button routerLink="/councils" routerLinkActive="active-link">
+      <mat-icon>groups</mat-icon>
+      Councils
+    </a>
+  </nav>
+
   <span class="spacer"></span>
-  <a mat-button routerLink="/">Home</a>
-  <a mat-button routerLink="/councils">Councils</a>
+
   <button mat-icon-button (click)="toggleTheme()" [attr.aria-label]="'Toggle theme'">
     <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
   </button>
