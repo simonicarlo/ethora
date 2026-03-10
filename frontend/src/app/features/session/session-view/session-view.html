@@ -4,6 +4,11 @@
     <span class="status-badge" [class]="sessionStatus()">{{ sessionStatus() }}</span>
   </header>
 
+  <app-debate-panel
+    [messages]="messages()"
+    [agents]="agents()"
+    [currentRound]="currentRound()" />
+
   @if (isVotingPhase()) {
     <app-voting-panel
       [votes]="votes()"
