@@ -303,21 +303,27 @@ A `TODO.md` file in the project root tracks all pending implementation work.
 
 Claude's workflow is automated via hooks. Follow this sequence when working on tasks:
 
-1. **Branch first** — Before editing any file, create a feature branch from `main`:
+1. **Sync first** — Always start by pulling the latest from `main`:
    ```
+   git fetch origin
    git checkout main && git pull origin main
+   ```
+   Do this at the start of every task to avoid working on stale code.
+
+2. **Branch first** — Before editing any file, create a feature branch from `main`:
+   ```
    git checkout -b feature/<descriptive-name>
    ```
    A `PreToolUse` hook blocks `Edit`/`Write` on `main` as a guardrail.
 
-2. **Work and commit** — Make changes, then commit with specific files staged:
+3. **Work and commit** — Make changes, then commit with specific files staged:
    ```
    git add <specific-files>
    git commit -m "feat: ..."
    ```
    Use `git config --local` for bot identity before committing.
 
-3. **Stop triggers PR** — When Claude finishes, the `Stop` hook automatically:
+4. **Stop triggers PR** — When Claude finishes, the `Stop` hook automatically:
    - Pushes the branch to origin
    - Creates a Bitbucket PR with the configured reviewer
    - Triggers the `review-pr` skill for automated code review
