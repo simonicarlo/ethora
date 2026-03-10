@@ -85,7 +85,7 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     round: Mapped[Round] = relationship("Round", back_populates="messages")
-    agent: Mapped[Agent] = relationship("Agent", lazy="selectin")
+    agent: Mapped[Agent | None] = relationship("Agent", lazy="selectin")
 
 
 class Vote(Base):

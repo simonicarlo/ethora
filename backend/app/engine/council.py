@@ -83,7 +83,7 @@ async def run_council_session(
 
             yield format_sse("round_complete", {"round": round_num})
 
-            # -- Human turn pause --
+            # -- Human turn pause (skip last round so voting can proceed) --
             if council.allow_human_turns and round_num < council.rounds:
                 session.status = "awaiting_human_turn"
                 await db.commit()
