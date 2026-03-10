@@ -30,7 +30,7 @@ git config user.email "claude-bot@ethora.dev"
 - **Base URL**: `https://stash.ergon.ch`
 - **Project**: `EHACKATHON`
 - **Repo**: `ethora`
-- **Auth**: Bearer token from `.env` (`BITBUCKET_TOKEN`)
+- **Auth**: Bearer token from `.env.bitbucket` (`BITBUCKET_TOKEN`)
 
 All API calls use:
 ```bash
