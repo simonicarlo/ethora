@@ -1,0 +1,77 @@
+.voting-panel {
+  h2 {
+    margin-bottom: 16px;
+    font-size: 1.25rem;
+    color: var(--mat-sys-on-surface);
+  }
+}
+
+.vote-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.vote-card {
+  &.pending {
+    opacity: 0.6;
+  }
+
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.vote-chip {
+  &.affirm {
+    --mat-chip-label-text-color: #1b5e20;
+    background-color: #e8f5e9;
+  }
+
+  &.oppose {
+    --mat-chip-label-text-color: #b71c1c;
+    background-color: #ffebee;
+  }
+
+  &.neutral {
+    --mat-chip-label-text-color: #e65100;
+    background-color: #fff3e0;
+  }
+}
+
+.confidence-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+}
+
+.confidence-label {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.confidence-value {
+  font-weight: 500;
+}
+
+mat-progress-bar {
+  margin-bottom: 12px;
+}
+
+.reasoning {
+  font-size: 0.875rem;
+  color: var(--mat-sys-on-surface-variant);
+  line-height: 1.4;
+  margin-top: 0;
+}
+
+.pending-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  color: var(--mat-sys-on-surface-variant);
+}

@@ -1,0 +1,55 @@
+<mat-card class="human-vote-form" appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>Cast Your Vote</mat-card-title>
+    <mat-card-subtitle>As the human reviewer, your decision is the final verdict.</mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="form-field">
+      <label>Decision</label>
+      <mat-button-toggle-group
+        [value]="decision()"
+        (change)="decision.set($event.value)"
+        aria-label="Decision">
+        <mat-button-toggle value="true">True</mat-button-toggle>
+        <mat-button-toggle value="false">False</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <div class="form-field">
+      <label>Confidence: {{ (confidence() * 100) | number:'1.0-0' }}%</label>
+      <mat-slider min="0" max="1" step="0.05" discrete>
+        <input
+          matSliderThumb
+          [value]="confidence()"
+          (valueChange)="confidence.set($event)" />
+      </mat-slider>
+    </div>
+
+    <mat-form-field class="full-width" appearance="outline">
+      <mat-label>Reasoning (optional)</mat-label>
+      <textarea
+        matInput
+        rows="3"
+        [value]="reasoning()"
+        (input)="reasoning.set($any($event.target).value)">
+      </textarea>
+    </mat-form-field>
+
+    @if (error()) {
+      <p class="error-text">{{ error() }}</p>
+    }
+  </mat-card-content>
+  <mat-card-actions align="end">
+    <button
+      mat-flat-button
+      color="primary"
+      [disabled]="!decision() || submitting()"
+      (click)="onSubmit()">
+      @if (submitting()) {
+        Submitting…
+      } @else {
+        Submit Vote
+      }
+    </button>
+  </mat-card-actions>
+</mat-card>
