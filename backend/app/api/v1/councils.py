@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -30,7 +30,7 @@ async def create_agent(payload: AgentCreate, db: DBSession) -> Agent:
 
 
 @router.get("/agents", response_model=list[AgentResponse])
-async def list_agents(db: DBSession, skip: int = 0, limit: int = 50) -> list[Agent]:
+async def list_agents(db: DBSession, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200)) -> list[Agent]:
     result = await db.execute(select(Agent).offset(skip).limit(limit))
     return list(result.scalars().all())
 
@@ -59,7 +59,7 @@ async def create_council(payload: CouncilCreate, db: DBSession) -> Council:
 
 
 @router.get("/councils", response_model=list[CouncilResponse])
-async def list_councils(db: DBSession, skip: int = 0, limit: int = 50) -> list[Council]:
+async def list_councils(db: DBSession, skip: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200)) -> list[Council]:
     result = await db.execute(
         select(Council).options(selectinload(Council.agents)).offset(skip).limit(limit)
     )

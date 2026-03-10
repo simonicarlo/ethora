@@ -79,9 +79,9 @@
 
 ## 6. Infrastructure
 
-- [ ] **Alembic migrations** — Replace `create_all()` with proper migration setup for production
-- [ ] **Pin Python dependency versions** in `requirements.txt`
-- [ ] **Add pagination** to `list_agents` and `list_councils` endpoints
+- [x] **Alembic migrations** — Replace `create_all()` with proper migration setup for production
+- [x] **Pin Python dependency versions** in `requirements.txt`
+- [x] **Add pagination** to `list_agents` and `list_councils` endpoints
 
 ---
 

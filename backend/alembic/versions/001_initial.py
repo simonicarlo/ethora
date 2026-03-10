@@ -24,7 +24,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("system_prompt", sa.Text(), nullable=False),
-        sa.Column("model", sa.String(), nullable=True),
+        sa.Column("model", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )
 
