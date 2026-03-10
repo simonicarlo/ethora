@@ -1,0 +1,42 @@
+// ============================================================
+// UTILITY CLASSES
+// ============================================================
+@use 'variables' as v;
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.gap-1 { gap: v.$space-1; }
+.gap-2 { gap: v.$space-2; }
+.gap-3 { gap: v.$space-3; }
+.gap-4 { gap: v.$space-4; }
+.gap-6 { gap: v.$space-6; }
