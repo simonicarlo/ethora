@@ -4,7 +4,8 @@
       "Read",
       "Glob",
       "Grep",
-      "Bash(git status*)",
+      "Bash(git status)",
+      "Bash(git status *)",
       "Bash(git log *)",
       "Bash(git diff *)",
       "Bash(git show *)",
@@ -12,10 +13,16 @@
       "Bash(git remote *)",
       "Bash(git rev-parse *)",
       "Bash(git rev-list *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)",
       "Bash(ls *)",
       "Bash(cat *)",
       "Bash(git add *)",
       "Bash(git push *)"
+    ],
+    "deny": [
+      "Bash(git push --force *)",
+      "Bash(git push -f *)"
     ]
   },
   "companyAnnouncements": [
