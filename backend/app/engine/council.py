@@ -156,12 +156,12 @@ async def run_council_session(
 
         await db.commit()
 
-    except Exception:
+    except Exception as exc:
         logger.exception("Council session %s failed", session_id)
         await db.rollback()
         session.status = "error"
         await db.commit()
-        yield format_sse("error", {"message": "Internal engine error"})
+        yield format_sse("error", {"message": str(exc) or "Internal engine error"})
 
 
 def _build_agent_messages(
