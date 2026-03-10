@@ -9,6 +9,12 @@
     [agents]="agents()"
     [currentRound]="currentRound()" />
 
+  @if (showHumanTurnInput()) {
+    <app-human-turn-input
+      [sessionId]="sessionId()"
+      (submitted)="onHumanTurnSubmitted()" />
+  }
+
   @if (isVotingPhase()) {
     <app-voting-panel
       [votes]="votes()"
