@@ -42,6 +42,11 @@ async def call_agent(
         )
     except anthropic.APIStatusError as exc:
         logger.error("Anthropic API error (%s): %s", exc.status_code, exc.message)
-        raise RuntimeError(exc.message)
+        raise RuntimeError(exc.message) from exc
+    except anthropic.APIConnectionError as exc:
+        logger.error("Anthropic API connection error: %s", exc)
+        raise RuntimeError(
+            "Unable to connect to the Anthropic API. Check your network connection."
+        ) from exc
     # Claude API returns a list of content blocks; the first block is the text response.
     return response.content[0].text

@@ -39,6 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     )
     if result.returncode != 0:
         logging.error("Alembic migration failed:\n%s", result.stderr)
+        raise RuntimeError("Alembic migration failed — refusing to start with an inconsistent schema")
     else:
         for line in result.stderr.strip().splitlines():
             logging.info(line)
