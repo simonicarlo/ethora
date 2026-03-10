@@ -22,6 +22,8 @@ async def create_agent(payload: AgentCreate, db: DBSession) -> Agent:
         model=payload.model,
     )
     db.add(agent)
+    # flush() (not commit): writes to DB to populate generated IDs, but defers
+    # the final commit to the get_db dependency's transaction lifecycle.
     await db.flush()
     return agent
 

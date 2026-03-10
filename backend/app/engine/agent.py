@@ -5,6 +5,8 @@ import anthropic
 from app.core.config import settings
 from app.models.models import Agent
 
+# Lazy singleton: avoids creating the client at import time, when the API key
+# may not yet be loaded from .env (e.g. during test collection or module scanning).
 _client: anthropic.AsyncAnthropic | None = None
 
 
@@ -28,4 +30,5 @@ async def call_agent(
         system=system_prompt,
         messages=messages,
     )
+    # Claude API returns a list of content blocks; the first block is the text response.
     return response.content[0].text

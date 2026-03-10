@@ -17,6 +17,8 @@ export class SseService {
 
       for (const event of events) {
         eventSource.addEventListener(event, (e) => {
+          // NgZone.run(): EventSource callbacks fire outside Angular's zone,
+          // so change detection won't trigger unless we re-enter the zone.
           this.zone.run(() => subscriber.next(e as MessageEvent));
         });
       }
@@ -25,6 +27,7 @@ export class SseService {
         this.zone.run(() => subscriber.error(new Error('SSE connection lost')));
       };
 
+      // Teardown: close the EventSource to prevent memory leaks and dangling HTTP connections.
       return () => eventSource.close();
     });
   }

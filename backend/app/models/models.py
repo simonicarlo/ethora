@@ -10,9 +10,12 @@ from app.core.database import Base
 
 
 def _utcnow() -> datetime:
+    """Explicit UTC timezone ensures consistent timestamps regardless of server locale."""
     return datetime.now(timezone.utc)
 
 
+# Plain association table (not an ORM model) because the M:N relationship
+# carries no extra fields — just the two foreign keys.
 council_agents = Table(
     "council_agents",
     Base.metadata,
@@ -24,6 +27,7 @@ council_agents = Table(
 class Agent(Base):
     __tablename__ = "agents"
 
+    # default=uuid.uuid4 (callable, not uuid4()) — SQLAlchemy calls it per-row to generate unique IDs.
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String, nullable=False)
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
@@ -39,6 +43,8 @@ class Council(Base):
     voting_mechanism: Mapped[str] = mapped_column(String, default="majority")
     allow_human_turns: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # lazy="selectin": eagerly loads related objects in a second SELECT.
+    # Required because async SQLAlchemy forbids implicit lazy loading (no sync I/O).
     agents: Mapped[list[Agent]] = relationship("Agent", secondary=council_agents, lazy="selectin")
 
 
