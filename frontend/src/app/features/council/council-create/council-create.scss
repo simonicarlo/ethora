@@ -1,0 +1,81 @@
+@use 'variables' as *;
+
+:host {
+  display: block;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: $space-7;
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: $weight-bold;
+  }
+}
+
+.form-card {
+  padding: $space-4;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.form-row {
+  display: flex;
+  gap: $space-4;
+
+  mat-form-field {
+    flex: 1;
+  }
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column;
+  }
+}
+
+.human-turns-checkbox {
+  display: block;
+  margin-bottom: $space-6;
+}
+
+.agents-heading {
+  font-size: 1.1rem;
+  font-weight: $weight-semibold;
+  margin: 0 0 $space-3;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: $space-6;
+}
+
+.no-agents {
+  opacity: 0.6;
+  text-align: center;
+  padding: $space-4;
+}
+
+.agent-prompt {
+  opacity: 0.6;
+  font-size: 0.85rem;
+}
+
+.error-text {
+  color: var(--mat-sys-error);
+  margin: $space-4 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: $space-6;
+
+  mat-spinner {
+    display: inline-block;
+  }
+}
