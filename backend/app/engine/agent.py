@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 _client: anthropic.AsyncAnthropic | None = None
 
 
-def _get_client() -> anthropic.AsyncAnthropic:
+def get_client() -> anthropic.AsyncAnthropic:
     global _client
     if _client is None:
         if not settings.ANTHROPIC_API_KEY:
@@ -33,7 +33,7 @@ async def call_agent(
 ) -> str:
     """Calls Claude API for a single agent turn and returns the complete response."""
     try:
-        client = _get_client()
+        client = get_client()
         response = await client.messages.create(
             model=agent.model,
             max_tokens=4096,

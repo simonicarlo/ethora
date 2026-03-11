@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.engine.agent import call_agent
-from app.engine.moderator import deduplicate_candidates
+from app.engine.moderator import CandidateEntry, deduplicate_candidates
 from app.engine.prompts.loader import (
     render_candidate_proposal,
     render_continuation_nudge,
@@ -123,7 +123,7 @@ async def run_council_session(
             session.status = "proposing"
             await db.flush()
 
-            raw_proposals: list[dict[str, object]] = []
+            raw_proposals: list[CandidateEntry] = []
             for agent in agents:
                 proposal_prompt = render_candidate_proposal(
                     input_claim=session.input_claim,
@@ -155,7 +155,7 @@ async def run_council_session(
 
             # Moderator deduplication
             moderator_result = await deduplicate_candidates(
-                raw_candidates=raw_proposals,  # type: ignore[arg-type]
+                raw_candidates=raw_proposals,
                 input_claim=session.input_claim,
             )
             finalized_candidates = moderator_result.candidates
@@ -172,11 +172,11 @@ async def run_council_session(
         session.status = "voting"
         await db.flush()
 
-        question_type = session.question_type or "binary"
+        question_type = session.question_type if session.question_type in ("binary", "open") else "binary"
         voting_prompt = render_voting_prompt(
             input_claim=session.input_claim,
             debate_text=debate_text,
-            question_type=question_type,  # type: ignore[arg-type]
+            question_type=question_type,  # type: ignore[arg-type]  # str from ORM vs Literal in function sig
             candidates=finalized_candidates,
         )
 

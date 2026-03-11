@@ -7,14 +7,20 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
+from typing import TypedDict
 
 from app.core.config import settings
-from app.engine.agent import _get_client
+from app.engine.agent import get_client
 from app.engine.prompts.loader import render_moderator_deduplicate
 
 logger = logging.getLogger(__name__)
+
+
+class CandidateEntry(TypedDict):
+    agent_id: str
+    agent_name: str
+    candidates: list[str]
 
 
 @dataclass
@@ -25,7 +31,7 @@ class ModeratorResult:
 
 
 async def deduplicate_candidates(
-    raw_candidates: list[dict[str, Any]],
+    raw_candidates: list[CandidateEntry],
     input_claim: str,
 ) -> ModeratorResult:
     """Use the moderator LLM to merge semantically equivalent candidates.
@@ -47,7 +53,7 @@ async def deduplicate_candidates(
     )
 
     try:
-        client = _get_client()
+        client = get_client()
         response = await client.messages.create(
             model=settings.MODERATOR_MODEL,
             max_tokens=2048,
@@ -66,17 +72,23 @@ async def deduplicate_candidates(
         return _fallback_dedup(raw_candidates)
 
 
-def _parse_moderator_response(raw_text: str) -> dict[str, Any]:
-    """Extract JSON from moderator response."""
+def _parse_moderator_response(raw_text: str) -> dict[str, str | list[str]]:
+    """Extract and validate JSON from moderator response."""
     text = raw_text.strip()
     start = text.find("{")
     end = text.rfind("}")
     if start != -1 and end != -1 and end > start:
-        return json.loads(text[start:end + 1])
+        parsed = json.loads(text[start:end + 1])
+        candidates = parsed.get("candidates", [])
+        if not isinstance(candidates, list) or not all(isinstance(c, str) for c in candidates):
+            raise ValueError(
+                f"Moderator response 'candidates' is not a list of strings: {type(candidates)}"
+            )
+        return parsed
     raise ValueError(f"No JSON found in moderator response: {text[:200]}")
 
 
-def _fallback_dedup(raw_candidates: list[dict[str, Any]]) -> ModeratorResult:
+def _fallback_dedup(raw_candidates: list[CandidateEntry]) -> ModeratorResult:
     """Case-insensitive exact-match deduplication as fallback."""
     seen: dict[str, str] = {}
     for entry in raw_candidates:
