@@ -37,7 +37,7 @@ class ToolInvocation:
     """Record of a tool the agent invoked during its turn."""
 
     tool_name: str
-    tool_input: dict[str, Any]
+    tool_input: dict[str, Any]  # Any: Anthropic SDK tool_use input is untyped
 
 
 @dataclass
@@ -51,25 +51,36 @@ class AgentResponse:
 # Lazy singleton: avoids creating the client at import time, when the API key
 # may not yet be loaded from .env (e.g. during test collection or module scanning).
 _client: anthropic.AsyncAnthropic | None = None
+_client_key: str | None = None
 
 
 def get_client() -> anthropic.AsyncAnthropic:
-    global _client
-    if _client is None:
-        if not settings.ANTHROPIC_API_KEY:
-            raise RuntimeError(
-                "ANTHROPIC_API_KEY is not configured. "
-                "Set it in the .env file or as an environment variable."
-            )
-        _client = anthropic.AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+    """Return an Anthropic client, creating or recreating if the API key changed."""
+    global _client, _client_key
+    current_key = settings.ANTHROPIC_API_KEY
+    if not current_key:
+        raise RuntimeError(
+            "ANTHROPIC_API_KEY is not configured. "
+            "Set it in the .env file or as an environment variable."
+        )
+    if _client is None or _client_key != current_key:
+        _client = anthropic.AsyncAnthropic(api_key=current_key)
+        _client_key = current_key
     return _client
+
+
+def reset_client() -> None:
+    """Reset the cached client (useful for tests and runtime key changes)."""
+    global _client, _client_key
+    _client = None
+    _client_key = None
 
 
 async def call_agent(
     agent: Agent,
     messages: list[dict[str, str]],
     system_prompt: str,
-    tools: list[dict[str, Any]] | None = None,
+    tools: list[dict[str, Any]] | None = None,  # Any: Anthropic SDK tool definition wire format
 ) -> AgentResponse:
     """Calls Claude API for a single agent turn and returns the complete response.
 
@@ -78,7 +89,7 @@ async def call_agent(
     """
     try:
         client = get_client()
-        kwargs: dict[str, Any] = {
+        kwargs: dict[str, Any] = {  # Any: building MessageCreateParams dynamically
             "model": agent.model,
             "max_tokens": 4096,
             "system": system_prompt,

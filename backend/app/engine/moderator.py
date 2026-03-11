@@ -9,6 +9,8 @@ import logging
 from dataclasses import dataclass
 from typing import TypedDict
 
+import anthropic
+
 from app.core.config import settings
 from app.engine.agent import call_with_tool
 from app.engine.prompts.loader import render_moderator_deduplicate, render_moderator_summarize, render_research_synthesis, render_stage_set
@@ -66,7 +68,7 @@ async def deduplicate_candidates(
             candidates=parsed["candidates"],
             explanation=parsed.get("explanation", ""),
         )
-    except Exception:
+    except (anthropic.APIError, KeyError, RuntimeError):
         logger.warning("Moderator LLM call failed, falling back to exact-match dedup", exc_info=True)
         return _fallback_dedup(raw_candidates)
 
@@ -94,7 +96,7 @@ async def summarize_agent_response(
             tool=SUMMARIZE_RESPONSE_TOOL,
         )
         return parsed.get("summary")
-    except Exception:
+    except (anthropic.APIError, KeyError, RuntimeError):
         logger.warning("Moderator summarization failed for agent %s", agent_name, exc_info=True)
         return None
 
@@ -129,7 +131,7 @@ async def synthesize_closing_statements(
             tool=SUMMARIZE_RESPONSE_TOOL,
         )
         return parsed.get("summary", "")
-    except Exception:
+    except (anthropic.APIError, KeyError, RuntimeError):
         logger.warning("Moderator synthesis failed, falling back to concatenation", exc_info=True)
         fallback_lines = [f"- **{name}**: {stmt}" for name, stmt in statements]
         return "## Closing Statement Summary\n\n" + "\n\n".join(fallback_lines)
@@ -163,7 +165,7 @@ async def generate_stage_intro(
             tool=SET_STAGE_TOOL,
         )
         return parsed.get("intro_text")
-    except Exception:
+    except (anthropic.APIError, KeyError, RuntimeError):
         logger.warning("Stage intro generation failed", exc_info=True)
         return None
 

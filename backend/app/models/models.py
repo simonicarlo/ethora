@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.schemas.schemas import DEFAULT_AGENT_ICON
 
 
 def _utcnow() -> datetime:
@@ -33,7 +34,7 @@ class Agent(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(String, default="claude-sonnet-4-20250514")
-    icon: Mapped[str | None] = mapped_column(String, default="smart_toy")
+    icon: Mapped[str | None] = mapped_column(String, default=DEFAULT_AGENT_ICON)
 
 
 class Council(Base):
@@ -62,9 +63,9 @@ class Session(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     council: Mapped[Council] = relationship("Council", lazy="selectin")
-    rounds: Mapped[list[Round]] = relationship("Round", back_populates="session", lazy="selectin")
-    votes: Mapped[list[Vote]] = relationship("Vote", back_populates="session", lazy="selectin")
-    verdict: Mapped[Verdict | None] = relationship("Verdict", back_populates="session", uselist=False, lazy="selectin")
+    rounds: Mapped[list[Round]] = relationship("Round", back_populates="session", lazy="selectin", cascade="all, delete-orphan")
+    votes: Mapped[list[Vote]] = relationship("Vote", back_populates="session", lazy="selectin", cascade="all, delete-orphan")
+    verdict: Mapped[Verdict | None] = relationship("Verdict", back_populates="session", uselist=False, lazy="selectin", cascade="all, delete-orphan")
 
 
 class Round(Base):
@@ -76,7 +77,7 @@ class Round(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     session: Mapped[Session] = relationship("Session", back_populates="rounds")
-    messages: Mapped[list[Message]] = relationship("Message", back_populates="round", lazy="selectin")
+    messages: Mapped[list[Message]] = relationship("Message", back_populates="round", lazy="selectin", cascade="all, delete-orphan")
 
 
 class Message(Base):

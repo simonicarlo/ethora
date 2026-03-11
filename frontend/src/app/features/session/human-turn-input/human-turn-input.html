@@ -11,7 +11,7 @@
         rows="4"
         placeholder="Share your thoughts, ask a question, or guide the discussion…"
         [value]="content()"
-        (input)="content.set($any($event.target).value)">
+        (input)="content.set(getInputValue($event))">
       </textarea>
     </mat-form-field>
 

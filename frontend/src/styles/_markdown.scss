@@ -1,0 +1,15 @@
+@use 'variables' as v;
+@use 'mixins' as m;
+
+/// Markdown rendered content styling (used inside ::ng-deep blocks).
+@mixin markdown-content {
+  :first-child { margin-top: 0; }
+  :last-child { margin-bottom: 0; }
+  p { margin: 0 0 0.75em; }
+  ul, ol { margin: 0.5em 0; padding-left: 1.5em; }
+  code { @include m.font-mono; background: var(--ac-glass-bg); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.875em; }
+  pre { background: var(--ac-glass-bg-heavy); padding: 12px; border-radius: 8px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  strong { font-weight: 600; }
+  blockquote { border-left: 3px solid var(--mat-sys-primary); margin: 0.5em 0; padding-left: 1em; opacity: 0.85; }
+}

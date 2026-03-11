@@ -11,6 +11,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApiService } from '../../../core/api.service';
 import { Council } from '../../../core/models';
+import { AgentChip } from '../../../shared/components/agent-chip/agent-chip';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
 import { StartSessionDialog } from '../../session/start-session-dialog/start-session-dialog';
 
@@ -24,6 +26,7 @@ import { StartSessionDialog } from '../../session/start-session-dialog/start-ses
     MatIconModule,
     MatMenuModule,
     MatProgressSpinnerModule,
+    AgentChip,
     MeshBackground,
   ],
   templateUrl: './council-list.html',
@@ -58,15 +61,19 @@ export class CouncilList {
   }
 
   deleteCouncil(council: Council): void {
-    if (!confirm(`Delete council "${council.name}"? This cannot be undone.`)) return;
-
-    this.api.deleteCouncil(council.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.councils.update(councils => councils.filter(c => c.id !== council.id));
-      },
-      error: (err) => {
-        this.error.set(err?.error?.detail ?? 'Failed to delete council');
-      },
+    const ref = this.dialog.open(ConfirmDialog, {
+      data: { title: 'Delete Council', message: `Delete council "${council.name}"? This cannot be undone.` },
+    });
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.api.deleteCouncil(council.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          this.councils.update(councils => councils.filter(c => c.id !== council.id));
+        },
+        error: (err) => {
+          this.error.set(err?.error?.detail ?? 'Failed to delete council');
+        },
+      });
     });
   }
 

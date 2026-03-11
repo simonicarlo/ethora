@@ -11,6 +11,7 @@ import { SseService } from '../../../core/sse.service';
 import {
   Agent,
   Council,
+  DEFAULT_AGENT_ICON,
   QuestionType,
   SessionStatus,
   SseAgentMessage,
@@ -28,6 +29,7 @@ import {
   SseSummaryReady,
   SseToolUse,
   SseVotingCast,
+  SseVotingStarted,
   Verdict,
   Vote,
   VotingMechanism,
@@ -39,6 +41,7 @@ import { HumanTurnInput } from '../human-turn-input/human-turn-input';
 import { VerdictCard } from '../verdict-card/verdict-card';
 import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { buildAgentMap } from '../../../shared/utils/agent-map';
 
 @Component({
   selector: 'app-session-view',
@@ -99,14 +102,10 @@ export class SessionView implements OnInit {
   );
   readonly isComplete = computed(() => this.sessionStatus() === 'complete');
 
-  private readonly agentMap = computed(() => {
-    const map = new Map<string, Agent>();
-    for (const a of this.agents()) map.set(a.id, a);
-    return map;
-  });
+  private readonly agentMap = computed(() => buildAgentMap(this.agents()));
 
   getAgentIcon(agentId: string): string {
-    return this.agentMap().get(agentId)?.icon ?? 'smart_toy';
+    return this.agentMap().get(agentId)?.icon ?? DEFAULT_AGENT_ICON;
   }
 
   ngOnInit(): void {
@@ -171,7 +170,7 @@ export class SessionView implements OnInit {
             agents: council.agents.map((a) => ({
               id: a.id,
               name: a.name,
-              icon: a.icon || 'smart_toy',
+              icon: a.icon || DEFAULT_AGENT_ICON,
               // NB: approximates backend's _extract_role_summary(); minor regex divergence is acceptable
               description: a.system_prompt.split(/[.!][\s\n]/)[0]?.slice(0, 80) || a.name,
             })),
@@ -421,6 +420,7 @@ export class SessionView implements OnInit {
         break;
       }
       case 'voting_started': {
+        const _data = raw as SseVotingStarted;
         this.sessionStatus.set('voting');
         this.votingInProgress.set(true);
         this.typingAgent.set(null);
@@ -477,7 +477,7 @@ export class SessionView implements OnInit {
     return {
       id: '',
       agent_id: data.agent_id,
-      value: data.vote ?? data.value ?? '',
+      value: data.vote,
       confidence: data.confidence,
       reasoning: data.reasoning,
     };

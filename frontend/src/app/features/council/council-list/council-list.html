@@ -44,7 +44,7 @@
           @if (council.agents.length > 0) {
             <div class="agent-list">
               @for (agent of council.agents; track agent.id) {
-                <span class="agent-name"><mat-icon class="agent-icon">{{ agent.icon || 'smart_toy' }}</mat-icon>{{ agent.name }}</span>
+                <span class="agent-name"><app-agent-chip [name]="agent.name" [icon]="agent.icon" /></span>
               }
             </div>
           }

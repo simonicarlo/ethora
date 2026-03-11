@@ -25,7 +25,7 @@ class TestGenerateStageIntro:
 
     async def test_returns_none_on_failure(self) -> None:
         with patch("app.engine.moderator.call_with_tool", new_callable=AsyncMock) as mock_call:
-            mock_call.side_effect = Exception("LLM unavailable")
+            mock_call.side_effect = RuntimeError("LLM unavailable")
             result = await generate_stage_intro(
                 council_name="Test",
                 input_claim="claim",

@@ -6,6 +6,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { Agent, QuestionType, Vote, VotingMechanism } from '../../../core/models';
+import { AgentChip } from '../../../shared/components/agent-chip/agent-chip';
 import { confidencePercent, voteColorClass } from '../../../shared/utils/vote-display.utils';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
@@ -17,6 +18,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
     MatIconModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    AgentChip,
     MarkdownPipe,
   ],
   templateUrl: './voting-panel.html',

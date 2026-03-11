@@ -31,7 +31,7 @@
         matInput
         rows="3"
         [value]="reasoning()"
-        (input)="reasoning.set($any($event.target).value)">
+        (input)="reasoning.set(getInputValue($event))">
       </textarea>
     </mat-form-field>
 

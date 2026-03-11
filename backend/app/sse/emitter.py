@@ -4,5 +4,5 @@ import json
 from typing import Any
 
 
-def format_sse(event: str, data: dict[str, Any]) -> str:
+def format_sse(event: str, data: dict[str, Any]) -> str:  # Any: SSE data values are heterogeneous JSON
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"

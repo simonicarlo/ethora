@@ -24,7 +24,28 @@ from app.engine.prompts.loader import (
 from app.engine.tools import AGENT_TOOLS, CAST_VOTE_TOOL, CLOSING_STATEMENT_TOOL, PROPOSE_CANDIDATES_TOOL
 from app.engine.voting import HumanVoteRequired, tally_votes
 from app.models.models import Agent, Council, Message, Round, Session, Verdict, Vote
+from app.schemas.schemas import DEFAULT_AGENT_ICON
 from app.sse.emitter import format_sse
+from app.sse.events import (
+    AGENT_MESSAGE,
+    AGENT_TYPING,
+    AWAITING_HUMAN_TURN,
+    AWAITING_HUMAN_VOTE,
+    CANDIDATE_PROPOSED,
+    CANDIDATES_FINALIZED,
+    CLOSING_STATEMENT,
+    ERROR,
+    MODERATOR_ACTION,
+    RATE_LIMITED,
+    ROUND_COMPLETE,
+    STAGE_SET,
+    STAGE_SET_INTRO,
+    SUMMARY_READY,
+    TOOL_USE,
+    VERDICT,
+    VOTING_CAST,
+    VOTING_STARTED,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +109,7 @@ async def _drain_summaries(
     while True:
         try:
             data = queue.get_nowait()
-            events.append(format_sse("summary_ready", data))
+            events.append(format_sse(SUMMARY_READY, data))
             # Persist summary in the main session (message is in identity map)
             msg = await db.get(Message, uuid.UUID(str(data["message_id"])))
             if msg is not None:
@@ -98,6 +119,23 @@ async def _drain_summaries(
         except asyncio.QueueEmpty:
             break
     return events
+
+
+def _system_prompt_for(agent: Agent, council: Council, agent_names: str) -> str:
+    """Build the deliberation system prompt for an agent in a council."""
+    return render_deliberation_system(
+        council_name=council.name,
+        agent_name=agent.name,
+        agent_list=agent_names,
+        voting_mechanism=council.voting_mechanism,
+        rounds=council.rounds,
+        agent_system_prompt=agent.system_prompt,
+    )
+
+
+def _build_debate_text(history: list[tuple[str, uuid.UUID | None, str]]) -> str:
+    """Format debate history into a readable text block."""
+    return "\n\n".join(f"[{name}]: {content}" for name, _, content in history)
 
 
 def _extract_role_summary(system_prompt: str, max_chars: int = 80) -> str:
@@ -162,12 +200,12 @@ async def run_council_session(
                 {
                     "id": str(a.id),
                     "name": a.name,
-                    "icon": a.icon or "smart_toy",
+                    "icon": a.icon or DEFAULT_AGENT_ICON,
                     "description": _extract_role_summary(a.system_prompt),
                 }
                 for a in agents
             ]
-            yield format_sse("stage_set", {
+            yield format_sse(STAGE_SET, {
                 "council_name": council.name,
                 "input_claim": session.input_claim,
                 "agents": stage_agents,
@@ -187,7 +225,7 @@ async def run_council_session(
                 voting_mechanism=council.voting_mechanism,
             )
             if intro_text:
-                yield format_sse("stage_set_intro", {"intro_text": intro_text})
+                yield format_sse(STAGE_SET_INTRO, {"intro_text": intro_text})
 
         # -- Round loop --
         for round_num in range(start_round, council.rounds + 1):
@@ -200,28 +238,21 @@ async def run_council_session(
 
             for agent in agents:
                 # Typing indicator
-                yield format_sse("agent_typing", {
+                yield format_sse(AGENT_TYPING, {
                     "agent_id": str(agent.id),
                     "agent_name": agent.name,
                     "round": round_num,
                 })
 
                 messages = _build_agent_messages(history, agent, session.input_claim)
-                system_prompt = render_deliberation_system(
-                    council_name=council.name,
-                    agent_name=agent.name,
-                    agent_list=agent_names,
-                    voting_mechanism=council.voting_mechanism,
-                    rounds=council.rounds,
-                    agent_system_prompt=agent.system_prompt,
-                )
+                system_prompt = _system_prompt_for(agent, council, agent_names)
                 agent_response: AgentResponse = await call_agent(
                     agent, messages, system_prompt, tools=tools,
                 )
 
                 # Emit tool_use SSE events for any tools the agent invoked
                 for invocation in agent_response.tool_invocations:
-                    yield format_sse("tool_use", {
+                    yield format_sse(TOOL_USE, {
                         "agent_id": str(agent.id),
                         "agent_name": agent.name,
                         "tool_name": invocation.tool_name,
@@ -261,7 +292,7 @@ async def run_council_session(
 
                 history.append((agent.name, agent.id, agent_response.content))
 
-                yield format_sse("agent_message", {
+                yield format_sse(AGENT_MESSAGE, {
                     "message_id": str(msg.id),
                     "agent_id": str(agent.id),
                     "agent_name": agent.name,
@@ -274,7 +305,7 @@ async def run_council_session(
                 for sse_event in await _drain_summaries(summary_queue, db, collected_summaries):
                     yield sse_event
 
-            yield format_sse("round_complete", {"round": round_num})
+            yield format_sse(ROUND_COMPLETE, {"round": round_num})
 
             # Drain summaries after round
             for sse_event in await _drain_summaries(summary_queue, db, collected_summaries):
@@ -284,7 +315,7 @@ async def run_council_session(
             if council.allow_human_turns and round_num < council.rounds:
                 session.status = "awaiting_human_turn"
                 await db.commit()
-                yield format_sse("awaiting_human_turn", {
+                yield format_sse(AWAITING_HUMAN_TURN, {
                     "round": round_num,
                     "message": "Waiting for human input",
                 })
@@ -301,10 +332,7 @@ async def run_council_session(
                 yield sse_event
 
             # Build debate text for closing statement prompts
-            debate_lines = []
-            for name, _, content_text in history:
-                debate_lines.append(f"[{name}]: {content_text}")
-            debate_text = "\n\n".join(debate_lines)
+            debate_text = _build_debate_text(history)
 
             closing_pairs: list[tuple[str, str]] = []
             for agent in agents:
@@ -313,14 +341,7 @@ async def run_council_session(
                     debate_text=debate_text,
                 )
                 closing_messages = [{"role": "user", "content": closing_prompt}]
-                closing_system = render_deliberation_system(
-                    council_name=council.name,
-                    agent_name=agent.name,
-                    agent_list=agent_names,
-                    voting_mechanism=council.voting_mechanism,
-                    rounds=council.rounds,
-                    agent_system_prompt=agent.system_prompt,
-                )
+                closing_system = _system_prompt_for(agent, council, agent_names)
                 parsed_closing = await call_with_tool(
                     model=agent.model,
                     messages=closing_messages,
@@ -342,7 +363,7 @@ async def run_council_session(
 
                 closing_pairs.append((agent.name, statement))
 
-                yield format_sse("closing_statement", {
+                yield format_sse(CLOSING_STATEMENT, {
                     "agent_id": str(agent.id),
                     "agent_name": agent.name,
                     "statement": statement,
@@ -364,7 +385,7 @@ async def run_council_session(
             session.status = "complete"
             await db.flush()
 
-            yield format_sse("verdict", {
+            yield format_sse(VERDICT, {
                 "decision": "research_synthesis",
                 "confidence": None,
                 "summary": synthesis,
@@ -377,7 +398,7 @@ async def run_council_session(
         # Emitted *before* summary gather so the UI shows instant feedback;
         # open-ended questions emit after candidate finalization instead (below).
         if session.question_type != "open":
-            yield format_sse("voting_started", {
+            yield format_sse(VOTING_STARTED, {
                 "message": "Agents are casting their votes",
             })
 
@@ -387,10 +408,7 @@ async def run_council_session(
             yield sse_event
 
         # -- Build debate text (shared by proposal + voting) --
-        debate_lines = []
-        for name, _, content_text in history:
-            debate_lines.append(f"[{name}]: {content_text}")
-        debate_text = "\n\n".join(debate_lines)
+        debate_text = _build_debate_text(history)
 
         # -- Candidate proposal phase (open-ended only) --
         finalized_candidates: list[str] | None = None
@@ -405,14 +423,7 @@ async def run_council_session(
                     debate_text=debate_text,
                 )
                 proposal_messages = [{"role": "user", "content": proposal_prompt}]
-                proposal_system = render_deliberation_system(
-                    council_name=council.name,
-                    agent_name=agent.name,
-                    agent_list=agent_names,
-                    voting_mechanism=council.voting_mechanism,
-                    rounds=council.rounds,
-                    agent_system_prompt=agent.system_prompt,
-                )
+                proposal_system = _system_prompt_for(agent, council, agent_names)
                 parsed_proposal = await call_with_tool(
                     model=agent.model,
                     messages=proposal_messages,
@@ -438,7 +449,7 @@ async def run_council_session(
                 db.add(proposal_msg)
                 await db.flush()
 
-                yield format_sse("candidate_proposed", {
+                yield format_sse(CANDIDATE_PROPOSED, {
                     "agent_id": str(agent.id),
                     "agent_name": agent.name,
                     "candidates": agent_candidates,
@@ -464,11 +475,11 @@ async def run_council_session(
             db.add(moderator_msg)
             await db.flush()
 
-            yield format_sse("moderator_action", {
+            yield format_sse(MODERATOR_ACTION, {
                 "action": moderator_result.action,
                 "explanation": moderator_result.explanation,
             })
-            yield format_sse("candidates_finalized", {
+            yield format_sse(CANDIDATES_FINALIZED, {
                 "candidates": finalized_candidates,
             })
 
@@ -476,7 +487,7 @@ async def run_council_session(
         session.status = "voting"
         await db.flush()
         if session.question_type == "open":
-            yield format_sse("voting_started", {
+            yield format_sse(VOTING_STARTED, {
                 "message": "Agents are casting their votes",
             })
 
@@ -491,14 +502,7 @@ async def run_council_session(
         votes: list[Vote] = []
         for agent in agents:
             vote_messages = [{"role": "user", "content": voting_prompt}]
-            vote_system_prompt = render_deliberation_system(
-                council_name=council.name,
-                agent_name=agent.name,
-                agent_list=agent_names,
-                voting_mechanism=council.voting_mechanism,
-                rounds=council.rounds,
-                agent_system_prompt=agent.system_prompt,
-            )
+            vote_system_prompt = _system_prompt_for(agent, council, agent_names)
             parsed_vote = await call_with_tool(
                 model=agent.model,
                 messages=vote_messages,
@@ -522,7 +526,7 @@ async def run_council_session(
             await db.flush()
             votes.append(vote)
 
-            yield format_sse("voting_cast", {
+            yield format_sse(VOTING_CAST, {
                 "agent_id": str(agent.id),
                 "agent_name": agent.name,
                 "vote": vote.value,
@@ -534,7 +538,7 @@ async def run_council_session(
         try:
             tally = await tally_votes(votes, council.voting_mechanism)  # type: ignore[arg-type]
         except HumanVoteRequired:
-            yield format_sse("awaiting_human_vote", {
+            yield format_sse(AWAITING_HUMAN_VOTE, {
                 "message": "Waiting for human to cast deciding vote",
             })
             await db.commit()
@@ -550,7 +554,7 @@ async def run_council_session(
         session.status = "complete"
         await db.flush()
 
-        yield format_sse("verdict", {
+        yield format_sse(VERDICT, {
             "decision": str(tally["decision"]),
             "confidence": tally.get("confidence"),
             "summary": tally.get("summary"),
@@ -563,10 +567,11 @@ async def run_council_session(
         logger.warning("Council session %s rate-limited: %s", session_id, exc)
         await db.rollback()
         session = await db.get(Session, session_id)
-        assert session is not None
+        if session is None:
+            raise RuntimeError(f"Session {session_id} not found after rollback")
         session.status = "rate_limited"
         await db.commit()
-        yield format_sse("rate_limited", {
+        yield format_sse(RATE_LIMITED, {
             "message": "The AI provider's rate limit was exceeded. You can resume this session shortly.",
             "retry_after": exc.retry_after,
         })
@@ -578,7 +583,7 @@ async def run_council_session(
         if session is not None:
             session.status = "error"
             await db.commit()
-        yield format_sse("error", {"message": str(exc) or "Internal engine error"})
+        yield format_sse(ERROR, {"message": str(exc) or "Internal engine error"})
 
 
 def _build_agent_messages(

@@ -7,7 +7,7 @@ import uuid
 
 import anthropic
 from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import delete as sa_delete, select
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import Response, StreamingResponse
 
@@ -28,6 +28,7 @@ from app.schemas.schemas import (
     VerdictResponse,
 )
 from app.sse.emitter import format_sse
+from app.sse.events import ERROR
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ async def list_sessions(
 
 @router.post("/sessions", response_model=SessionResponse, status_code=201)
 async def create_session(payload: SessionCreate, db: DBSession) -> Session:
+    await get_or_404(db, Council, payload.council_id, "Council not found")
     session = Session(
         council_id=payload.council_id,
         input_claim=payload.input_claim,
@@ -108,7 +110,7 @@ async def get_session_messages(
             "created_at": msg.created_at,
         })
 
-    return {"messages": msg_list, "votes": votes}
+    return SessionStateResponse(messages=msg_list, votes=votes)
 
 
 @router.get("/sessions/{session_id}/stream")
@@ -138,7 +140,7 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
             except (anthropic.APIError, SQLAlchemyError):
                 logger.exception("Stream error for session %s", session_id)
                 await engine_db.rollback()
-                yield format_sse("error", {"message": "Stream error"})
+                yield format_sse(ERROR, {"message": "Stream error"})
 
     # media_type="text/event-stream" is the standard SSE content type;
     # browsers and EventSource clients rely on it to enable streaming parsing.
@@ -245,18 +247,7 @@ async def delete_session(session_id: uuid.UUID, db: DBSession) -> Response:
             detail=f"Cannot delete session in '{session.status}' state",
         )
 
-    # Get round IDs for this session
-    round_ids_result = await db.execute(
-        select(Round.id).where(Round.session_id == session_id)
-    )
-    round_ids = [r for (r,) in round_ids_result.all()]
-
-    # Cascade delete: messages → rounds → votes → verdict → session
-    if round_ids:
-        await db.execute(sa_delete(Message).where(Message.round_id.in_(round_ids)))
-        await db.execute(sa_delete(Round).where(Round.session_id == session_id))
-    await db.execute(sa_delete(Vote).where(Vote.session_id == session_id))
-    await db.execute(sa_delete(Verdict).where(Verdict.session_id == session_id))
+    # ORM cascade handles rounds, messages, votes, and verdict
     await db.delete(session)
     await db.flush()
     return Response(status_code=204)

@@ -84,6 +84,9 @@ Ethora is a multi-agent deliberation framework. AI agents (each with a custom sy
 | `voting`              | Agents are casting votes                              |
 | `complete`            | Verdict rendered                                      |
 | `error`               | Engine failure                                        |
+| `proposing`           | Agents are proposing candidate answers (open-ended)   |
+| `closing_statements`  | Agents are delivering closing statements               |
+| `rate_limited`        | Paused due to API rate limiting                        |
 
 ---
 
@@ -211,7 +214,7 @@ All endpoints are prefixed with `/api/v1`.
   "council_id": "uuid",
   "input_claim": "string",
   "question_type": "binary",
-  "status": "pending|running|voting|awaiting_human_turn|complete|error",
+  "status": "pending|running|proposing|voting|closing_statements|awaiting_human_turn|complete|error|rate_limited",
   "created_at": "ISO-8601"
 }
 ```
@@ -300,6 +303,12 @@ Precondition: session must be in `pending` status (returns 409 otherwise).
 | `awaiting_human_vote` | `message` | When `human_in_loop` voting is used (instead of auto-tally) |
 | `verdict` | `decision`, `confidence`, `summary` | Final verdict rendered |
 | `error` | `message` | On engine failure |
+| `agent_typing` | `agent_id`, `agent_name`, `round` | When an agent starts generating (before response completes) |
+| `summary_ready` | `message_id`, `agent_id`, `agent_name`, `round`, `summary` | After background summary extraction completes |
+| `voting_started` | `message` | When voting phase begins |
+| `closing_statement` | `agent_id`, `agent_name`, `statement` | After each agent's closing statement (research mode) |
+| `moderator_action` | `action`, `explanation` | When moderator performs dedup or other actions |
+| `rate_limited` | `message`, `retry_after` | When Anthropic API returns 429 |
 
 ### Wire format
 
@@ -310,7 +319,7 @@ event: <event_name>\ndata: <json>\n\n
 
 ### Frontend SSE event list
 
-The frontend `SseService` must listen for all events in the table above: `stage_set`, `stage_set_intro`, `agent_message`, `round_complete`, `awaiting_human_turn`, `tool_use`, `candidate_proposed`, `candidates_finalized`, `voting_cast`, `awaiting_human_vote`, `verdict`, `error`.
+The frontend `SseService` must listen for all events in the table above: `stage_set`, `stage_set_intro`, `agent_message`, `round_complete`, `awaiting_human_turn`, `tool_use`, `candidate_proposed`, `candidates_finalized`, `agent_typing`, `summary_ready`, `voting_started`, `voting_cast`, `closing_statement`, `moderator_action`, `awaiting_human_vote`, `verdict`, `rate_limited`, `error`.
 
 ### Phase 1 alignment gaps (resolved)
 
@@ -321,14 +330,9 @@ These were identified in Phase 1 and have been fixed:
 - ~~Session status type: `awaiting_human_turn` added~~
 - ~~Vote field naming: `vote` → `value` mapping added~~
 
-### Phase 2 alignment work needed
+### Phase 2 alignment (resolved)
 
-| Area | Change needed |
-|------|--------------|
-| New SSE events | Frontend must handle `tool_use`, `candidate_proposed`, `candidates_finalized` |
-| `agent_message` shape | Now includes `summary` field — frontend must parse and display |
-| Session creation | `question_type` field added to `SessionCreate` |
-| Historical messages | New `GET /sessions/{id}/messages` endpoint — frontend must load on init to survive page reloads |
+All Phase 2 items have been implemented: `tool_use`, `candidate_proposed`, and `candidates_finalized` SSE events are handled by the frontend; `agent_message` includes `summary`; `question_type` is supported in session creation; and historical messages load via `GET /sessions/{id}/messages`.
 
 ---
 
@@ -349,6 +353,7 @@ The `question_type` field on `Session` determines how voting works:
 |------|-----------|
 | `binary` | Agents vote `"true"` or `"false"` on the input claim (default, current behaviour) |
 | `open` | Agents first propose candidate answers, then vote on the deduplicated candidate list |
+| `research` | Agents perform tool-assisted research, deliver closing statements, then vote |
 
 **Open-ended voting flow:**
 1. After deliberation rounds complete, each agent proposes 1–3 candidate answers (`candidate_proposed` SSE event)

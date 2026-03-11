@@ -1,9 +1,16 @@
 from __future__ import annotations
 
 from collections import Counter
+from typing import TypedDict
 
 from app.models.models import Vote
 from app.schemas.schemas import VotingMechanism
+
+
+class TallyResult(TypedDict):
+    decision: str
+    confidence: float
+    summary: str
 
 
 class HumanVoteRequired(Exception):
@@ -12,7 +19,7 @@ class HumanVoteRequired(Exception):
 
 async def tally_votes(
     votes: list[Vote], mechanism: VotingMechanism
-) -> dict[str, str | float]:
+) -> TallyResult:
     """Routes to the correct voting mechanism and returns the result.
 
     Returns a dict with keys: decision (str), confidence (float), summary (str).
@@ -31,7 +38,7 @@ async def tally_votes(
     raise ValueError(f"Unknown voting mechanism: {mechanism}")
 
 
-def _majority(votes: list[Vote]) -> dict[str, str | float]:
+def _majority(votes: list[Vote]) -> TallyResult:
     counts = Counter(v.value for v in votes)
     winner, winner_count = counts.most_common(1)[0]
     total = len(votes)
@@ -42,7 +49,7 @@ def _majority(votes: list[Vote]) -> dict[str, str | float]:
     }
 
 
-def _weighted(votes: list[Vote]) -> dict[str, str | float]:
+def _weighted(votes: list[Vote]) -> TallyResult:
     weights: dict[str, float] = {}
     for v in votes:
         # Default to 1.0 so agents without a confidence score are counted equally
@@ -64,7 +71,7 @@ def _weighted(votes: list[Vote]) -> dict[str, str | float]:
     }
 
 
-def _consensus(votes: list[Vote]) -> dict[str, str | float]:
+def _consensus(votes: list[Vote]) -> TallyResult:
     values = {v.value for v in votes}
     if len(values) == 1:
         decision = values.pop()

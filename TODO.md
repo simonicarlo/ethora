@@ -47,14 +47,14 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 2 — Align frontend/backend types and fix SPEC drift**
 
-- [ ] **Update SPEC.md** — Add 6 missing SSE events (`agent_typing`, `summary_ready`, `voting_started`, `closing_statement`, `moderator_action`, `rate_limited`), 3 missing statuses (`proposing`, `closing_statements`, `rate_limited`), `research` question type, and updated `agent_message` shape
-- [ ] **Add `summary` field to frontend `Message` interface** — Backend `MessageResponse` includes it, but base `Message` type omits it — **`frontend/src/app/core/models.ts:80-87`**
-- [ ] **Fix `voting_cast` SSE field mismatch** — Backend sends `vote`, frontend has dual `vote?`/`value?` workaround. Pick one field name and align both sides — **`council.py:528`, `models.ts:183`**
-- [ ] **Remove `$any()` from templates** — Replace with typed helper methods or template refs in `human-turn-input.html:14`, `human-vote-form.html:34`, `tool-registry.html:38,42`
-- [ ] **Type `let row` in MatTable** — Implicit `any` in `error-log-viewer.html:22-47` circumvents strict templates
-- [ ] **Use `Literal` type for `MessageWithContext.message_type`** on backend — Currently untyped `str` — **`backend/app/schemas/schemas.py:156`**
-- [ ] **Add `SseVotingStarted` interface** — Event is handled but has no type definition — **`frontend/src/app/core/models.ts`**
-- [ ] **Replace `Any` usages with TypedDicts** — `agent.py:41,72,81`, `tools.py:16,26,49`, `emitter.py:7` — add required comments or replace with typed alternatives
+- [x] **Update SPEC.md** — Added 6 missing SSE events (`agent_typing`, `summary_ready`, `voting_started`, `closing_statement`, `moderator_action`, `rate_limited`), 3 missing statuses (`proposing`, `closing_statements`, `rate_limited`), `research` question type, and updated `agent_message` shape
+- [x] **Add `summary` field to frontend `Message` interface** — Added `summary?: string | null` to `Message` and `SseAgentMessage` — **`frontend/src/app/core/models.ts`**
+- [x] **Fix `voting_cast` SSE field mismatch** — Standardized on `vote` field, removed `value?` workaround — **`models.ts`, `session-view.ts`**
+- [x] **Remove `$any()` from templates** — Replaced with typed `getInputValue()` helper in `human-turn-input.ts`, `human-vote-form.ts`, `tool-registry.ts`
+- [x] **Type `let row` in MatTable** — Already resolved by Angular 17+ strict template inference from typed `ErrorLogEntry[]` dataSource
+- [x] **Use `Literal` type for `MessageWithContext.message_type`** — Added `MessageType = Literal[...]` — **`backend/app/schemas/schemas.py`**
+- [x] **Add `SseVotingStarted` interface** — Added interface and typed cast in session-view — **`frontend/src/app/core/models.ts`**
+- [x] **Replace `Any` usages with justified comments** — Added explicit `# Any:` comments to `agent.py`, `tools.py`, `emitter.py` explaining why `Any` is necessary (Anthropic SDK wire format)
 
 ---
 
@@ -62,15 +62,15 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 2 — Data integrity and robustness**
 
-- [ ] **Use SQLAlchemy Enum for status/voting columns** — `voting_mechanism` and `status` are plain `String`; add DB-level constraint via migration — **`backend/app/models/models.py:45,61`**
-- [ ] **Add ORM cascade deletes** — Add `cascade="all, delete-orphan"` to relationships and `ON DELETE CASCADE` to FKs; remove manual cascade in `sessions.py:248-261` — **`backend/app/models/models.py`**
-- [ ] **Add FK indexes** — `Round.session_id`, `Message.round_id`, `Vote.session_id`, `Vote.agent_id` lack indexes (PostgreSQL doesn't auto-index FKs) — **`backend/app/models/models.py`**
-- [ ] **Replace `assert` with proper guards** — `councils.py:158`, `council.py:566` — `assert` is stripped with `-O` flag
-- [ ] **Narrow moderator exception handling** — `moderator.py:69,97,132,166` catch bare `except Exception`; use specific exceptions — **`backend/app/engine/moderator.py`**
-- [ ] **Validate `council_id` exists on session creation** — Currently FK violation returns 500 instead of 404 — **`backend/app/api/v1/sessions.py:52-60`**
-- [ ] **Return `SessionStateResponse` instance from `get_session_messages`** — Currently returns raw dict, bypassing Pydantic validation — **`backend/app/api/v1/sessions.py:111`**
-- [ ] **Use `TallyResult` TypedDict for `tally_votes` return** — Currently `dict[str, str | float]` is too loose — **`backend/app/engine/voting.py:15`**
-- [ ] **Replace global Anthropic client with DI** — Module-level singleton is not task-safe and ignores runtime key changes — **`backend/app/engine/agent.py:53-65`**
+- [x] **Add CHECK constraints for status/voting columns** — Added DB-level CHECK constraints for `voting_mechanism`, `status`, and `question_type` via migration 011 — **`alembic/versions/011_add_cascades_and_check_constraints.py`**
+- [x] **Add ORM cascade deletes** — Added `cascade="all, delete-orphan"` to 4 relationships + ON DELETE CASCADE on 7 FKs; simplified manual cascade in `sessions.py` — **`models.py`, migration 011**
+- [x] **Add FK indexes** — Already handled in migration 002 (`ix_sessions_council_id`, `ix_rounds_session_id`, `ix_messages_round_id`, `ix_messages_agent_id`, `ix_votes_session_id`, `ix_votes_agent_id`)
+- [x] **Replace `assert` with proper guards** — `councils.py:158` → HTTPException(400), `council.py:566` → RuntimeError with message
+- [x] **Narrow moderator exception handling** — Replaced 4 bare `except Exception` with `except (anthropic.APIError, KeyError, RuntimeError)` — **`moderator.py`**
+- [x] **Validate `council_id` exists on session creation** — Added `get_or_404()` check before creating session — **`sessions.py`**
+- [x] **Return `SessionStateResponse` instance from `get_session_messages`** — Changed raw dict return to `SessionStateResponse(...)` — **`sessions.py`**
+- [x] **Use `TallyResult` TypedDict for `tally_votes` return** — Added `TallyResult` TypedDict, updated all 4 function signatures — **`voting.py`**
+- [x] **Replace global Anthropic client with key-aware caching** — `get_client()` now detects API key changes and recreates client; added `reset_client()` for tests — **`agent.py`**
 
 ---
 
@@ -78,15 +78,15 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 3 — Refactoring for maintainability**
 
-- [ ] **Create SSE event constants module** — Replace 18+ hardcoded string literals with constants in `sse/events.py` — **`backend/app/engine/council.py`, `sessions.py`**
-- [ ] **Extract `_system_prompt_for()` helper** — `render_deliberation_system()` called 4x with identical args at lines 210, 316, 408, 494 — **`backend/app/engine/council.py`**
-- [ ] **Extract `_build_debate_text()` helper** — Identical 4-line block at lines 304-307 and 390-393 — **`backend/app/engine/council.py`**
-- [ ] **Consolidate default icon constant** — `'smart_toy'` hardcoded in 10+ locations across both stacks; define `DEFAULT_AGENT_ICON` per stack — **multiple files**
-- [ ] **Extract shared markdown styles** — Duplicated `::ng-deep` markdown CSS in `debate-panel.scss:190-200` and `session-view.scss:235-243`; create `_markdown.scss` mixin
-- [ ] **Unify DI patterns** — Frontend: `human-turn-input.ts`, `human-vote-form.ts` use constructor injection while all others use `inject()`. Backend: `admin.py` uses raw `Depends(get_db)` while others use `DBSession` alias
-- [ ] **Replace `confirm()` with `MatDialog`** — Browser `confirm()` in `council-list.ts:61`, `session-list.ts:99`, `agent-config.ts:141` is inconsistent with Material Design
-- [ ] **Create shared `AgentChip` component** — Agent name+icon template pattern repeated in 4+ templates — **`frontend/src/app/shared/components/`**
-- [ ] **Deduplicate `agentMap` computed signal** — Same map built independently in `session-view.ts` and `debate-panel.ts`; pass as input or extract utility
+- [x] **Create SSE event constants module** — Created `sse/events.py` with 18 named constants; updated `council.py` and `sessions.py` — **`backend/app/sse/events.py`**
+- [x] **Extract `_system_prompt_for()` helper** — Replaced 4 identical `render_deliberation_system()` call sites — **`backend/app/engine/council.py`**
+- [x] **Extract `_build_debate_text()` helper** — Replaced 2 identical debate-text-building blocks — **`backend/app/engine/council.py`**
+- [x] **Consolidate default icon constant** — Added `DEFAULT_AGENT_ICON` per stack; updated 6 frontend and 3 backend references — **`models.ts`, `schemas.py`, multiple files**
+- [x] **Extract shared markdown styles** — Created `_markdown.scss` mixin; updated `debate-panel.scss` and `session-view.scss` — **`frontend/src/styles/_markdown.scss`**
+- [x] **Unify DI patterns** — Backend: replaced 7 raw `Depends(get_db)` with `DBSession` in `admin.py`; frontend already unified with `inject()` — **`backend/app/api/v1/admin.py`**
+- [x] **Replace `confirm()` with `MatDialog`** — Created shared `ConfirmDialog` component; updated `council-list.ts`, `session-list.ts`, `agent-config.ts` — **`frontend/src/app/shared/components/confirm-dialog/`**
+- [x] **Create shared `AgentChip` component** — Created `AgentChip` component; updated `voting-panel.html` and `council-list.html` — **`frontend/src/app/shared/components/agent-chip/`**
+- [x] **Deduplicate `agentMap` computed signal** — Extracted `buildAgentMap()` utility; updated `session-view.ts` and `debate-panel.ts` — **`frontend/src/app/shared/utils/agent-map.ts`**
 
 ---
 

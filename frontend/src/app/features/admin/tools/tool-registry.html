@@ -35,11 +35,11 @@
                   [min]="param.min ?? 0"
                   [max]="param.max ?? 99999"
                   [value]="getParamValue(tool.id, param.name)"
-                  (input)="setParamValue(tool.id, param.name, +$any($event.target).value)">
+                  (input)="setParamValue(tool.id, param.name, +getInputValue($event))">
               } @else {
                 <input matInput type="text"
                   [value]="getParamValue(tool.id, param.name)"
-                  (input)="setParamValue(tool.id, param.name, $any($event.target).value)">
+                  (input)="setParamValue(tool.id, param.name, getInputValue($event))">
               }
             </mat-form-field>
           }
