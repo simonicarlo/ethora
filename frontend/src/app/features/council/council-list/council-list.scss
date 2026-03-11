@@ -64,6 +64,10 @@
 .council-card {
   @include glass-card;
   @include hover-glow;
+
+  .spacer {
+    flex: 1;
+  }
   .council-meta {
     margin-bottom: $space-3;
   }

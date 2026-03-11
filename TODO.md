@@ -168,13 +168,13 @@ Stream B (CRUD) ─────────┘
 
 > **Priority 2 · Depends on: Stream A**
 
-- [ ] Add candidate proposal phase: after deliberation, agents propose candidate answers for open-ended questions — **`council.py`**
-- [ ] Collect and deduplicate candidates, present list to all agents for voting
-- [ ] Update voting prompt template: binary mode (`true`/`false`) vs open mode (vote on candidates) — **`prompts/voting_prompt.txt`**
-- [ ] Add `question_type: Literal["binary", "open"]` to **Session** schema (per-session, user picks at start) — **`schemas.py`, `models.py`**
-- [ ] Add SSE events: `candidate_proposed`, `candidates_finalized` — **`council.py`**
-- [ ] Frontend: update start-session dialog with question type picker — **`start-session-dialog/`**
-- [ ] Frontend: update voting panel to display candidates and open-ended results — **`voting-panel/`**
+- [x] Add candidate proposal phase: after deliberation, agents propose candidate answers for open-ended questions — **`council.py`**
+- [x] Collect and deduplicate candidates, present list to all agents for voting
+- [x] Update voting prompt template: binary mode (`true`/`false`) vs open mode (vote on candidates) — **`prompts/voting_prompt.txt`**
+- [x] Add `question_type: Literal["binary", "open"]` to **Session** schema (per-session, user picks at start) — **`schemas.py`, `models.py`**
+- [x] Add SSE events: `candidate_proposed`, `candidates_finalized` — **`council.py`**
+- [x] Frontend: update start-session dialog with question type picker — **`start-session-dialog/`**
+- [x] Frontend: update voting panel to display candidates and open-ended results — **`voting-panel/`**
 
 ---
 
@@ -234,21 +234,21 @@ Stream B (CRUD) ─────────┘
 
 ### Backend
 
-- [ ] **Add `GET /api/v1/sessions` endpoint** — List all sessions with optional filters (`council_id`, `status`), ordered by `created_at` desc, paginated — **`sessions.py`**
-- [ ] **Implement `GET /api/v1/sessions/{id}/messages`** — Return all messages for a session grouped by round (already in SPEC, not yet implemented) — **`sessions.py`**
-- [ ] **Add `GET /api/v1/councils/{id}/sessions`** — List sessions for a specific council — **`councils.py`**
-- [ ] **Add `DELETE /api/v1/sessions/{id}`** — Delete a session and cascade to rounds/messages/votes/verdict — **`sessions.py`**
-- [ ] **Add `SessionListResponse` schema** with session metadata + council name + verdict summary (if complete) — **`schemas.py`**
+- [x] **Add `GET /api/v1/sessions` endpoint** — List all sessions with optional filters (`council_id`, `status`), ordered by `created_at` desc, paginated — **`sessions.py`**
+- [x] **Implement `GET /api/v1/sessions/{id}/messages`** — Return all messages for a session grouped by round (already in SPEC, not yet implemented) — **`sessions.py`**
+- [x] **Add `GET /api/v1/councils/{id}/sessions`** — List sessions for a specific council — **`councils.py`**
+- [x] **Add `DELETE /api/v1/sessions/{id}`** — Delete a session and cascade to rounds/messages/votes/verdict — **`sessions.py`**
+- [x] **Add `SessionListResponse` schema** with session metadata + council name + verdict summary (if complete) — **`schemas.py`**
 
 ### Frontend
 
-- [ ] **Create `SessionList` component** — Table view of past sessions with status badges (running/complete/error/awaiting input), council name, claim preview, date — **`features/session/session-list/`**
-- [ ] **Add `/sessions` route** — Wire `SessionList` into routing and toolbar nav — **`app.routes.ts`**
-- [ ] **Add `listSessions()` and `getMessages()` to `ApiService`** — **`api.service.ts`**
-- [ ] **Load historical messages on session-view init** — Before connecting SSE, call `GET /sessions/{id}/messages` to restore transcript on page reload or re-visit — **`session-view.ts`**
-- [ ] **Add "Recent Sessions" widget to Home page** — Show last 5 sessions with status and link — **`features/home/`**
-- [ ] **Add "View Sessions" link on council cards** — Navigate to `/sessions?council_id={id}` — **`council-list/`**
-- [ ] **Delete session action** — Delete button with confirmation dialog in session list — **`session-list/`**
+- [x] **Create `SessionList` component** — Table view of past sessions with status badges (running/complete/error/awaiting input), council name, claim preview, date — **`features/session/session-list/`**
+- [x] **Add `/sessions` route** — Wire `SessionList` into routing and toolbar nav — **`app.routes.ts`**
+- [x] **Add `listSessions()` and `getMessages()` to `ApiService`** — **`api.service.ts`**
+- [x] **Load historical messages on session-view init** — Before connecting SSE, call `GET /sessions/{id}/messages` to restore transcript on page reload or re-visit — **`session-view.ts`**
+- [x] **Add "Recent Sessions" widget to Home page** — Show last 5 sessions with status and link — **`features/home/`**
+- [x] **Add "View Sessions" link on council cards** — Navigate to `/sessions?council_id={id}` — **`council-list/`**
+- [x] **Delete session action** — Delete button with confirmation dialog in session list — **`session-list/`**
 
 ---
 

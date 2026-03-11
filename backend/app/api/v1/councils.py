@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
-from app.api.v1.deps import DBSession, get_or_404
+from app.api.v1.deps import DBSession, build_session_list, get_or_404
 from app.models.models import Agent, Council, Session, council_agents
 from app.schemas.schemas import (
     AgentCreate,
@@ -15,6 +15,7 @@ from app.schemas.schemas import (
     CouncilCreate,
     CouncilResponse,
     CouncilUpdate,
+    SessionListItem,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["councils"])
@@ -163,3 +164,19 @@ async def delete_council(council_id: uuid.UUID, db: DBSession) -> Response:
     await db.delete(council)
     await db.flush()
     return Response(status_code=204)
+
+
+# ── Council Sessions ───────────────────────────────────────────────────────
+
+@router.get("/councils/{council_id}/sessions", response_model=list[SessionListItem])
+async def list_council_sessions(
+    council_id: uuid.UUID,
+    db: DBSession,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+) -> list[SessionListItem]:
+    """List all sessions for a specific council, ordered by created_at desc."""
+    await get_or_404(db, Council, council_id, "Council not found")
+    return await build_session_list(
+        db, council_id=council_id, skip=skip, limit=limit,
+    )

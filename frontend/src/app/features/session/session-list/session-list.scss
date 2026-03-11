@@ -1,0 +1,144 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+:host {
+  display: block;
+  max-width: $content-max-width;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-7;
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: $weight-bold;
+  }
+}
+
+.filter-bar {
+  margin-bottom: $space-4;
+}
+
+.center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $space-12 $space-4;
+  text-align: center;
+}
+
+.error-message {
+  color: var(--mat-sys-error);
+
+  mat-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: $space-4;
+  }
+}
+
+.empty-state {
+  .empty-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    opacity: 0.4;
+    margin-bottom: $space-4;
+  }
+
+  p {
+    margin: 0 0 $space-6;
+    opacity: 0.7;
+  }
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  border-radius: $radius-lg;
+  transition: background 0.2s;
+
+  &:hover {
+    background: var(--mat-sys-surface-variant);
+  }
+}
+
+.status-icon {
+  flex-shrink: 0;
+}
+
+.session-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.session-claim {
+  font-weight: $weight-medium;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-detail {
+  font-size: 0.85rem;
+  opacity: 0.6;
+  text-transform: capitalize;
+}
+
+.verdict-preview {
+  font-size: 0.85rem;
+  opacity: 0.5;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions-trigger {
+  flex-shrink: 0;
+  opacity: 0.5;
+
+  .session-row:hover & {
+    opacity: 1;
+  }
+}
+
+.status-complete {
+  color: var(--mat-sys-primary);
+}
+
+.status-error {
+  color: var(--mat-sys-error);
+}
+
+.status-active {
+  color: var(--mat-sys-tertiary);
+}
+
+.status-waiting {
+  color: var(--mat-sys-secondary);
+}
+
+.status-pending {
+  opacity: 0.5;
+}

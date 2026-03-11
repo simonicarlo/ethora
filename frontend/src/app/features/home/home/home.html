@@ -47,3 +47,29 @@
     </mat-card>
   </div>
 </section>
+
+@if (recentSessions().length > 0) {
+  <section class="recent-sessions">
+    <h2 class="section-heading">Recent Sessions</h2>
+    <div class="session-list">
+      @for (session of recentSessions(); track session.id) {
+        <a [routerLink]="['/sessions', session.id]" class="session-item">
+          <mat-icon class="session-status-icon">
+            {{ session.status === 'complete' ? 'check_circle' : session.status === 'error' ? 'error' : 'play_circle' }}
+          </mat-icon>
+          <div class="session-info">
+            <span class="session-claim">{{ session.input_claim.length > 80 ? session.input_claim.substring(0, 80) + '...' : session.input_claim }}</span>
+            <span class="session-detail">{{ session.council_name }} &middot; {{ session.created_at | date:'short' }}</span>
+          </div>
+          <mat-icon class="session-arrow">chevron_right</mat-icon>
+        </a>
+      }
+    </div>
+    <div class="section-footer">
+      <a mat-button routerLink="/sessions">
+        View All Sessions
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
+    </div>
+  </section>
+}

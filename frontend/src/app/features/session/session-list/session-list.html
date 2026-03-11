@@ -1,0 +1,63 @@
+<div class="page-header">
+  <h1>Sessions</h1>
+</div>
+
+@if (councilFilter()) {
+  <div class="filter-bar">
+    <mat-chip-set>
+      <mat-chip (removed)="clearFilter()">
+        Filtered by council
+        <mat-icon matChipRemove>cancel</mat-icon>
+      </mat-chip>
+    </mat-chip-set>
+  </div>
+}
+
+@if (loading()) {
+  <div class="center">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+} @else if (error()) {
+  <div class="center error-message">
+    <mat-icon>error_outline</mat-icon>
+    <p>{{ error() }}</p>
+  </div>
+} @else if (sessions().length === 0) {
+  <div class="center empty-state">
+    <mat-icon class="empty-icon">history</mat-icon>
+    <p>No sessions found.</p>
+    <a mat-flat-button routerLink="/councils">Start a Session</a>
+  </div>
+} @else {
+  <div class="session-list">
+    @for (session of sessions(); track session.id) {
+      <div class="session-row">
+        <mat-icon [class]="'status-icon ' + statusClass(session.status)">{{ statusIcon(session.status) }}</mat-icon>
+        <a [routerLink]="['/sessions', session.id]" class="session-info">
+          <span class="session-claim">{{ claimPreview(session.input_claim) }}</span>
+          <span class="session-detail">
+            {{ session.council_name }}
+            &middot; {{ statusLabel(session.status) }}
+            &middot; {{ session.created_at | date:'medium' }}
+          </span>
+          @if (session.verdict_summary) {
+            <span class="verdict-preview">{{ session.verdict_summary }}</span>
+          }
+        </a>
+        <button mat-icon-button [matMenuTriggerFor]="menu" class="actions-trigger">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #menu="matMenu">
+          <a mat-menu-item [routerLink]="['/sessions', session.id]">
+            <mat-icon>visibility</mat-icon>
+            <span>View</span>
+          </a>
+          <button mat-menu-item (click)="deleteSession(session)">
+            <mat-icon color="warn">delete</mat-icon>
+            <span>Delete</span>
+          </button>
+        </mat-menu>
+      </div>
+    }
+  </div>
+}
