@@ -5,8 +5,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 
-import { Council } from '../../../core/models';
+import { Council, QuestionType } from '../../../core/models';
 
 @Component({
   selector: 'app-start-session-dialog',
@@ -14,6 +15,7 @@ import { Council } from '../../../core/models';
     FormsModule,
     MatDialogModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatChipsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -27,13 +29,24 @@ import { Council } from '../../../core/models';
           <mat-chip>{{ agent.name }}</mat-chip>
         }
       </mat-chip-set>
+      <div class="question-type-row">
+        <label class="toggle-label">Question type</label>
+        <mat-button-toggle-group
+          [value]="questionType()"
+          (change)="questionType.set($event.value)"
+          data-testid="question-type-toggle"
+        >
+          <mat-button-toggle value="binary">Binary</mat-button-toggle>
+          <mat-button-toggle value="open">Open-ended</mat-button-toggle>
+        </mat-button-toggle-group>
+      </div>
       <mat-form-field class="claim-field">
-        <mat-label>Claim or question</mat-label>
+        <mat-label>{{ questionType() === 'binary' ? 'Claim to evaluate' : 'Question to answer' }}</mat-label>
         <textarea
           matInput
           rows="3"
           required
-          placeholder="Enter a claim or question for the council to deliberate..."
+          [placeholder]="questionType() === 'binary' ? 'Enter a claim for the council to evaluate...' : 'Enter a question for the council to answer...'"
           [ngModel]="claim()"
           (ngModelChange)="claim.set($event)"
         ></textarea>
@@ -64,6 +77,15 @@ import { Council } from '../../../core/models';
       opacity: 0.7;
       font-size: 0.9rem;
     }
+    .question-type-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .toggle-label {
+      font-size: 0.9rem;
+      opacity: 0.7;
+    }
     .claim-field {
       width: 100%;
     }
@@ -73,12 +95,13 @@ export class StartSessionDialog {
   private readonly dialogRef = inject(MatDialogRef<StartSessionDialog>);
   readonly council: Council = inject(MAT_DIALOG_DATA);
   readonly claim = signal('');
+  readonly questionType = signal<QuestionType>('binary');
 
   onCancel(): void {
     this.dialogRef.close();
   }
 
   onStart(): void {
-    this.dialogRef.close(this.claim().trim());
+    this.dialogRef.close({ claim: this.claim().trim(), questionType: this.questionType() });
   }
 }

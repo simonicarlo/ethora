@@ -7,7 +7,8 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 VotingMechanism = Literal["majority", "weighted", "consensus", "human_in_loop"]
-SessionStatus = Literal["pending", "running", "voting", "awaiting_human_turn", "complete", "error"]
+QuestionType = Literal["binary", "open"]
+SessionStatus = Literal["pending", "running", "proposing", "voting", "awaiting_human_turn", "complete", "error"]
 
 
 # -- Agents ------------------------------------------------------------------
@@ -67,12 +68,14 @@ class CouncilResponse(BaseModel):
 class SessionCreate(BaseModel):
     council_id: uuid.UUID
     input_claim: str = Field(min_length=1, max_length=5000)
+    question_type: QuestionType = "binary"
 
 
 class SessionResponse(BaseModel):
     id: uuid.UUID
     council_id: uuid.UUID
     input_claim: str
+    question_type: QuestionType
     status: SessionStatus
     created_at: datetime
 

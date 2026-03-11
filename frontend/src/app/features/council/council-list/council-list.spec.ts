@@ -156,7 +156,7 @@ describe('CouncilList', () => {
     fixture.detectChanges();
 
     const dialog = TestBed.inject(MatDialog);
-    const mockDialogRef = { afterClosed: () => of('Is the earth flat?') } as MatDialogRef<unknown>;
+    const mockDialogRef = { afterClosed: () => of({ claim: 'Is the earth flat?', questionType: 'binary' }) } as MatDialogRef<unknown>;
     vi.spyOn(dialog, 'open').mockReturnValue(mockDialogRef);
 
     const btn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="start-session-btn"]');
@@ -169,7 +169,7 @@ describe('CouncilList', () => {
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     const req = httpTesting.expectOne('/api/v1/sessions');
-    expect(req.request.body).toEqual({ council_id: 'c1', input_claim: 'Is the earth flat?' });
+    expect(req.request.body).toEqual({ council_id: 'c1', input_claim: 'Is the earth flat?', question_type: 'binary' });
     req.flush({ id: 's1', council_id: 'c1', input_claim: 'Is the earth flat?', status: 'pending', created_at: '2026-01-01T00:00:00Z' });
 
     expect(router.navigate).toHaveBeenCalledWith(['/sessions', 's1']);
@@ -181,7 +181,7 @@ describe('CouncilList', () => {
     fixture.detectChanges();
 
     const dialog = TestBed.inject(MatDialog);
-    const mockDialogRef = { afterClosed: () => of('Test claim') } as MatDialogRef<unknown>;
+    const mockDialogRef = { afterClosed: () => of({ claim: 'Test claim', questionType: 'binary' }) } as MatDialogRef<unknown>;
     vi.spyOn(dialog, 'open').mockReturnValue(mockDialogRef);
 
     const btn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="start-session-btn"]');

@@ -28,11 +28,44 @@
         (submitted)="onHumanTurnSubmitted($event)" />
     }
 
+    @if (proposedCandidates().length > 0) {
+      <section class="candidates-section">
+        <h2>Candidate Proposals</h2>
+        @for (proposal of proposedCandidates(); track proposal.agent_id) {
+          <div class="proposal-card">
+            <strong>{{ proposal.agent_name }}</strong>
+            <ul>
+              @for (candidate of proposal.candidates; track candidate) {
+                <li>{{ candidate }}</li>
+              }
+            </ul>
+          </div>
+        }
+        @if (moderatorExplanation()) {
+          <div class="moderator-note">
+            <strong>Moderator:</strong> {{ moderatorExplanation() }}
+          </div>
+        }
+        @if (candidates().length > 0) {
+          <div class="finalized-candidates">
+            <h3>Finalized Candidates</h3>
+            <ol>
+              @for (candidate of candidates(); track candidate) {
+                <li>{{ candidate }}</li>
+              }
+            </ol>
+          </div>
+        }
+      </section>
+    }
+
     @if (isVotingPhase()) {
       <app-voting-panel
         [votes]="votes()"
         [agents]="agents()"
-        [votingMechanism]="votingMechanism()" />
+        [votingMechanism]="votingMechanism()"
+        [candidates]="candidates()"
+        [questionType]="questionType()" />
     }
 
     @if (showHumanForm()) {

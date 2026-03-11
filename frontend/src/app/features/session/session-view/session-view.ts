@@ -7,11 +7,15 @@ import { SseService } from '../../../core/sse.service';
 import {
   Agent,
   Council,
+  QuestionType,
   SessionStatus,
   SseAgentMessage,
   SseAwaitingHumanTurn,
   SseAwaitingHumanVote,
+  SseCandidateProposed,
+  SseCandidatesFinalized,
   SseError,
+  SseModeratorAction,
   SseRoundComplete,
   SseVotingCast,
   Verdict,
@@ -46,10 +50,14 @@ export class SessionView implements OnInit {
   readonly verdict = signal<Verdict | null>(null);
   readonly sessionStatus = signal<SessionStatus>('pending');
   readonly votingMechanism = signal<VotingMechanism>('majority');
+  readonly questionType = signal<QuestionType>('binary');
   readonly agents = signal<Agent[]>([]);
   readonly waitingForHuman = signal(false);
   readonly inputClaim = signal('');
   readonly loading = signal(true);
+  readonly candidates = signal<string[]>([]);
+  readonly proposedCandidates = signal<{agent_id: string; agent_name: string; candidates: string[]}[]>([]);
+  readonly moderatorExplanation = signal<string | null>(null);
   private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(() => {
@@ -103,6 +111,7 @@ export class SessionView implements OnInit {
         tap((session) => {
           this.sessionStatus.set(session.status);
           this.inputClaim.set(session.input_claim);
+          this.questionType.set(session.question_type ?? 'binary');
         }),
         switchMap((session) => this.api.getCouncil(session.council_id)),
       )
@@ -218,6 +227,22 @@ export class SessionView implements OnInit {
       case 'round_complete': {
         const data = raw as SseRoundComplete;
         this.currentRound.set(data.round);
+        break;
+      }
+      case 'candidate_proposed': {
+        const data = raw as SseCandidateProposed;
+        this.sessionStatus.set('proposing');
+        this.proposedCandidates.update((p) => [...p, data]);
+        break;
+      }
+      case 'candidates_finalized': {
+        const data = raw as SseCandidatesFinalized;
+        this.candidates.set(data.candidates);
+        break;
+      }
+      case 'moderator_action': {
+        const data = raw as SseModeratorAction;
+        this.moderatorExplanation.set(data.explanation);
         break;
       }
       case 'voting_cast': {

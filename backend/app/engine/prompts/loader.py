@@ -75,14 +75,49 @@ def render_voting_prompt(
     input_claim: str,
     debate_text: str,
     question_type: Literal["binary", "open"] = "binary",
+    candidates: list[str] | None = None,
 ) -> str:
     """Render the voting prompt with the appropriate vote format."""
     template = load_template("voting_prompt.txt")
     vote_format = _BINARY_VOTE_FORMAT if question_type == "binary" else _OPEN_VOTE_FORMAT
+
+    if candidates:
+        numbered = "\n".join(f"  {i+1}. {c}" for i, c in enumerate(candidates))
+        candidates_section = f"\nThe finalized candidate answers are:\n{numbered}\n\nYou must vote for one of these candidates exactly as written.\n"
+    else:
+        candidates_section = ""
+
     return _render(template, {
         "input_claim": input_claim,
         "debate_text": debate_text,
         "vote_format": vote_format,
+        "candidates_section": candidates_section,
+    })
+
+
+def render_candidate_proposal(
+    *,
+    input_claim: str,
+    debate_text: str,
+) -> str:
+    """Render the candidate proposal prompt for open-ended questions."""
+    template = load_template("candidate_proposal.txt")
+    return _render(template, {
+        "input_claim": input_claim,
+        "debate_text": debate_text,
+    })
+
+
+def render_moderator_deduplicate(
+    *,
+    input_claim: str,
+    raw_candidates: str,
+) -> str:
+    """Render the moderator deduplication prompt."""
+    template = load_template("moderator_deduplicate.txt")
+    return _render(template, {
+        "input_claim": input_claim,
+        "raw_candidates": raw_candidates,
     })
 
 

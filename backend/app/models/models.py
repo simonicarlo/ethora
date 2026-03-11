@@ -54,6 +54,7 @@ class Session(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     council_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("councils.id"), nullable=False)
     input_claim: Mapped[str] = mapped_column(Text, nullable=False)
+    question_type: Mapped[str] = mapped_column(String, default="binary")
     status: Mapped[str] = mapped_column(String, default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 

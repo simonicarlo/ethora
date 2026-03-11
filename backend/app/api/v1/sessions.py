@@ -36,6 +36,7 @@ async def create_session(payload: SessionCreate, db: DBSession) -> Session:
     session = Session(
         council_id=payload.council_id,
         input_claim=payload.input_claim,
+        question_type=payload.question_type,
     )
     db.add(session)
     await db.flush()

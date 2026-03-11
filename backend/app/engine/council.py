@@ -12,7 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.engine.agent import call_agent
+from app.engine.moderator import deduplicate_candidates
 from app.engine.prompts.loader import (
+    render_candidate_proposal,
     render_continuation_nudge,
     render_deliberation_system,
     render_voting_prompt,
@@ -109,19 +111,73 @@ async def run_council_session(
                 })
                 return
 
-        # -- Voting phase --
-        session.status = "voting"
-        await db.flush()
-
+        # -- Build debate text (shared by proposal + voting) --
         debate_lines = []
         for name, _, content_text in history:
             debate_lines.append(f"[{name}]: {content_text}")
         debate_text = "\n\n".join(debate_lines)
 
+        # -- Candidate proposal phase (open-ended only) --
+        finalized_candidates: list[str] | None = None
+        if session.question_type == "open":
+            session.status = "proposing"
+            await db.flush()
+
+            raw_proposals: list[dict[str, object]] = []
+            for agent in agents:
+                proposal_prompt = render_candidate_proposal(
+                    input_claim=session.input_claim,
+                    debate_text=debate_text,
+                )
+                proposal_messages = [{"role": "user", "content": proposal_prompt}]
+                proposal_system = render_deliberation_system(
+                    council_name=council.name,
+                    agent_name=agent.name,
+                    agent_list=agent_names,
+                    voting_mechanism=council.voting_mechanism,
+                    rounds=council.rounds,
+                    agent_system_prompt=agent.system_prompt,
+                )
+                raw_proposal = await call_agent(agent, proposal_messages, proposal_system)
+                agent_candidates = _parse_candidates(raw_proposal)
+
+                raw_proposals.append({
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "candidates": agent_candidates,
+                })
+
+                yield format_sse("candidate_proposed", {
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "candidates": agent_candidates,
+                })
+
+            # Moderator deduplication
+            moderator_result = await deduplicate_candidates(
+                raw_candidates=raw_proposals,  # type: ignore[arg-type]
+                input_claim=session.input_claim,
+            )
+            finalized_candidates = moderator_result.candidates
+
+            yield format_sse("moderator_action", {
+                "action": moderator_result.action,
+                "explanation": moderator_result.explanation,
+            })
+            yield format_sse("candidates_finalized", {
+                "candidates": finalized_candidates,
+            })
+
+        # -- Voting phase --
+        session.status = "voting"
+        await db.flush()
+
+        question_type = session.question_type or "binary"
         voting_prompt = render_voting_prompt(
             input_claim=session.input_claim,
             debate_text=debate_text,
-            question_type="binary",
+            question_type=question_type,  # type: ignore[arg-type]
+            candidates=finalized_candidates,
         )
 
         votes: list[Vote] = []
@@ -237,6 +293,25 @@ def _build_agent_messages(
 
     return messages
 
+
+
+def _parse_candidates(raw_text: str) -> list[str]:
+    """Parse JSON candidates array from agent response, with fallback."""
+    text = raw_text.strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            parsed = json.loads(text[start:end + 1])
+            candidates = parsed.get("candidates", [])
+            if isinstance(candidates, list) and all(isinstance(c, str) for c in candidates):
+                return candidates
+        except json.JSONDecodeError:
+            pass
+
+    # Fallback: treat entire response as a single candidate
+    logger.warning("Failed to parse candidates JSON, using raw text: %.200s", raw_text)
+    return [raw_text.strip()[:200]]
 
 
 def _parse_vote(raw_text: str) -> dict:
