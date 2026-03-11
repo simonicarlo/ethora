@@ -5,8 +5,10 @@ import { Observable } from 'rxjs';
 import {
   Agent,
   AgentCreate,
+  AgentUpdate,
   Council,
   CouncilCreate,
+  CouncilUpdate,
   Session,
   SessionCreate,
   Verdict,
@@ -48,12 +50,32 @@ export class ApiService {
     return this.post<Council>('/councils', data);
   }
 
+  updateCouncil(id: string, data: CouncilUpdate): Observable<Council> {
+    return this.put<Council>(`/councils/${id}`, data);
+  }
+
+  deleteCouncil(id: string): Observable<void> {
+    return this.delete<void>(`/councils/${id}`);
+  }
+
   getAgents(): Observable<Agent[]> {
     return this.get<Agent[]>('/agents');
   }
 
   createAgent(data: AgentCreate): Observable<Agent> {
     return this.post<Agent>('/agents', data);
+  }
+
+  getAgent(id: string): Observable<Agent> {
+    return this.get<Agent>(`/agents/${id}`);
+  }
+
+  updateAgent(id: string, data: AgentUpdate): Observable<Agent> {
+    return this.put<Agent>(`/agents/${id}`, data);
+  }
+
+  deleteAgent(id: string): Observable<void> {
+    return this.delete<void>(`/agents/${id}`);
   }
 
   createSession(data: SessionCreate): Observable<Session> {

@@ -38,3 +38,9 @@
     display: inline-block;
   }
 }
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: $space-6;
+}

@@ -18,6 +18,12 @@ class AgentCreate(BaseModel):
     model: str = "claude-sonnet-4-20250514"
 
 
+class AgentUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    system_prompt: str | None = Field(default=None, min_length=1)
+    model: str | None = None
+
+
 class AgentResponse(BaseModel):
     id: uuid.UUID
     name: str
@@ -35,6 +41,14 @@ class CouncilCreate(BaseModel):
     voting_mechanism: VotingMechanism = "majority"
     allow_human_turns: bool = False
     agent_ids: list[uuid.UUID] = Field(min_length=2)
+
+
+class CouncilUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    rounds: int | None = Field(default=None, ge=1, le=20)
+    voting_mechanism: VotingMechanism | None = None
+    allow_human_turns: bool | None = None
+    agent_ids: list[uuid.UUID] | None = Field(default=None, min_length=2)
 
 
 class CouncilResponse(BaseModel):

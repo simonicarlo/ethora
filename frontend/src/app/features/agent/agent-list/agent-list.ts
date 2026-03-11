@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -26,6 +26,7 @@ import { Agent } from '../../../core/models';
 })
 export class AgentList {
   private readonly api = inject(ApiService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly agents = signal<Agent[]>([]);
@@ -41,6 +42,19 @@ export class AgentList {
       error: (err) => {
         this.error.set(err?.message ?? 'Failed to load agents');
         this.loading.set(false);
+      },
+    });
+  }
+
+  deleteAgent(agent: Agent): void {
+    if (!confirm(`Delete agent "${agent.name}"? This cannot be undone.`)) return;
+
+    this.api.deleteAgent(agent.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.agents.update(agents => agents.filter(a => a.id !== agent.id));
+      },
+      error: (err) => {
+        this.error.set(err?.error?.detail ?? 'Failed to delete agent');
       },
     });
   }
