@@ -150,12 +150,12 @@ Stream D (Open Voting) ──┘
 
 **Reported symptoms:** errors on human input prompt; agent answers disappear on reload; voting panel appears prematurely.
 
-- [ ] Investigate: SSE stream errors when `awaiting_human_turn` fires — **`council.py`, `sessions.py`**
-- [ ] Add `GET /api/v1/sessions/{id}/messages` endpoint to fetch historical messages — **`sessions.py`**
-- [ ] Frontend: load existing messages/votes from API on session-view init before connecting SSE — **`session-view.ts`**
-- [ ] Fix SSE pause/resume flow — ensure stream doesn't error on human turn pause — **`council.py`**
-- [ ] Fix voting panel visibility — only show when status is `voting` or `complete` — **`session-view.ts`**
-- [ ] E2E test: human turns enabled → prompt → submit → rounds continue
+- [x] Investigate: SSE stream errors when `awaiting_human_turn` fires — **`council.py`, `sessions.py`**
+- [x] Add `GET /api/v1/sessions/{id}/messages` endpoint to fetch historical messages — **`sessions.py`**
+- [x] Frontend: load existing messages/votes from API on session-view init before connecting SSE — **`session-view.ts`**
+- [x] Fix SSE pause/resume flow — ensure stream doesn't error on human turn pause — **`council.py`**
+- [x] Fix voting panel visibility — only show when status is `voting` or `complete` — **`session-view.ts`**
+- [x] E2E test: human turns enabled → prompt → submit → rounds continue
 
 ---
 

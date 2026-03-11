@@ -14,13 +14,14 @@ from starlette.responses import StreamingResponse
 from app.api.v1.deps import DBSession, get_or_404
 from app.core.database import async_session_factory
 from app.engine.council import run_council_session
-from app.models.models import Council, Message, Round, Session, Verdict
+from app.models.models import Council, Message, Round, Session, Verdict, Vote
 from app.schemas.schemas import (
     HumanTurnRequest,
     HumanTurnResponse,
     HumanVoteRequest,
     SessionCreate,
     SessionResponse,
+    SessionStateResponse,
     VerdictResponse,
 )
 from app.sse.emitter import format_sse
@@ -44,6 +45,43 @@ async def create_session(payload: SessionCreate, db: DBSession) -> Session:
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
 async def get_session(session_id: uuid.UUID, db: DBSession) -> Session:
     return await get_or_404(db, Session, session_id, "Session not found")
+
+
+@router.get("/sessions/{session_id}/messages", response_model=SessionStateResponse)
+async def get_session_messages(
+    session_id: uuid.UUID, db: DBSession
+) -> dict[str, list[dict[str, object]]]:
+    """Return all messages and votes for a session (for cold-loading on page reload)."""
+    await get_or_404(db, Session, session_id, "Session not found")
+
+    # Fetch messages with round and agent info, ordered by round then creation time.
+    # Message.round and Message.agent are eagerly loaded via selectin.
+    msg_result = await db.execute(
+        select(Message)
+        .join(Round, Message.round_id == Round.id)
+        .where(Round.session_id == session_id)
+        .order_by(Round.round_number, Message.created_at)
+    )
+    messages = msg_result.scalars().all()
+
+    vote_result = await db.execute(
+        select(Vote).where(Vote.session_id == session_id)
+    )
+    votes = vote_result.scalars().all()
+
+    msg_list: list[dict[str, object]] = [
+        {
+            "id": msg.id,
+            "round_number": msg.round.round_number,
+            "agent_id": msg.agent_id,
+            "agent_name": msg.agent.name if msg.agent else "Human",
+            "content": msg.content,
+            "created_at": msg.created_at,
+        }
+        for msg in messages
+    ]
+
+    return {"messages": msg_list, "votes": votes}
 
 
 @router.get("/sessions/{session_id}/stream")

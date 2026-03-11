@@ -11,6 +11,7 @@ import {
   CouncilUpdate,
   Session,
   SessionCreate,
+  SessionState,
   Verdict,
 } from './models';
 
@@ -84,6 +85,10 @@ export class ApiService {
 
   getSession(id: string): Observable<Session> {
     return this.get<Session>(`/sessions/${id}`);
+  }
+
+  getSessionMessages(sessionId: string): Observable<SessionState> {
+    return this.get<SessionState>(`/sessions/${sessionId}/messages`);
   }
 
   getVerdict(sessionId: string): Observable<Verdict> {

@@ -4,9 +4,10 @@ from __future__ import annotations
 import uuid
 
 from httpx import AsyncClient
+from sqlalchemy import select as sa_select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.models import Agent, Council, Message, Round, Session, council_agents
+from app.models.models import Agent, Council, Message, Round, Session, Vote, council_agents
 
 
 async def _seed_human_turn_session(
@@ -89,3 +90,85 @@ async def test_submit_human_turn_disabled(client: AsyncClient, db_session: Async
     )
     assert resp.status_code == 409
     assert "human turns" in resp.json()["detail"].lower()
+
+
+# -- GET /sessions/{id}/messages tests ----------------------------------------
+
+
+async def test_get_session_messages_empty(client: AsyncClient, db_session: AsyncSession) -> None:
+    session = await _seed_human_turn_session(db_session, status="pending")
+
+    resp = await client.get(f"/api/v1/sessions/{session.id}/messages")
+    assert resp.status_code == 200
+
+    body = resp.json()
+    assert body["messages"] == []
+    assert body["votes"] == []
+
+
+async def test_get_session_messages_with_data(client: AsyncClient, db_session: AsyncSession) -> None:
+    session = await _seed_human_turn_session(db_session, status="running")
+
+    # Get the round and agents seeded by helper
+    round_result = await db_session.execute(
+        sa_select(Round).where(Round.session_id == session.id)
+    )
+    round_ = round_result.scalars().first()
+    assert round_ is not None
+
+    agent_result = await db_session.execute(
+        sa_select(Agent)
+    )
+    agents = agent_result.scalars().all()
+    agent = agents[0]
+
+    # Add a message
+    msg = Message(round_id=round_.id, agent_id=agent.id, content="Test response")
+    db_session.add(msg)
+    await db_session.flush()
+
+    # Add a vote
+    vote = Vote(session_id=session.id, agent_id=agent.id, value="true", confidence=0.8, reasoning="Agreed")
+    db_session.add(vote)
+    await db_session.flush()
+
+    resp = await client.get(f"/api/v1/sessions/{session.id}/messages")
+    assert resp.status_code == 200
+
+    body = resp.json()
+    assert len(body["messages"]) == 1
+    assert body["messages"][0]["round_number"] == 1
+    assert body["messages"][0]["agent_name"] == agent.name
+    assert body["messages"][0]["content"] == "Test response"
+
+    assert len(body["votes"]) == 1
+    assert body["votes"][0]["value"] == "true"
+    assert body["votes"][0]["confidence"] == 0.8
+
+
+async def test_get_session_messages_human_messages(client: AsyncClient, db_session: AsyncSession) -> None:
+    session = await _seed_human_turn_session(db_session, status="awaiting_human_turn")
+
+    round_result = await db_session.execute(
+        sa_select(Round).where(Round.session_id == session.id)
+    )
+    round_ = round_result.scalars().first()
+    assert round_ is not None
+
+    # Add a human message (agent_id=None)
+    msg = Message(round_id=round_.id, agent_id=None, content="Human question")
+    db_session.add(msg)
+    await db_session.flush()
+
+    resp = await client.get(f"/api/v1/sessions/{session.id}/messages")
+    assert resp.status_code == 200
+
+    body = resp.json()
+    assert len(body["messages"]) == 1
+    assert body["messages"][0]["agent_id"] is None
+    assert body["messages"][0]["agent_name"] == "Human"
+
+
+async def test_get_session_messages_not_found(client: AsyncClient) -> None:
+    resp = await client.get(f"/api/v1/sessions/{uuid.uuid4()}/messages")
+    assert resp.status_code == 404

@@ -24,7 +24,13 @@ export class SseService {
       }
 
       eventSource.onerror = () => {
-        this.zone.run(() => subscriber.error(new Error('SSE connection lost')));
+        this.zone.run(() => {
+          if (eventSource.readyState === EventSource.CLOSED) {
+            subscriber.complete(); // Normal server-side close
+          } else {
+            subscriber.error(new Error('SSE connection lost'));
+          }
+        });
       };
 
       // Teardown: close the EventSource to prevent memory leaks and dangling HTTP connections.

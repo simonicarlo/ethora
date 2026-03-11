@@ -52,7 +52,9 @@ export class SessionView implements OnInit {
   private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(
-    () => this.sessionStatus() === 'voting' || this.sessionStatus() === 'complete',
+    () =>
+      (this.sessionStatus() === 'voting' || this.sessionStatus() === 'complete') &&
+      this.votes().length > 0,
   );
   readonly showHumanTurnInput = computed(
     () => this.sessionStatus() === 'awaiting_human_turn',
@@ -109,21 +111,55 @@ export class SessionView implements OnInit {
   private handleInitialStatus(sessionId: string): void {
     switch (this.sessionStatus()) {
       case 'complete':
-        this.api.getVerdict(sessionId).subscribe((verdict) => {
-          this.verdict.set(verdict);
+        this.loadHistoricalState(sessionId, () => {
+          this.api.getVerdict(sessionId).subscribe((verdict) => {
+            this.verdict.set(verdict);
+          });
         });
         break;
       case 'error':
-        // Already reflected in sessionStatus — nothing more to do
+        this.loadHistoricalState(sessionId);
         break;
       case 'awaiting_human_turn':
-        this.waitingForHuman.set(true);
+        this.loadHistoricalState(sessionId, () => {
+          this.waitingForHuman.set(true);
+        });
         break;
       default:
-        // pending, running, voting — connect SSE for live updates
-        this.connectSse(sessionId);
+        // pending, running, voting — load history then connect SSE for live updates
+        this.loadHistoricalState(sessionId, () => this.connectSse(sessionId));
         break;
     }
+  }
+
+  private loadHistoricalState(sessionId: string, onComplete?: () => void): void {
+    this.api.getSessionMessages(sessionId).subscribe({
+      next: (state) => {
+        const debateMessages: DebateMessage[] = state.messages
+          .filter((m) => m.agent_id !== null)
+          .map((m) => ({
+            agent_id: m.agent_id!,
+            round: m.round_number,
+            content: m.content,
+          }));
+        this.messages.set(debateMessages);
+
+        if (state.messages.length > 0) {
+          const maxRound = Math.max(...state.messages.map((m) => m.round_number));
+          this.currentRound.set(maxRound);
+        }
+
+        if (state.votes.length > 0) {
+          this.votes.set(state.votes);
+        }
+
+        onComplete?.();
+      },
+      error: () => {
+        // Non-fatal — historical messages just won't be available
+        onComplete?.();
+      },
+    });
   }
 
   private connectSse(sessionId: string): void {
@@ -133,11 +169,16 @@ export class SessionView implements OnInit {
       .subscribe({
         next: (event) => this.handleSseEvent(event),
         error: () => {
-          // SSE fires onerror on normal close too — only set error state if the
-          // session hasn't already completed (avoids false error on clean shutdown).
-          if (this.sessionStatus() !== 'complete') {
+          // Only set error if session isn't in a valid terminal/paused state.
+          // SSE fires onerror on connection loss — but not on clean server close
+          // (handled via complete below after the readyState fix in SseService).
+          if (this.sessionStatus() !== 'complete' && this.sessionStatus() !== 'awaiting_human_turn') {
             this.sessionStatus.set('error');
           }
+        },
+        complete: () => {
+          // Stream closed normally (e.g., server returned after awaiting_human_turn).
+          // Status was already set by the last SSE event — nothing to do.
         },
       });
 
