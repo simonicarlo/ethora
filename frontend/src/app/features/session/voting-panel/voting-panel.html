@@ -21,13 +21,11 @@
     @for (agent of agents(); track agent.id) {
       @if (voteMap().get(agent.id); as vote) {
         <mat-card class="vote-card voted" appearance="outlined">
-          <mat-card-header>
-            <mat-card-title>{{ agent.name }}</mat-card-title>
+          <mat-card-content>
+            <div class="agent-name">{{ agent.name }}</div>
             <mat-chip [class]="'vote-chip ' + voteColor(vote.value)">
               {{ vote.value }}
             </mat-chip>
-          </mat-card-header>
-          <mat-card-content>
             <div class="confidence-row">
               <span class="confidence-label">Confidence</span>
               <span class="confidence-value">{{ confidencePercent(vote.confidence) }}%</span>
@@ -43,10 +41,8 @@
         </mat-card>
       } @else {
         <mat-card class="vote-card pending" appearance="outlined">
-          <mat-card-header>
-            <mat-card-title>{{ agent.name }}</mat-card-title>
-          </mat-card-header>
           <mat-card-content>
+            <span class="agent-name">{{ agent.name }}</span>
             <div class="pending-row">
               <mat-spinner diameter="24"></mat-spinner>
               <span>Voting…</span>
