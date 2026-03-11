@@ -32,7 +32,7 @@
             @if (msg.references && msg.references.length > 0) {
               <div class="references-list">
                 <span class="references-label">Sources:</span>
-                @for (ref of msg.references; track ref.url; let i = $index) {
+                @for (ref of msg.references; track $index; let i = $index) {
                   <a class="reference-link" [href]="ref.url" target="_blank" rel="noopener noreferrer">
                     [{{ i + 1 }}] {{ ref.title || ref.url }}
                   </a>

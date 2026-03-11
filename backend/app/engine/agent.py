@@ -107,20 +107,25 @@ def _parse_agent_response(response: anthropic.types.Message) -> AgentResponse:
         if block.type == "text":
             text_parts.append(block.text)
         elif block.type == "tool_use":
+            # SDK types `input` as `object`, but it's always a dict for our tool schemas
             tool_invocations.append(
                 ToolInvocation(tool_name=block.name, tool_input=block.input)  # type: ignore[arg-type]
             )
         elif block.type == "web_search_tool_result":
-            # Server-side web search results contain search entries
-            for entry in block.content:  # type: ignore[union-attr]
-                if getattr(entry, "type", None) == "web_search_result":
-                    references.append(
-                        Reference(
-                            url=getattr(entry, "url", ""),
-                            title=getattr(entry, "title", None),
-                            snippet=getattr(entry, "page_snippet", None),
+            # Server-side web search results contain search entries.
+            # SDK union type doesn't narrow `.content` — access defensively.
+            try:
+                for entry in block.content:  # type: ignore[union-attr]
+                    if getattr(entry, "type", None) == "web_search_result":
+                        references.append(
+                            Reference(
+                                url=getattr(entry, "url", ""),
+                                title=getattr(entry, "title", None),
+                                snippet=getattr(entry, "page_snippet", None),
+                            )
                         )
-                    )
+            except (AttributeError, TypeError):
+                logger.warning("Unexpected web_search_tool_result structure, skipping references")
 
     content = "\n\n".join(text_parts) if text_parts else ""
     return AgentResponse(

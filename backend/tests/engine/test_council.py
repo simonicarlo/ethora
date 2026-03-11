@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import Base
-from app.engine.agent import AgentResponse
+from app.engine.agent import AgentResponse, Reference, ToolInvocation
 from app.engine.council import run_council_session
 from app.models.models import (
     Agent,
@@ -686,3 +686,92 @@ async def test_resume_after_human_turn(db: AsyncSession) -> None:
     rounds = result.scalars().all()
     assert len(rounds) == 2
     assert rounds[1].round_number == 2
+
+
+# -- Tool Use Tests --
+
+
+async def test_tools_enabled_emits_tool_use_events(db: AsyncSession) -> None:
+    """Council with tools_enabled=True should emit tool_use SSE events and persist references."""
+    session = await _seed_council(db, num_agents=2, rounds=1)
+    # Enable tools on the council
+    result = await db.execute(select(Council).where(Council.id == session.council_id))
+    council = result.scalar_one()
+    council.tools_enabled = True
+    await db.flush()
+
+    mock_refs = [
+        Reference(url="https://example.com/1", title="Source 1", snippet="Snippet 1"),
+        Reference(url="https://example.com/2", title="Source 2", snippet="Snippet 2"),
+    ]
+    mock_tool_invocations = [
+        ToolInvocation(tool_name="web_search", tool_input={"query": "test query"}),
+    ]
+
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        # Verify tools are passed when tools_enabled=True
+        assert tools is not None, "Expected tools to be passed for tools_enabled council"
+        return AgentResponse(
+            content=f"Response from {agent.name} with sources",
+            references=mock_refs,
+            tool_invocations=mock_tool_invocations,
+        )
+
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
+        events = []
+        async for event in run_council_session(session.id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    # Should have tool_use events
+    assert "tool_use" in event_types
+    tool_use_events = [e for e in parsed if e[0] == "tool_use"]
+    assert len(tool_use_events) == 2  # One per agent
+    assert tool_use_events[0][1]["tool_name"] == "web_search"
+
+    # agent_message events should include references
+    agent_msgs = [e for e in parsed if e[0] == "agent_message"]
+    assert len(agent_msgs) == 2
+    assert len(agent_msgs[0][1]["references"]) == 2
+    assert agent_msgs[0][1]["references"][0]["url"] == "https://example.com/1"
+
+    # Verify references are persisted in DB
+    msg_result = await db.execute(select(Message))
+    messages = msg_result.scalars().all()
+    assert all(m.references is not None and len(m.references) == 2 for m in messages)
+
+
+async def test_tools_disabled_does_not_pass_tools(db: AsyncSession) -> None:
+    """Council with tools_enabled=False should not pass tools to call_agent."""
+    session = await _seed_council(db, num_agents=2, rounds=1)
+    # tools_enabled defaults to False
+
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        assert tools is None, "Expected no tools for tools_disabled council"
+        return _agent_response(f"Response from {agent.name}")
+
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
+        events = []
+        async for event in run_council_session(session.id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    # Should NOT have tool_use events
+    assert "tool_use" not in event_types
+    assert "verdict" in event_types

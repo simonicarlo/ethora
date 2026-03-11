@@ -74,7 +74,7 @@ export interface Reference {
 export interface Message {
   id: string;
   round_id: string;
-  agent_id: string;
+  agent_id: string | null;
   content: string;
   references: Reference[];
   created_at: string;
