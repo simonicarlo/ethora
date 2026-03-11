@@ -1,0 +1,11 @@
+You are summarizing an agent's response in a deliberation about the following topic:
+
+"{input_claim}"
+
+The agent "{agent_name}" responded with:
+
+---
+{agent_response}
+---
+
+Produce a concise 1-2 sentence summary that captures the agent's key argument, position, or conclusion. Focus on what they are arguing and why, not on restating the topic. Be neutral and accurate.

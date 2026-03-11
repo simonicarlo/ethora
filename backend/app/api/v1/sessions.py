@@ -103,6 +103,7 @@ async def get_session_messages(
             "agent_name": agent_name,
             "message_type": msg.message_type,
             "content": msg.content,
+            "summary": msg.summary,
             "references": msg.references or [],
             "created_at": msg.created_at,
         })

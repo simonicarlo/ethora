@@ -28,7 +28,19 @@
             <mat-card-subtitle>{{ msg.isModerator ? 'Moderator Action' : 'Round ' + msg.round }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            <div class="message-content" [innerHTML]="msg.content | markdown"></div>
+            @if (msg.summary && !isExpanded(msg)) {
+              <div class="message-summary">{{ msg.summary }}</div>
+              <button mat-button class="expand-toggle" (click)="toggleExpanded(msg)">
+                <mat-icon>expand_more</mat-icon> Show full response
+              </button>
+            } @else {
+              <div class="message-content" [innerHTML]="msg.content | markdown"></div>
+              @if (msg.summary) {
+                <button mat-button class="expand-toggle" (click)="toggleExpanded(msg)">
+                  <mat-icon>expand_less</mat-icon> Show summary
+                </button>
+              }
+            }
             @if (msg.references && msg.references.length > 0) {
               <div class="references-list">
                 <span class="references-label">Sources:</span>
@@ -53,6 +65,12 @@
     <div class="tool-use-indicator">
       <mat-icon class="spinning">travel_explore</mat-icon>
       <span>{{ toolUse.agent_name }} is searching the web…</span>
+    </div>
+  } @else if (typingAgent(); as typing) {
+    <div class="typing-indicator">
+      <mat-icon>smart_toy</mat-icon>
+      <span>{{ typing.agent_name }} is thinking</span>
+      <span class="typing-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
     </div>
   }
 }

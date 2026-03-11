@@ -11,6 +11,7 @@ import {
   QuestionType,
   SessionStatus,
   SseAgentMessage,
+  SseAgentTyping,
   SseAwaitingHumanTurn,
   SseAwaitingHumanVote,
   SseCandidateProposed,
@@ -19,6 +20,7 @@ import {
   SseRateLimited,
   SseModeratorAction,
   SseRoundComplete,
+  SseSummaryReady,
   SseToolUse,
   SseVotingCast,
   Verdict,
@@ -63,6 +65,7 @@ export class SessionView implements OnInit {
   readonly proposedCandidates = signal<{agent_id: string; agent_name: string; candidates: string[]}[]>([]);
   readonly moderatorExplanation = signal<string | null>(null);
   readonly activeToolUse = signal<ToolActivity | null>(null);
+  readonly typingAgent = signal<{ agent_id: string; agent_name: string } | null>(null);
   readonly retryAfter = signal<number | null>(null);
   private sseSub: Subscription | null = null;
 
@@ -198,6 +201,7 @@ export class SessionView implements OnInit {
             message_type: m.message_type,
             round: m.round_number,
             content: m.content,
+            summary: m.summary,
             references: m.references ?? [],
           }));
         this.messages.set(debateMessages);
@@ -285,7 +289,9 @@ export class SessionView implements OnInit {
         const data = raw as SseAgentMessage;
         this.sessionStatus.set('running');
         this.activeToolUse.set(null);
+        this.typingAgent.set(null);
         this.messages.update((m) => [...m, {
+          message_id: data.message_id,
           agent_id: data.agent_id,
           agent_name: data.agent_name,
           round: data.round,
@@ -293,6 +299,20 @@ export class SessionView implements OnInit {
           references: data.references ?? [],
         }]);
         this.currentRound.set(data.round);
+        break;
+      }
+      case 'agent_typing': {
+        const data = raw as SseAgentTyping;
+        this.typingAgent.set({ agent_id: data.agent_id, agent_name: data.agent_name });
+        break;
+      }
+      case 'summary_ready': {
+        const data = raw as SseSummaryReady;
+        this.messages.update((msgs) =>
+          msgs.map((m) =>
+            m.message_id === data.message_id ? { ...m, summary: data.summary } : m,
+          ),
+        );
         break;
       }
       case 'tool_use': {

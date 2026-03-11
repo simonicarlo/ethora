@@ -1,0 +1,9 @@
+You are summarizing a multi-agent deliberation about the following topic:
+
+"{input_claim}"
+
+The following agents participated and here are summaries of their key arguments:
+
+{agent_summaries}
+
+Produce a concise 2-3 sentence overview of the deliberation. Capture the main positions, key disagreements or agreements, and the overall direction of the discussion. Be neutral and accurate.

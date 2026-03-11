@@ -60,6 +60,7 @@ export interface SessionListItem {
   question_type: QuestionType;
   status: SessionStatus;
   verdict_summary: string | null;
+  discussion_summary: string | null;
   created_at: string;
 }
 
@@ -110,6 +111,7 @@ export interface MessageWithContext {
   agent_name: string | null;
   message_type: MessageType;
   content: string;
+  summary?: string | null;
   references: Reference[];
   created_at: string;
 }
@@ -122,11 +124,26 @@ export interface SessionState {
 // -- SSE event payloads ---------------------------------------------------
 
 export interface SseAgentMessage {
+  message_id: string;
   agent_id: string;
   agent_name: string;
   round: number;
   content: string;
   references: Reference[];
+}
+
+export interface SseSummaryReady {
+  message_id: string;
+  agent_id: string;
+  agent_name: string;
+  round: number;
+  summary: string;
+}
+
+export interface SseAgentTyping {
+  agent_id: string;
+  agent_name: string;
+  round: number;
 }
 
 export interface SseToolUse {
