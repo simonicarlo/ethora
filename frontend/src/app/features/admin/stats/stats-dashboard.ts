@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { DecimalPipe } from '@angular/common';
 
 import { ApiService } from '../../../core/api.service';
+import { ThemeService } from '../../../core/theme.service';
 import { AgentMetricItem, CouncilUsageItem, DailyCount, SessionStats } from '../../../core/models';
 
 @Component({
@@ -27,6 +28,7 @@ import { AgentMetricItem, CouncilUsageItem, DailyCount, SessionStats } from '../
 export class StatsDashboard {
   private readonly api = inject(ApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly theme = inject(ThemeService);
 
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
@@ -45,23 +47,32 @@ export class StatsDashboard {
     datasets: [{ data: [], label: 'Sessions' }],
   });
 
-  readonly statusChartOptions: ChartConfiguration<'doughnut'>['options'] = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'right', labels: { color: 'rgba(255,255,255,0.7)' } },
-    },
-  };
+  readonly statusChartOptions = computed<ChartConfiguration<'doughnut'>['options']>(() => {
+    const textColor = this.theme.isDark() ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)';
+    return {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { color: textColor } },
+      },
+    };
+  });
 
-  readonly timelineChartOptions: ChartConfiguration<'line'>['options'] = {
-    responsive: true,
-    scales: {
-      x: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-      y: { ticks: { color: 'rgba(255,255,255,0.5)' }, grid: { color: 'rgba(255,255,255,0.1)' }, beginAtZero: true },
-    },
-    plugins: {
-      legend: { labels: { color: 'rgba(255,255,255,0.7)' } },
-    },
-  };
+  readonly timelineChartOptions = computed<ChartConfiguration<'line'>['options']>(() => {
+    const isDark = this.theme.isDark();
+    const textColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    const legendColor = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.7)';
+    return {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: textColor }, grid: { color: gridColor } },
+        y: { ticks: { color: textColor }, grid: { color: gridColor }, beginAtZero: true },
+      },
+      plugins: {
+        legend: { labels: { color: legendColor } },
+      },
+    };
+  });
 
   readonly councilUsage = signal<CouncilUsageItem[]>([]);
   readonly agentMetrics = signal<AgentMetricItem[]>([]);

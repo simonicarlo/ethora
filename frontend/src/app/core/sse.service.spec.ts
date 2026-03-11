@@ -120,10 +120,10 @@ describe('SseService', () => {
     subscription.unsubscribe();
   });
 
-  it('should emit error when EventSource encounters a connection error', () => {
+  it('should emit error when EventSource encounters a connection error (no retries)', () => {
     let errorCaught: Error | undefined;
 
-    const subscription = service.connect('/test').subscribe({
+    const subscription = service.connect('/test', undefined, { maxRetries: 0 }).subscribe({
       error: (err) => {
         errorCaught = err;
       },
@@ -134,6 +134,28 @@ describe('SseService', () => {
 
     expect(errorCaught).toBeDefined();
     expect(errorCaught!.message).toBe('SSE connection lost');
+
+    subscription.unsubscribe();
+  });
+
+  it('should retry on connection error and create a new EventSource', async () => {
+    const subscription = service.connect('/test', ['agent_message'], {
+      maxRetries: 2,
+      initialDelay: 10,
+      backoffMultiplier: 1,
+    }).subscribe();
+
+    // First connection
+    expect(MockEventSource.instances.length).toBe(1);
+    const first = MockEventSource.instances[0];
+    first.simulateError();
+
+    // Wait for retry delay
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Should have created a second EventSource
+    expect(MockEventSource.instances.length).toBe(2);
+    expect(first.closed).toBe(true);
 
     subscription.unsubscribe();
   });
