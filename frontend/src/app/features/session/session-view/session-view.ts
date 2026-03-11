@@ -7,7 +7,6 @@ import { SseService } from '../../../core/sse.service';
 import {
   Agent,
   Council,
-  MessageType,
   QuestionType,
   SessionStatus,
   SseAgentMessage,
@@ -278,13 +277,6 @@ export class SessionView implements OnInit {
         const data = raw as SseCandidateProposed;
         this.sessionStatus.set('proposing');
         this.proposedCandidates.update((p) => [...p, data]);
-        this.messages.update((m) => [...m, {
-          agent_id: data.agent_id,
-          agent_name: data.agent_name,
-          message_type: 'proposal' as MessageType,
-          round: this.currentRound(),
-          content: JSON.stringify({ candidates: data.candidates }),
-        }]);
         break;
       }
       case 'candidates_finalized': {
@@ -295,13 +287,6 @@ export class SessionView implements OnInit {
       case 'moderator_action': {
         const data = raw as SseModeratorAction;
         this.moderatorExplanation.set(data.explanation);
-        this.messages.update((m) => [...m, {
-          agent_id: null,
-          agent_name: 'Moderator',
-          message_type: 'moderator' as MessageType,
-          round: this.currentRound(),
-          content: JSON.stringify({ explanation: data.explanation }),
-        }]);
         break;
       }
       case 'voting_cast': {

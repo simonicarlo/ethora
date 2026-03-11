@@ -145,6 +145,7 @@ async def run_council_session(
                     system_prompt=proposal_system,
                     tool=PROPOSE_CANDIDATES_TOOL,
                 )
+                # "candidates" is guaranteed by the tool schema's required fields
                 agent_candidates = parsed_proposal["candidates"]
 
                 raw_proposals.append({

@@ -5,7 +5,9 @@ tool_choice={"type": "tool", "name": ...}, eliminating fragile JSON parsing.
 """
 from __future__ import annotations
 
-CAST_VOTE_TOOL: dict = {
+from typing import Any
+
+CAST_VOTE_TOOL: dict[str, Any] = {
     "name": "cast_vote",
     "description": "Cast your vote on the deliberation topic.",
     "input_schema": {
@@ -28,7 +30,7 @@ CAST_VOTE_TOOL: dict = {
     },
 }
 
-PROPOSE_CANDIDATES_TOOL: dict = {
+PROPOSE_CANDIDATES_TOOL: dict[str, Any] = {
     "name": "propose_candidates",
     "description": "Propose 1-3 candidate answers based on the deliberation.",
     "input_schema": {
@@ -46,7 +48,7 @@ PROPOSE_CANDIDATES_TOOL: dict = {
     },
 }
 
-DEDUPLICATE_CANDIDATES_TOOL: dict = {
+DEDUPLICATE_CANDIDATES_TOOL: dict[str, Any] = {
     "name": "deduplicate_candidates",
     "description": "Merge semantically equivalent candidates and return the normalized list.",
     "input_schema": {

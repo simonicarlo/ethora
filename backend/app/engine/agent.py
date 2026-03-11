@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import anthropic
 
@@ -57,8 +58,8 @@ async def call_with_tool(
     model: str,
     messages: list[dict[str, str]],
     system_prompt: str,
-    tool: dict,
-) -> dict:
+    tool: dict[str, Any],
+) -> dict[str, Any]:
     """Call Claude API with a single tool, forcing it to use that tool.
 
     Returns the parsed tool input dict (guaranteed to match the tool schema).
