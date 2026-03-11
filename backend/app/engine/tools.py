@@ -13,12 +13,17 @@ from typing import Any
 # -- Agent tools (used during deliberation when tools_enabled=True) -----------
 
 WEB_SEARCH_TOOL: dict[str, Any] = {
-    "type": "web_search_20250305",
+    "type": "web_search_20260209",
     "name": "web_search",
-    "max_uses": 5,
+    "max_uses": 3,
 }
 
-AGENT_TOOLS: list[dict[str, Any]] = [WEB_SEARCH_TOOL]
+CODE_EXECUTION_TOOL: dict[str, Any] = {
+    "type": "code_execution_20250522",
+    "name": "code_execution",
+}
+
+AGENT_TOOLS: list[dict[str, Any]] = [WEB_SEARCH_TOOL, CODE_EXECUTION_TOOL]
 
 CAST_VOTE_TOOL: dict[str, Any] = {
     "name": "cast_vote",
