@@ -65,6 +65,7 @@ describe('ApiService', () => {
         name: agentData.name,
         system_prompt: agentData.system_prompt,
         model: 'claude-sonnet-4-20250514',
+        icon: 'smart_toy',
       };
 
       service.createAgent(agentData).subscribe((agent) => {

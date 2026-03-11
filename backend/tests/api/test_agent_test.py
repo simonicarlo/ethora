@@ -6,6 +6,8 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import AsyncClient
 
+from app.engine.agent import AgentResponse
+
 
 @pytest.fixture()
 async def agent_id(client: AsyncClient) -> str:
@@ -20,7 +22,7 @@ async def agent_id(client: AsyncClient) -> str:
 class TestAgentTestEndpoint:
     async def test_test_agent_success(self, client: AsyncClient, agent_id: str) -> None:
         with patch("app.api.v1.councils.call_agent", new_callable=AsyncMock) as mock_call:
-            mock_call.return_value = "I am a helpful response."
+            mock_call.return_value = AgentResponse(content="I am a helpful response.")
             resp = await client.post(
                 f"/api/v1/agents/{agent_id}/test",
                 json={"message": "Hello, who are you?"},

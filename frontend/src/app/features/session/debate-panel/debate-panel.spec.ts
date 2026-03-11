@@ -4,8 +4,8 @@ import { DebatePanel, DebateMessage, ToolActivity } from './debate-panel';
 import { Agent } from '../../../core/models';
 
 const mockAgents: Agent[] = [
-  { id: 'a1', name: 'Analyst', system_prompt: '', model: 'claude-sonnet-4-20250514' },
-  { id: 'a2', name: 'Critic', system_prompt: '', model: 'claude-sonnet-4-20250514' },
+  { id: 'a1', name: 'Analyst', system_prompt: '', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
+  { id: 'a2', name: 'Critic', system_prompt: '', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
 ];
 
 const mockMessages: DebateMessage[] = [

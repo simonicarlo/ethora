@@ -18,8 +18,8 @@ const mockCouncils: Council[] = [
     allow_human_turns: false,
     tools_enabled: false,
     agents: [
-      { id: 'a1', name: 'Analyst', system_prompt: 'You are an analyst.', model: 'claude-sonnet-4-20250514' },
-      { id: 'a2', name: 'Critic', system_prompt: 'You are a critic.', model: 'claude-sonnet-4-20250514' },
+      { id: 'a1', name: 'Analyst', system_prompt: 'You are an analyst.', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
+      { id: 'a2', name: 'Critic', system_prompt: 'You are a critic.', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
     ],
   },
   {
@@ -30,7 +30,7 @@ const mockCouncils: Council[] = [
     allow_human_turns: true,
     tools_enabled: false,
     agents: [
-      { id: 'a3', name: 'Philosopher', system_prompt: 'You are a philosopher.', model: 'claude-sonnet-4-20250514' },
+      { id: 'a3', name: 'Philosopher', system_prompt: 'You are a philosopher.', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
     ],
   },
 ];

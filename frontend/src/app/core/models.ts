@@ -3,12 +3,14 @@ export interface Agent {
   name: string;
   system_prompt: string;
   model: string;
+  icon: string;
 }
 
 export interface AgentCreate {
   name: string;
   system_prompt: string;
   model?: string;
+  icon?: string;
 }
 
 export type AgentUpdate = Partial<AgentCreate>;

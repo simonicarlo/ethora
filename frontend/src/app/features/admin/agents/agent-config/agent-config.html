@@ -11,7 +11,7 @@
           <a mat-list-item
              (click)="selectAgent(agent)"
              [class.selected]="selectedAgent()?.id === agent.id">
-            <mat-icon matListItemIcon>smart_toy</mat-icon>
+            <mat-icon matListItemIcon>{{ agent.icon || 'smart_toy' }}</mat-icon>
             <span matListItemTitle>{{ agent.name }}</span>
           </a>
         }
@@ -37,6 +37,17 @@
                   <mat-label>Name</mat-label>
                   <input matInput formControlName="name" placeholder="e.g. Devil's Advocate">
                 </mat-form-field>
+
+                <label class="icon-picker-label">Icon</label>
+                <div class="icon-picker-grid">
+                  @for (icon of iconOptions; track icon) {
+                    <button type="button" mat-icon-button
+                            [class.selected]="form.controls.icon.value === icon"
+                            (click)="form.controls.icon.setValue(icon)">
+                      <mat-icon>{{ icon }}</mat-icon>
+                    </button>
+                  }
+                </div>
 
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>System Prompt</mat-label>
@@ -94,7 +105,11 @@
       } @else {
         <div class="empty-detail">
           <mat-icon>smart_toy</mat-icon>
-          <p>Select an agent from the list or create a new one.</p>
+          <p>Select an agent from the list or create one from a template.</p>
+        </div>
+        <div class="tab-content">
+          <h3>Templates</h3>
+          <app-agent-templates (cloned)="onAgentCloned($event)" />
         </div>
       }
     </div>

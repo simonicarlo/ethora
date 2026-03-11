@@ -10,7 +10,7 @@
   @for (template of templates; track template.name) {
     <mat-card appearance="outlined" class="template-card">
       <mat-card-header>
-        <mat-icon matCardAvatar>smart_toy</mat-icon>
+        <mat-icon matCardAvatar>{{ template.icon }}</mat-icon>
         <mat-card-title>{{ template.name }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>

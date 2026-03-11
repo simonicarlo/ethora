@@ -33,8 +33,8 @@ describe('SessionView', () => {
     allow_human_turns: false,
     tools_enabled: false,
     agents: [
-      { id: 'a1', name: 'Agent 1', system_prompt: 'prompt', model: 'claude' },
-      { id: 'a2', name: 'Agent 2', system_prompt: 'prompt', model: 'claude' },
+      { id: 'a1', name: 'Agent 1', system_prompt: 'prompt', model: 'claude', icon: 'smart_toy' },
+      { id: 'a2', name: 'Agent 2', system_prompt: 'prompt', model: 'claude', icon: 'smart_toy' },
     ],
   };
 

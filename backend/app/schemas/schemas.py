@@ -17,12 +17,14 @@ class AgentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     system_prompt: str = Field(min_length=1)
     model: str = "claude-sonnet-4-20250514"
+    icon: str = "smart_toy"
 
 
 class AgentUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     system_prompt: str | None = Field(default=None, min_length=1)
     model: str | None = None
+    icon: str | None = None
 
 
 class AgentResponse(BaseModel):
@@ -30,6 +32,7 @@ class AgentResponse(BaseModel):
     name: str
     system_prompt: str
     model: str
+    icon: str
 
     model_config = ConfigDict(from_attributes=True)
 
