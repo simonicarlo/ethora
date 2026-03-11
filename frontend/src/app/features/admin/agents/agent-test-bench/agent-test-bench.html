@@ -1,0 +1,36 @@
+<p class="bench-description">
+  Send a test message to <strong>{{ agent().name }}</strong> and see how it responds.
+</p>
+
+<mat-form-field appearance="outline" class="full-width">
+  <mat-label>Test Message</mat-label>
+  <textarea matInput [(ngModel)]="testMessage" rows="3"
+    placeholder="Type a message to test this agent's behavior..."
+    (keydown.meta.enter)="send()"
+    (keydown.control.enter)="send()"></textarea>
+</mat-form-field>
+
+<button mat-flat-button (click)="send()" [disabled]="!testMessage.trim() || sending()">
+  @if (sending()) {
+    <mat-spinner diameter="20"></mat-spinner>
+  } @else {
+    <mat-icon>send</mat-icon>
+    Send
+  }
+</button>
+
+@if (response()) {
+  <mat-card appearance="outlined" class="response-card">
+    <mat-card-header>
+      <mat-icon matCardAvatar>smart_toy</mat-icon>
+      <mat-card-title>{{ agent().name }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="response-text">{{ response() }}</p>
+    </mat-card-content>
+  </mat-card>
+}
+
+@if (error()) {
+  <p class="error-text">{{ error() }}</p>
+}
