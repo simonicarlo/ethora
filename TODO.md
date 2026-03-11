@@ -166,3 +166,4 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 - [ ] **Fact Checker wrapper** — Preconfigured council with Source Critic, Logical Analyst, Devil's Advocate, Synthesizer agents
 - [ ] **Graph visualization panel** — Deferred from PoC
 - [ ] **Tool registry backend persistence** — Per-tool config requires a `tool_config` JSON column on councils
+- [ ] **Frontend admin auth support** — Add `X-Admin-Key` header to admin API requests when `ADMIN_API_KEY` is configured (e.g., via HTTP interceptor or login prompt) — **`frontend/src/app/core/api.service.ts`**
