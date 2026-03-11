@@ -82,6 +82,19 @@ class SessionResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class SessionListItem(BaseModel):
+    id: uuid.UUID
+    council_id: uuid.UUID
+    council_name: str
+    input_claim: str
+    question_type: QuestionType
+    status: SessionStatus
+    verdict_summary: str | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # -- Messages -----------------------------------------------------------------
 
 class MessageResponse(BaseModel):

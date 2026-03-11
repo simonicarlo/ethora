@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import {
@@ -11,6 +11,7 @@ import {
   CouncilUpdate,
   Session,
   SessionCreate,
+  SessionListItem,
   SessionState,
   Verdict,
 } from './models';
@@ -77,6 +78,17 @@ export class ApiService {
 
   deleteAgent(id: string): Observable<void> {
     return this.delete<void>(`/agents/${id}`);
+  }
+
+  listSessions(params?: { council_id?: string; status?: string }): Observable<SessionListItem[]> {
+    let httpParams = new HttpParams();
+    if (params?.council_id) httpParams = httpParams.set('council_id', params.council_id);
+    if (params?.status) httpParams = httpParams.set('status', params.status);
+    return this.http.get<SessionListItem[]>(`${this.basePath}/sessions`, { params: httpParams });
+  }
+
+  deleteSession(id: string): Observable<void> {
+    return this.delete<void>(`/sessions/${id}`);
   }
 
   createSession(data: SessionCreate): Observable<Session> {

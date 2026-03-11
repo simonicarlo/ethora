@@ -8,5 +8,6 @@ export const routes: Routes = [
   { path: 'agents', loadComponent: () => import('./features/agent/agent-list/agent-list').then(m => m.AgentList) },
   { path: 'agents/new', loadComponent: () => import('./features/agent/agent-form/agent-form').then(m => m.AgentForm) },
   { path: 'agents/:id/edit', loadComponent: () => import('./features/agent/agent-form/agent-form').then(m => m.AgentForm) },
+  { path: 'sessions', loadComponent: () => import('./features/session/session-list/session-list').then(m => m.SessionList) },
   { path: 'sessions/:id', loadComponent: () => import('./features/session/session-view/session-view').then(m => m.SessionView) },
 ];

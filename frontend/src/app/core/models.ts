@@ -45,6 +45,17 @@ export interface Session {
   created_at: string;
 }
 
+export interface SessionListItem {
+  id: string;
+  council_id: string;
+  council_name: string;
+  input_claim: string;
+  question_type: QuestionType;
+  status: SessionStatus;
+  verdict_summary: string | null;
+  created_at: string;
+}
+
 export interface SessionCreate {
   council_id: string;
   input_claim: string;

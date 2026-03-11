@@ -6,10 +6,10 @@ from collections.abc import AsyncGenerator
 import uuid
 
 import anthropic
-from fastapi import APIRouter, HTTPException
-from sqlalchemy import select
+from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy import delete as sa_delete, select
 from sqlalchemy.exc import SQLAlchemyError
-from starlette.responses import StreamingResponse
+from starlette.responses import Response, StreamingResponse
 
 from app.api.v1.deps import DBSession, get_or_404
 from app.core.database import async_session_factory
@@ -20,6 +20,7 @@ from app.schemas.schemas import (
     HumanTurnResponse,
     HumanVoteRequest,
     SessionCreate,
+    SessionListItem,
     SessionResponse,
     SessionStateResponse,
     VerdictResponse,
@@ -29,6 +30,44 @@ from app.sse.emitter import format_sse
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
+
+
+@router.get("/sessions", response_model=list[SessionListItem])
+async def list_sessions(
+    db: DBSession,
+    council_id: uuid.UUID | None = None,
+    status: str | None = None,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+) -> list[dict[str, object]]:
+    """List all sessions with optional filters, ordered by created_at desc."""
+    stmt = (
+        select(Session, Council.name.label("council_name"), Verdict.summary.label("verdict_summary"))
+        .join(Council, Session.council_id == Council.id)
+        .outerjoin(Verdict, Verdict.session_id == Session.id)
+        .order_by(Session.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    if council_id is not None:
+        stmt = stmt.where(Session.council_id == council_id)
+    if status is not None:
+        stmt = stmt.where(Session.status == status)
+    result = await db.execute(stmt)
+    rows = result.all()
+    return [
+        {
+            "id": session.id,
+            "council_id": session.council_id,
+            "council_name": council_name,
+            "input_claim": session.input_claim,
+            "question_type": session.question_type,
+            "status": session.status,
+            "verdict_summary": verdict_summary,
+            "created_at": session.created_at,
+        }
+        for session, council_name, verdict_summary in rows
+    ]
 
 
 @router.post("/sessions", response_model=SessionResponse, status_code=201)
@@ -198,3 +237,31 @@ async def get_verdict(session_id: uuid.UUID, db: DBSession) -> Verdict:
     if verdict is None:
         raise HTTPException(status_code=404, detail="Verdict not found")
     return verdict
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+async def delete_session(session_id: uuid.UUID, db: DBSession) -> Response:
+    """Delete a session and all related data (messages, rounds, votes, verdict)."""
+    session = await get_or_404(db, Session, session_id, "Session not found")
+
+    if session.status in ("running", "proposing", "voting"):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot delete session in '{session.status}' state",
+        )
+
+    # Get round IDs for this session
+    round_ids_result = await db.execute(
+        select(Round.id).where(Round.session_id == session_id)
+    )
+    round_ids = [r for (r,) in round_ids_result.all()]
+
+    # Cascade delete: messages → rounds → votes → verdict → session
+    if round_ids:
+        await db.execute(sa_delete(Message).where(Message.round_id.in_(round_ids)))
+        await db.execute(sa_delete(Round).where(Round.session_id == session_id))
+    await db.execute(sa_delete(Vote).where(Vote.session_id == session_id))
+    await db.execute(sa_delete(Verdict).where(Verdict.session_id == session_id))
+    await db.delete(session)
+    await db.flush()
+    return Response(status_code=204)

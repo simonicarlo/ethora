@@ -53,6 +53,10 @@
             <mat-icon>play_arrow</mat-icon>
             Start Session
           </button>
+          <a mat-button [routerLink]="['/sessions']" [queryParams]="{ council_id: council.id }">
+            <mat-icon>history</mat-icon>
+            Sessions
+          </a>
           <a mat-button [routerLink]="['/councils', council.id, 'edit']">
             <mat-icon>edit</mat-icon>
             Edit
