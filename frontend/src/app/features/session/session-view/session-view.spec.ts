@@ -45,12 +45,23 @@ describe('SessionView', () => {
     created_at: '2026-03-10T00:00:00Z',
   };
 
-  function flushInitRequests(sessionOverrides: Record<string, unknown> = {}): void {
+  const emptySessionState = { messages: [], votes: [] };
+
+  function flushInitRequests(
+    sessionOverrides: Record<string, unknown> = {},
+    sessionState: { messages: unknown[]; votes: unknown[] } = emptySessionState,
+  ): void {
     const sessionReq = httpMock.expectOne('/api/v1/sessions/sess-1');
     sessionReq.flush({ ...mockSession, ...sessionOverrides });
 
     const councilReq = httpMock.expectOne('/api/v1/councils/council-1');
     councilReq.flush(mockCouncil);
+
+    fixture.detectChanges();
+
+    // handleInitialStatus now cold-loads messages for all statuses
+    const messagesReq = httpMock.expectOne('/api/v1/sessions/sess-1/messages');
+    messagesReq.flush(sessionState);
 
     fixture.detectChanges();
   }
@@ -177,6 +188,63 @@ describe('SessionView', () => {
     });
   });
 
+  describe('historical state cold-loading', () => {
+    const mockMessages = [
+      { id: 'm1', round_number: 1, agent_id: 'a1', agent_name: 'Agent 1', content: 'First message', created_at: '2026-03-10T00:00:00Z' },
+      { id: 'm2', round_number: 1, agent_id: null, agent_name: 'Human', content: 'Human input', created_at: '2026-03-10T00:01:00Z' },
+    ];
+    const mockVotes = [
+      { id: 'v1', agent_id: 'a1', value: 'true', confidence: 0.9, reasoning: 'Agreed' },
+    ];
+
+    it('should load historical messages on awaiting_human_turn init', () => {
+      fixture.detectChanges();
+      flushInitRequests(
+        { status: 'awaiting_human_turn' },
+        { messages: mockMessages, votes: [] },
+      );
+
+      // Human messages are filtered out — only agent messages appear
+      expect(component.messages().length).toBe(1);
+      expect(component.messages()[0].agent_id).toBe('a1');
+      expect(component.currentRound()).toBe(1);
+      expect(component.waitingForHuman()).toBe(true);
+    });
+
+    it('should load historical messages and votes on complete init', () => {
+      fixture.detectChanges();
+      flushInitRequests(
+        { status: 'complete' },
+        { messages: mockMessages, votes: mockVotes },
+      );
+
+      expect(component.messages().length).toBe(1);
+      expect(component.votes().length).toBe(1);
+
+      const verdictReq = httpMock.expectOne('/api/v1/sessions/sess-1/verdict');
+      verdictReq.flush(mockVerdict);
+
+      expect(component.verdict()).toEqual(mockVerdict);
+    });
+
+    it('should not show voting panel when votes are empty', () => {
+      fixture.detectChanges();
+      flushInitRequests({ status: 'complete' }, { messages: [], votes: [] });
+
+      expect(component.isVotingPhase()).toBe(false);
+    });
+
+    it('should show voting panel when votes are loaded', () => {
+      fixture.detectChanges();
+      flushInitRequests(
+        { status: 'complete' },
+        { messages: [], votes: mockVotes },
+      );
+
+      expect(component.isVotingPhase()).toBe(true);
+    });
+  });
+
   describe('SSE event handling', () => {
     beforeEach(() => {
       fixture.detectChanges();
@@ -213,6 +281,20 @@ describe('SessionView', () => {
       sseSubject.error(new Error('SSE connection lost'));
 
       expect(component.sessionStatus()).toBe('complete');
+    });
+
+    it('should not set error on SSE connection loss for awaiting_human_turn session', () => {
+      component.sessionStatus.set('awaiting_human_turn');
+      sseSubject.error(new Error('SSE connection lost'));
+
+      expect(component.sessionStatus()).toBe('awaiting_human_turn');
+    });
+
+    it('should not change status on SSE stream completion', () => {
+      component.sessionStatus.set('awaiting_human_turn');
+      sseSubject.complete();
+
+      expect(component.sessionStatus()).toBe('awaiting_human_turn');
     });
   });
 });

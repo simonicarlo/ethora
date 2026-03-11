@@ -69,6 +69,22 @@ export interface Verdict {
   created_at: string;
 }
 
+// -- Session state (cold-load) ---------------------------------------------
+
+export interface MessageWithContext {
+  id: string;
+  round_number: number;
+  agent_id: string | null;
+  agent_name: string | null;
+  content: string;
+  created_at: string;
+}
+
+export interface SessionState {
+  messages: MessageWithContext[];
+  votes: Vote[];
+}
+
 // -- SSE event payloads ---------------------------------------------------
 
 export interface SseAgentMessage {

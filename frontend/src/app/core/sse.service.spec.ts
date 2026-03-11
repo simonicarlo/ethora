@@ -5,11 +5,16 @@ import { SseService } from './sse.service';
 
 // Mock EventSource since it is a browser API not available in test environment
 class MockEventSource {
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSED = 2;
+
   static instances: MockEventSource[] = [];
 
   readonly listeners = new Map<string, EventListener>();
   onerror: ((event: Event) => void) | null = null;
   closed = false;
+  readyState = MockEventSource.OPEN;
 
   constructor(public url: string) {
     MockEventSource.instances.push(this);
@@ -21,6 +26,7 @@ class MockEventSource {
 
   close(): void {
     this.closed = true;
+    this.readyState = MockEventSource.CLOSED;
   }
 
   /** Simulate a server-sent event */
@@ -32,8 +38,17 @@ class MockEventSource {
     }
   }
 
-  /** Simulate an error */
+  /** Simulate a connection error (server unreachable, network failure) */
   simulateError(): void {
+    this.readyState = MockEventSource.CONNECTING;
+    if (this.onerror) {
+      this.onerror(new Event('error'));
+    }
+  }
+
+  /** Simulate a clean server-side close (e.g., after awaiting_human_turn) */
+  simulateClose(): void {
+    this.readyState = MockEventSource.CLOSED;
     if (this.onerror) {
       this.onerror(new Event('error'));
     }
@@ -105,7 +120,7 @@ describe('SseService', () => {
     subscription.unsubscribe();
   });
 
-  it('should emit error when EventSource encounters an error', () => {
+  it('should emit error when EventSource encounters a connection error', () => {
     let errorCaught: Error | undefined;
 
     const subscription = service.connect('/test').subscribe({
@@ -119,6 +134,28 @@ describe('SseService', () => {
 
     expect(errorCaught).toBeDefined();
     expect(errorCaught!.message).toBe('SSE connection lost');
+
+    subscription.unsubscribe();
+  });
+
+  it('should complete (not error) when server closes the connection cleanly', () => {
+    let completed = false;
+    let errorCaught: Error | undefined;
+
+    const subscription = service.connect('/test').subscribe({
+      error: (err) => {
+        errorCaught = err;
+      },
+      complete: () => {
+        completed = true;
+      },
+    });
+
+    const mock = MockEventSource.instances[0];
+    mock.simulateClose();
+
+    expect(completed).toBe(true);
+    expect(errorCaught).toBeUndefined();
 
     subscription.unsubscribe();
   });

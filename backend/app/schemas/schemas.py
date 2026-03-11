@@ -102,6 +102,24 @@ class VerdictResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# -- Session State (historical messages + votes) ------------------------------
+
+class MessageWithContext(BaseModel):
+    id: uuid.UUID
+    round_number: int
+    agent_id: uuid.UUID | None = None
+    agent_name: str | None = None
+    content: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SessionStateResponse(BaseModel):
+    messages: list[MessageWithContext]
+    votes: list[VoteResponse]
+
+
 # -- Human Turn ---------------------------------------------------------------
 
 class HumanTurnRequest(BaseModel):
