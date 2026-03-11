@@ -101,9 +101,9 @@ describe('CouncilList', () => {
 
     const agents = fixture.nativeElement.querySelectorAll('.agent-name');
     const names = Array.from(agents).map((a: any) => a.textContent.trim());
-    expect(names).toContain('Analyst');
-    expect(names).toContain('Critic');
-    expect(names).toContain('Philosopher');
+    expect(names.some((n: string) => n.includes('Analyst'))).toBe(true);
+    expect(names.some((n: string) => n.includes('Critic'))).toBe(true);
+    expect(names.some((n: string) => n.includes('Philosopher'))).toBe(true);
   });
 
   it('should show empty state when no councils', () => {

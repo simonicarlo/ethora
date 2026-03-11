@@ -22,7 +22,7 @@
       @if (voteMap().get(agent.id); as vote) {
         <mat-card class="vote-card voted" appearance="outlined">
           <mat-card-content>
-            <div class="agent-name">{{ agent.name }}</div>
+            <div class="agent-name"><mat-icon class="agent-icon">{{ agent.icon || 'smart_toy' }}</mat-icon>{{ agent.name }}</div>
             <mat-chip [class]="'vote-chip ' + voteColor(vote.value)">
               {{ vote.value }}
             </mat-chip>
@@ -42,7 +42,7 @@
       } @else {
         <mat-card class="vote-card pending" appearance="outlined">
           <mat-card-content>
-            <div class="agent-name">{{ agent.name }}</div>
+            <div class="agent-name"><mat-icon class="agent-icon">{{ agent.icon || 'smart_toy' }}</mat-icon>{{ agent.name }}</div>
             <div class="pending-row">
               <mat-spinner diameter="24"></mat-spinner>
               <span>Voting…</span>

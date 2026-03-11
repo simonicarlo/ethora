@@ -46,7 +46,7 @@
         <h2>Candidate Proposals</h2>
         @for (proposal of proposedCandidates(); track proposal.agent_id) {
           <div class="proposal-card">
-            <strong>{{ proposal.agent_name }}</strong>
+            <strong><mat-icon class="agent-icon">{{ getAgentIcon(proposal.agent_id) }}</mat-icon>{{ proposal.agent_name }}</strong>
             <ul>
               @for (candidate of proposal.candidates; track candidate) {
                 <li>{{ candidate }}</li>
@@ -79,7 +79,7 @@
           @for (stmt of closingStatements(); track stmt.agent_id) {
             <mat-card class="statement-card" appearance="outlined">
               <mat-card-content>
-                <div class="agent-name">{{ stmt.agent_name }}</div>
+                <div class="agent-name"><mat-icon class="agent-icon">{{ getAgentIcon(stmt.agent_id) }}</mat-icon>{{ stmt.agent_name }}</div>
                 <div class="statement-content" [innerHTML]="stmt.statement | markdown"></div>
               </mat-card-content>
             </mat-card>

@@ -83,10 +83,19 @@
   }
 
   .agent-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 0.85rem;
     padding: $space-1 $space-3;
     border-radius: $radius-pill;
     background: var(--mat-sys-surface-variant);
     color: var(--mat-sys-on-surface-variant);
+
+    .agent-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
   }
 }
