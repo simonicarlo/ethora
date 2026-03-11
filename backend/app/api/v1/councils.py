@@ -50,12 +50,8 @@ async def get_agent(agent_id: uuid.UUID, db: DBSession) -> Agent:
 @router.put("/agents/{agent_id}", response_model=AgentResponse)
 async def update_agent(agent_id: uuid.UUID, payload: AgentUpdate, db: DBSession) -> Agent:
     agent = await get_or_404(db, Agent, agent_id, "Agent not found")
-    if payload.name is not None:
-        agent.name = payload.name
-    if payload.system_prompt is not None:
-        agent.system_prompt = payload.system_prompt
-    if payload.model is not None:
-        agent.model = payload.model
+    for field in payload.model_fields_set:
+        setattr(agent, field, getattr(payload, field))
     await db.flush()
     return agent
 
@@ -122,21 +118,24 @@ async def list_councils(db: DBSession, skip: int = Query(0, ge=0), limit: int = 
 
 @router.get("/councils/{council_id}", response_model=CouncilResponse)
 async def get_council(council_id: uuid.UUID, db: DBSession) -> Council:
-    return await get_or_404(db, Council, council_id, "Council not found")
+    return await get_or_404(
+        db, Council, council_id, "Council not found",
+        options=[selectinload(Council.agents)],
+    )
 
 
 @router.put("/councils/{council_id}", response_model=CouncilResponse)
 async def update_council(council_id: uuid.UUID, payload: CouncilUpdate, db: DBSession) -> Council:
-    council = await get_or_404(db, Council, council_id, "Council not found")
-    if payload.name is not None:
-        council.name = payload.name
-    if payload.rounds is not None:
-        council.rounds = payload.rounds
-    if payload.voting_mechanism is not None:
-        council.voting_mechanism = payload.voting_mechanism
-    if payload.allow_human_turns is not None:
-        council.allow_human_turns = payload.allow_human_turns
-    if payload.agent_ids is not None:
+    council = await get_or_404(
+        db, Council, council_id, "Council not found",
+        options=[selectinload(Council.agents)],
+    )
+    # Apply scalar field updates from provided fields only
+    for field in payload.model_fields_set - {"agent_ids"}:
+        setattr(council, field, getattr(payload, field))
+    # Handle agent_ids separately — requires DB lookup
+    if "agent_ids" in payload.model_fields_set:
+        assert payload.agent_ids is not None  # guaranteed by model_fields_set check
         result = await db.execute(select(Agent).where(Agent.id.in_(payload.agent_ids)))
         agents = list(result.scalars().all())
         if len(agents) != len(payload.agent_ids):

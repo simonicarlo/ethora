@@ -6,6 +6,7 @@ from typing import Annotated, TypeVar
 from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.strategy_options import Load
 
 from app.core.database import Base, get_db
 
@@ -21,9 +22,17 @@ async def get_or_404(
     model: type[T],
     id: uuid.UUID,
     detail: str = "Not found",
+    options: list[Load] | None = None,
 ) -> T:
-    """Fetch a row by primary key or raise 404."""
-    result = await db.execute(select(model).where(model.id == id))  # type: ignore[attr-defined]
+    """Fetch a row by primary key or raise 404.
+
+    Args:
+        options: SQLAlchemy loader options (e.g. selectinload) to apply to the query.
+    """
+    stmt = select(model).where(model.id == id)  # type: ignore[attr-defined]
+    if options:
+        stmt = stmt.options(*options)
+    result = await db.execute(stmt)
     obj = result.scalar_one_or_none()
     if obj is None:
         raise HTTPException(status_code=404, detail=detail)
