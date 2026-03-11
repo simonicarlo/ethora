@@ -292,5 +292,7 @@ Stream B (CRUD) ─────────┘
 
 ## 18. Future
 
+- [ ] **Admin endpoint authentication** — Add auth/authorization to `/api/v1/admin/*` endpoints before production (`backend/app/api/v1/admin.py`)
+- [ ] **Tool registry backend persistence** — Per-tool config persistence requires a `tool_config` JSON column on councils
 - [ ] **Fact Checker wrapper** — Preconfigured council with Source Critic, Logical Analyst, Devil's Advocate, Synthesizer agents
 - [ ] **Graph visualization panel** — Deferred from PoC

@@ -32,6 +32,8 @@ from app.schemas.schemas import (
     SettingUpdate,
 )
 
+# TODO: Add authentication/authorization to admin endpoints before production use.
+# Currently open to all requests — acceptable for PoC but must be locked down.
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
@@ -200,16 +202,28 @@ async def error_logs(
         .limit(limit)
     )).all()
 
-    return [
-        ErrorLogEntry(
+    entries: list[ErrorLogEntry] = []
+    for sid, cname, claim, _status, created in rows:
+        # Try to extract actual error from the last message in the session
+        last_msg_result = await db.execute(
+            select(Message.content)
+            .join(Round, Round.id == Message.round_id)
+            .where(Round.session_id == sid)
+            .order_by(Message.created_at.desc())
+            .limit(1)
+        )
+        last_msg = last_msg_result.scalar_one_or_none()
+        error_message = last_msg if last_msg else "Session ended with status: error"
+
+        entries.append(ErrorLogEntry(
             session_id=sid,
             council_name=cname,
             input_claim=claim,
-            error_message=f"Session ended with status: error",
+            error_message=error_message,
             created_at=created,
-        )
-        for sid, cname, claim, _status, created in rows
-    ]
+        ))
+
+    return entries
 
 
 # ---------------------------------------------------------------------------

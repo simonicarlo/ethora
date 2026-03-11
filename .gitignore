@@ -82,3 +82,9 @@ pgdata/
 *.log
 coverage/
 .nyc_output/
+
+# ============================================
+# Claude Code artifacts
+# ============================================
+.claude/worktrees/
+docs/superpowers/plans/

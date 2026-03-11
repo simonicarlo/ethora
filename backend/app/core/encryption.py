@@ -1,11 +1,14 @@
 """Fernet symmetric encryption for sensitive settings stored at rest."""
 from __future__ import annotations
 
+from functools import lru_cache
+
 from cryptography.fernet import Fernet
 
 from app.core.config import settings
 
 
+@lru_cache(maxsize=1)
 def _get_fernet() -> Fernet:
     key = settings.SETTINGS_ENCRYPTION_KEY
     if not key:
