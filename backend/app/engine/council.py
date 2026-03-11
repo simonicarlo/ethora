@@ -306,6 +306,8 @@ async def run_council_session(
     except RateLimitError as exc:
         logger.warning("Council session %s rate-limited: %s", session_id, exc)
         await db.rollback()
+        session = await db.get(Session, session_id)
+        assert session is not None
         session.status = "rate_limited"
         await db.commit()
         yield format_sse("rate_limited", {

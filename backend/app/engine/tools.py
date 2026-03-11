@@ -3,8 +3,9 @@
 Each tool schema forces Claude to return data in a guaranteed format via
 tool_choice={"type": "tool", "name": ...}, eliminating fragile JSON parsing.
 
-Also defines agent tools (web_search) that agents can use during deliberation
-when tools_enabled is true on the council.
+Also defines agent tools (web_search, code_execution) that agents can use during
+deliberation when tools_enabled is true on the council. code_execution is an
+Anthropic server-side tool required by the web_search dynamic filtering feature.
 """
 from __future__ import annotations
 

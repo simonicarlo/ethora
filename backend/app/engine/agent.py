@@ -194,11 +194,21 @@ async def call_with_tool(
 
 
 def _extract_retry_after(exc: anthropic.RateLimitError) -> float | None:
-    """Extract Retry-After seconds from a rate-limit response, if present."""
+    """Extract Retry-After seconds from a rate-limit response, if present.
+
+    Checks the standard ``Retry-After`` header first, then falls back to
+    ``x-ratelimit-reset`` (Unix timestamp) which some providers use.
+    """
     try:
-        header = exc.response.headers.get("retry-after")
+        headers = exc.response.headers
+        header = headers.get("retry-after")
         if header is not None:
             return float(header)
+        # Fallback: x-ratelimit-reset is a Unix timestamp
+        reset_ts = headers.get("x-ratelimit-reset")
+        if reset_ts is not None:
+            import time
+            return max(0.0, float(reset_ts) - time.time())
     except (AttributeError, ValueError):
         pass
     return None

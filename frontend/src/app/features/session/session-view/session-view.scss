@@ -138,19 +138,8 @@
     margin-top: 4px;
   }
 
-  .resume-button {
+  button[mat-raised-button] {
     margin-top: 12px;
-    padding: 8px 20px;
-    border: none;
-    border-radius: 6px;
-    background-color: var(--mat-sys-primary, #1976d2);
-    color: var(--mat-sys-on-primary, #fff);
-    font-weight: 500;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.9;
-    }
   }
 }
 

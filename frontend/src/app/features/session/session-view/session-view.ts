@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, switchMap, tap } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/api.service';
 import { SseService } from '../../../core/sse.service';
@@ -32,7 +33,7 @@ import { VerdictCard } from '../verdict-card/verdict-card';
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatProgressSpinnerModule],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatProgressSpinnerModule],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -108,6 +109,12 @@ export class SessionView implements OnInit {
     this.sessionStatus.set('pending');
     this.retryAfter.set(null);
     this.connectSse(this.sessionId());
+  }
+
+  formatWait(seconds: number): string {
+    if (seconds >= 120) return `~${Math.round(seconds / 60)} minutes`;
+    if (seconds >= 60) return '~1 minute';
+    return `~${Math.round(seconds)} seconds`;
   }
 
   onHumanVoted(verdict: Verdict): void {
