@@ -61,7 +61,7 @@ class TestRenderDeliberationSystem:
 
 
 class TestRenderVotingPrompt:
-    def test_binary_contains_claim_and_format(self) -> None:
+    def test_binary_contains_claim_and_debate(self) -> None:
         result = render_voting_prompt(
             input_claim="The sky is blue",
             debate_text="[Alice]: Yes it is.\n\n[Bob]: I agree.",
@@ -69,18 +69,19 @@ class TestRenderVotingPrompt:
         )
         assert "The sky is blue" in result
         assert "[Alice]:" in result
-        assert '"true"' in result or '"false"' in result
-        assert '"confidence"' in result
+        assert "cast_vote" in result
 
-    def test_open_uses_candidate_format(self) -> None:
+    def test_open_with_candidates_section(self) -> None:
         result = render_voting_prompt(
             input_claim="Best color?",
             debate_text="[Alice]: Red.",
             question_type="open",
+            candidates=["Red", "Blue"],
         )
         assert "Best color?" in result
-        assert "<your chosen candidate>" in result
-        assert '"true" or "false"' not in result
+        assert "Red" in result
+        assert "Blue" in result
+        assert "exactly as written" in result
 
     def test_debate_text_with_braces_preserved(self) -> None:
         result = render_voting_prompt(

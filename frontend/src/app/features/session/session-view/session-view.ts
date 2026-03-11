@@ -171,13 +171,16 @@ export class SessionView implements OnInit {
   private loadHistoricalState(sessionId: string, onComplete?: () => void): void {
     this.api.getSessionMessages(sessionId).subscribe({
       next: (state) => {
-        const debateMessages: DebateMessage[] = state.messages.map((m) => ({
-          agent_id: m.agent_id,
-          agent_name: m.agent_name ?? undefined,
-          message_type: m.message_type,
-          round: m.round_number,
-          content: m.content,
-        }));
+        // Filter out proposal/moderator messages from debate timeline
+        const debateMessages: DebateMessage[] = state.messages
+          .filter((m) => m.message_type !== 'proposal' && m.message_type !== 'moderator')
+          .map((m) => ({
+            agent_id: m.agent_id,
+            agent_name: m.agent_name ?? undefined,
+            message_type: m.message_type,
+            round: m.round_number,
+            content: m.content,
+          }));
         this.messages.set(debateMessages);
 
         if (state.messages.length > 0) {

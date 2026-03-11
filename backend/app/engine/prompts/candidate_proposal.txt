@@ -6,8 +6,4 @@ Here is the full debate:
 
 {debate_text}
 
-Based on the deliberation, propose 1 to 3 candidate answers to the question. Each candidate should be a concise, distinct answer.
-
-Respond with ONLY a JSON object in this exact format:
-{"candidates": ["candidate 1", "candidate 2", "candidate 3"]}
-Do not include any other text outside the JSON.
+Based on the deliberation, propose 1 to 3 candidate answers to the question. Each candidate should be a concise, distinct answer. Use the propose_candidates tool.
