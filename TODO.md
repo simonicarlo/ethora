@@ -125,11 +125,11 @@ Stream B (CRUD) ─────────┘
 
 > **Priority 1 · Depends on: nothing · Blocks: D, E**
 
-- [ ] Create `backend/app/engine/prompts/` directory with editable template files (`deliberation_system.txt`, `voting_prompt.txt`, `continuation_nudge.txt`)
-- [ ] Build prompt template loader with variable interpolation (agent name, council name, other agents, round count, voting mechanism)
-- [ ] Wrap each agent's `system_prompt` with deliberation framing ("You are in a deliberation council…", other agents, voting mechanism, rounds)
-- [ ] Update **`_build_voting_prompt`** in `council.py` to use template file instead of inline f-string
-- [ ] Update **`_build_agent_messages`** continuation nudge to use template
+- [x] Create `backend/app/engine/prompts/` directory with editable template files (`deliberation_system.txt`, `voting_prompt.txt`, `continuation_nudge.txt`)
+- [x] Build prompt template loader with variable interpolation (agent name, council name, other agents, round count, voting mechanism)
+- [x] Wrap each agent's `system_prompt` with deliberation framing ("You are in a deliberation council…", other agents, voting mechanism, rounds)
+- [x] Update **`_build_voting_prompt`** in `council.py` to use template file instead of inline f-string
+- [x] Update **`_build_agent_messages`** continuation nudge to use template
 
 ---
 
