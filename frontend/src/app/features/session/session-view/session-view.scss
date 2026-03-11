@@ -199,14 +199,37 @@
 
 .statement-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
   gap: 16px;
 }
 
 .statement-card {
-  mat-card-content p {
-    margin: 0;
-    white-space: pre-wrap;
+  @include glass-panel;
+
+  .agent-name {
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+
+  .statement-content {
+    font-size: 0.85rem;
+    color: var(--mat-sys-on-surface-variant);
+    line-height: 1.6;
+    max-height: 450px;
+    overflow-y: auto;
+
+    ::ng-deep {
+      :first-child { margin-top: 0; }
+      :last-child { margin-bottom: 0; }
+      p { margin: 0 0 0.75em; }
+      ul, ol { margin: 0.5em 0; padding-left: 1.5em; }
+      code { @include font-mono; background: var(--ac-glass-bg); padding: 0.15em 0.4em; border-radius: 3px; }
+      pre { background: var(--ac-glass-bg-heavy); padding: 12px; border-radius: 6px; overflow-x: auto; }
+      strong { font-weight: 600; }
+      blockquote { border-left: 3px solid var(--mat-sys-primary); margin: 0.5em 0; padding-left: 1em; }
+    }
   }
 }
 

@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { Agent, QuestionType, Vote, VotingMechanism } from '../../../core/models';
 import { confidencePercent, voteColorClass } from '../../../shared/utils/vote-display.utils';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-voting-panel',
@@ -14,6 +15,7 @@ import { confidencePercent, voteColorClass } from '../../../shared/utils/vote-di
     MatChipsModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    MarkdownPipe,
   ],
   templateUrl: './voting-panel.html',
   styleUrl: './voting-panel.scss',

@@ -77,12 +77,10 @@
         <h2>Closing Statements</h2>
         <div class="statement-grid">
           @for (stmt of closingStatements(); track stmt.agent_id) {
-            <mat-card appearance="outlined" class="statement-card">
-              <mat-card-header>
-                <mat-card-title>{{ stmt.agent_name }}</mat-card-title>
-              </mat-card-header>
+            <mat-card class="statement-card" appearance="outlined">
               <mat-card-content>
-                <p>{{ stmt.statement }}</p>
+                <div class="agent-name">{{ stmt.agent_name }}</div>
+                <div class="statement-content" [innerHTML]="stmt.statement | markdown"></div>
               </mat-card-content>
             </mat-card>
           }
