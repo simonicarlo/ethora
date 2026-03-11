@@ -82,7 +82,8 @@ export class DebatePanel {
           .map((m) => {
             const isModerator = m.message_type === 'moderator';
             const isHuman = m.message_type === 'human' || (!m.message_type && m.agent_id === null);
-            const icon = isModerator ? 'shield' : isHuman ? 'person' : 'smart_toy';
+            const agent = m.agent_id ? this.agentMap().get(m.agent_id) : undefined;
+            const icon = isModerator ? 'shield' : isHuman ? 'person' : (agent?.icon ?? 'smart_toy');
             const agentName = isModerator
               ? 'Moderator'
               : isHuman

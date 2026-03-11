@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
@@ -13,6 +14,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
   imports: [
     MatCardModule,
     MatChipsModule,
+    MatIconModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
     MarkdownPipe,

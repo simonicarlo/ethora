@@ -96,6 +96,16 @@ export class SessionView implements OnInit {
   );
   readonly isComplete = computed(() => this.sessionStatus() === 'complete');
 
+  private readonly agentMap = computed(() => {
+    const map = new Map<string, Agent>();
+    for (const a of this.agents()) map.set(a.id, a);
+    return map;
+  });
+
+  getAgentIcon(agentId: string): string {
+    return this.agentMap().get(agentId)?.icon ?? 'smart_toy';
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id') ?? '';
     this.sessionId.set(id);
