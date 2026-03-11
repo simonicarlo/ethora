@@ -80,6 +80,10 @@ export class ApiService {
     return this.delete<void>(`/agents/${id}`);
   }
 
+  testAgent(id: string, message: string): Observable<{ response: string }> {
+    return this.post<{ response: string }>(`/agents/${id}/test`, { message });
+  }
+
   listSessions(params?: { council_id?: string; status?: string; limit?: number }): Observable<SessionListItem[]> {
     let httpParams = new HttpParams();
     if (params?.council_id) httpParams = httpParams.set('council_id', params.council_id);
