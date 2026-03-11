@@ -1,0 +1,16 @@
+You are introducing a deliberation session for the council "{council_name}".
+
+The topic under deliberation is:
+{input_claim}
+
+The participating agents are:
+{agent_descriptions}
+
+The session will run for {rounds} round(s), and the voting mechanism is "{voting_mechanism}".
+
+Write a 1-3 sentence introduction that:
+1. Briefly frames the topic in an engaging way
+2. Acknowledges the panel of experts who will deliberate
+3. Sets expectations for the discussion ahead
+
+Keep the tone professional but approachable. Do not repeat the topic verbatim — paraphrase or contextualize it. Do not list the agents by name.

@@ -122,6 +122,25 @@ export interface SessionState {
   votes: Vote[];
 }
 
+// -- Stage set (moderator intro) -------------------------------------------
+
+export interface StageSetAgent {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+export interface StageSetData {
+  council_name: string;
+  input_claim: string;
+  agents: StageSetAgent[];
+  rounds: number;
+  voting_mechanism: string;
+  question_type: string;
+  intro_text: string | null;
+}
+
 // -- SSE event payloads ---------------------------------------------------
 
 export interface SseAgentMessage {

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
-from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response, synthesize_closing_statements
+from app.engine.moderator import CandidateEntry, deduplicate_candidates, generate_stage_intro, summarize_agent_response, synthesize_closing_statements
 from app.engine.prompts.loader import (
     render_candidate_proposal,
     render_closing_statement_prompt,
@@ -100,6 +100,20 @@ async def _drain_summaries(
     return events
 
 
+def _extract_role_summary(system_prompt: str, max_chars: int = 80) -> str:
+    """Extract a short description from the first sentence of an agent's system prompt."""
+    text = system_prompt.strip()
+    # Find first sentence boundary
+    for sep in (". ", ".\n", "!\n", "! "):
+        idx = text.find(sep)
+        if idx != -1:
+            text = text[: idx + 1]
+            break
+    if len(text) > max_chars:
+        text = text[: max_chars - 1].rstrip() + "\u2026"
+    return text
+
+
 async def run_council_session(
     session_id: uuid.UUID, db: AsyncSession
 ) -> AsyncGenerator[str, None]:
@@ -141,6 +155,39 @@ async def run_council_session(
             history = await _load_history_from_db(db, session.id)
         else:
             history: list[tuple[str, uuid.UUID | None, str]] = []
+
+        # -- Stage set (only on fresh start, not resume) --
+        if start_round == 1:
+            stage_agents = [
+                {
+                    "id": str(a.id),
+                    "name": a.name,
+                    "icon": a.icon or "smart_toy",
+                    "description": _extract_role_summary(a.system_prompt),
+                }
+                for a in agents
+            ]
+            yield format_sse("stage_set", {
+                "council_name": council.name,
+                "input_claim": session.input_claim,
+                "agents": stage_agents,
+                "rounds": council.rounds,
+                "voting_mechanism": council.voting_mechanism,
+                "question_type": session.question_type or "binary",
+                "intro_text": None,
+            })
+
+            # Generate LLM intro (fast model, ~500ms-1s)
+            agent_desc_lines = [f"- {a.name}: {_extract_role_summary(a.system_prompt)}" for a in agents]
+            intro_text = await generate_stage_intro(
+                council_name=council.name,
+                input_claim=session.input_claim,
+                agent_descriptions="\n".join(agent_desc_lines),
+                rounds=council.rounds,
+                voting_mechanism=council.voting_mechanism,
+            )
+            if intro_text:
+                yield format_sse("stage_set_intro", {"intro_text": intro_text})
 
         # -- Round loop --
         for round_num in range(start_round, council.rounds + 1):

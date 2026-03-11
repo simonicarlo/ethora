@@ -4,7 +4,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { Agent, MessageType, Reference } from '../../../core/models';
+import { Agent, MessageType, Reference, StageSetData } from '../../../core/models';
+import { TitleCasePipe } from '@angular/common';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 export interface ToolActivity {
@@ -26,7 +27,7 @@ export interface DebateMessage {
 
 @Component({
   selector: 'app-debate-panel',
-  imports: [MatButtonModule, MatCardModule, MatIconModule, MatDividerModule, MarkdownPipe],
+  imports: [MatButtonModule, MatCardModule, MatIconModule, MatDividerModule, TitleCasePipe, MarkdownPipe],
   templateUrl: './debate-panel.html',
   styleUrl: './debate-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +37,7 @@ export class DebatePanel {
   readonly agents = input.required<Agent[]>();
   readonly currentRound = input<number>(0);
   readonly inputClaim = input<string>('');
+  readonly stageSet = input<StageSetData | null>(null);
   readonly activeToolUse = input<ToolActivity | null>(null);
   readonly typingAgent = input<{ agent_id: string; agent_name: string } | null>(null);
 

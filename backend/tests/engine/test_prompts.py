@@ -7,6 +7,7 @@ from app.engine.prompts.loader import (
     load_template,
     render_continuation_nudge,
     render_deliberation_system,
+    render_stage_set,
     render_voting_prompt,
 )
 
@@ -88,6 +89,32 @@ class TestRenderVotingPrompt:
             input_claim="claim",
             debate_text="[Alice]: The set {1, 2, 3} is finite.",
             question_type="binary",
+        )
+        assert "{1, 2, 3}" in result
+
+
+class TestRenderStageSet:
+    def test_contains_all_placeholders(self) -> None:
+        result = render_stage_set(
+            council_name="Ethics Board",
+            input_claim="Is AI ethical?",
+            agent_descriptions="- Critic: Harsh critic\n- Analyst: Careful analyst",
+            rounds=3,
+            voting_mechanism="weighted",
+        )
+        assert "Ethics Board" in result
+        assert "Is AI ethical?" in result
+        assert "Critic" in result
+        assert "3" in result
+        assert "weighted" in result
+
+    def test_braces_in_claim_preserved(self) -> None:
+        result = render_stage_set(
+            council_name="Test",
+            input_claim="Analyze the set {1, 2, 3}",
+            agent_descriptions="- Agent: Test",
+            rounds=1,
+            voting_mechanism="majority",
         )
         assert "{1, 2, 3}" in result
 
