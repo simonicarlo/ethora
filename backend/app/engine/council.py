@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.engine.agent import AgentResponse, call_agent, call_with_tool
+from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
 from app.engine.moderator import CandidateEntry, deduplicate_candidates
 from app.engine.prompts.loader import (
     render_candidate_proposal,
@@ -303,6 +303,17 @@ async def run_council_session(
 
         await db.commit()
 
+    except RateLimitError as exc:
+        logger.warning("Council session %s rate-limited: %s", session_id, exc)
+        await db.rollback()
+        session = await db.get(Session, session_id)
+        assert session is not None
+        session.status = "rate_limited"
+        await db.commit()
+        yield format_sse("rate_limited", {
+            "message": "The AI provider's rate limit was exceeded. You can resume this session shortly.",
+            "retry_after": exc.retry_after,
+        })
     except (anthropic.APIError, SQLAlchemyError) as exc:
         logger.exception("Council session %s failed", session_id)
         await db.rollback()

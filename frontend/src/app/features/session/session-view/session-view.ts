@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, switchMap, tap } from 'rxjs';
+import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/api.service';
 import { SseService } from '../../../core/sse.service';
@@ -15,6 +16,7 @@ import {
   SseCandidateProposed,
   SseCandidatesFinalized,
   SseError,
+  SseRateLimited,
   SseModeratorAction,
   SseRoundComplete,
   SseToolUse,
@@ -31,7 +33,7 @@ import { VerdictCard } from '../verdict-card/verdict-card';
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatProgressSpinnerModule],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatProgressSpinnerModule],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,6 +62,7 @@ export class SessionView implements OnInit {
   readonly proposedCandidates = signal<{agent_id: string; agent_name: string; candidates: string[]}[]>([]);
   readonly moderatorExplanation = signal<string | null>(null);
   readonly activeToolUse = signal<ToolActivity | null>(null);
+  readonly retryAfter = signal<number | null>(null);
   private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(() => {
@@ -100,6 +103,18 @@ export class SessionView implements OnInit {
     this.sessionStatus.set('pending');
     // Re-connect SSE — backend resets session to "pending" after human turn
     this.reconnectSse();
+  }
+
+  resumeSession(): void {
+    this.sessionStatus.set('pending');
+    this.retryAfter.set(null);
+    this.connectSse(this.sessionId());
+  }
+
+  formatWait(seconds: number): string {
+    if (seconds >= 120) return `~${Math.round(seconds / 60)} minutes`;
+    if (seconds >= 60) return '~1 minute';
+    return `~${Math.round(seconds)} seconds`;
   }
 
   onHumanVoted(verdict: Verdict): void {
@@ -144,6 +159,7 @@ export class SessionView implements OnInit {
         });
         break;
       case 'error':
+      case 'rate_limited':
         this.loadHistoricalState(sessionId);
         break;
       case 'awaiting_human_turn':
@@ -239,7 +255,7 @@ export class SessionView implements OnInit {
           // SSE fires onerror on connection close — this includes normal closes
           // after awaiting_human_turn, awaiting_human_vote (status='voting'), or verdict.
           const status = this.sessionStatus();
-          if (status !== 'complete' && status !== 'awaiting_human_turn' && status !== 'voting') {
+          if (status !== 'complete' && status !== 'awaiting_human_turn' && status !== 'voting' && status !== 'rate_limited') {
             this.sessionStatus.set('error');
           }
         },
@@ -334,6 +350,13 @@ export class SessionView implements OnInit {
         console.log('[SSE] Awaiting human vote:', data.message);
         this.sessionStatus.set('voting');
         this.waitingForHuman.set(true);
+        break;
+      }
+      case 'rate_limited': {
+        const data = raw as SseRateLimited;
+        console.warn('[SSE] Rate limited:', data.message, 'retry_after:', data.retry_after);
+        this.sessionStatus.set('rate_limited');
+        this.retryAfter.set(data.retry_after);
         break;
       }
       case 'error': {

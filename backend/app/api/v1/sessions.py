@@ -13,6 +13,7 @@ from starlette.responses import Response, StreamingResponse
 
 from app.api.v1.deps import DBSession, build_session_list, get_or_404
 from app.core.database import async_session_factory
+from app.engine.agent import RateLimitError
 from app.engine.council import run_council_session
 from app.models.models import Council, Message, Round, Session, Verdict, Vote
 from app.schemas.schemas import (
@@ -112,11 +113,16 @@ async def get_session_messages(
 @router.get("/sessions/{session_id}/stream")
 async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingResponse:
     session = await get_or_404(db, Session, session_id, "Session not found")
-    if session.status != "pending":
+    resumable_statuses = ("pending", "rate_limited")
+    if session.status not in resumable_statuses:
         raise HTTPException(
             status_code=409,
-            detail=f"Session is '{session.status}', expected 'pending'",
+            detail=f"Session is '{session.status}', expected one of {resumable_statuses}",
         )
+    # Reset to pending so the engine picks it up cleanly
+    if session.status == "rate_limited":
+        session.status = "pending"
+        await db.flush()
 
     async def event_generator() -> AsyncGenerator[str, None]:
         # Use a dedicated DB session — the request-scoped one closes when
@@ -125,6 +131,9 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
             try:
                 async for event in run_council_session(session_id, engine_db):
                     yield event
+            except RateLimitError:
+                # Already handled by council.py — this is a safety net
+                logger.warning("Rate limit bubbled to stream for session %s", session_id)
             except (anthropic.APIError, SQLAlchemyError):
                 logger.exception("Stream error for session %s", session_id)
                 await engine_db.rollback()

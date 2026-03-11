@@ -12,6 +12,14 @@ from app.models.models import Agent
 logger = logging.getLogger(__name__)
 
 
+class RateLimitError(Exception):
+    """Raised when the Anthropic API returns a 429 rate-limit response."""
+
+    def __init__(self, message: str, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 @dataclass
 class Reference:
     """A source reference extracted from tool results (e.g., web search)."""
@@ -79,6 +87,10 @@ async def call_agent(
         if tools:
             kwargs["tools"] = tools
         response = await client.messages.create(**kwargs)
+    except anthropic.RateLimitError as exc:
+        retry_after = _extract_retry_after(exc)
+        logger.warning("Rate limited by Anthropic API (retry_after=%s): %s", retry_after, exc.message)
+        raise RateLimitError(exc.message, retry_after=retry_after) from exc
     except anthropic.APIStatusError as exc:
         logger.error("Anthropic API error (%s): %s", exc.status_code, exc.message)
         raise RuntimeError(exc.message) from exc
@@ -157,6 +169,10 @@ async def call_with_tool(
             tools=[tool],
             tool_choice={"type": "tool", "name": tool["name"]},
         )
+    except anthropic.RateLimitError as exc:
+        retry_after = _extract_retry_after(exc)
+        logger.warning("Rate limited by Anthropic API (retry_after=%s): %s", retry_after, exc.message)
+        raise RateLimitError(exc.message, retry_after=retry_after) from exc
     except anthropic.APIStatusError as exc:
         logger.error("Anthropic API error (%s): %s", exc.status_code, exc.message)
         raise RuntimeError(exc.message) from exc
@@ -175,3 +191,24 @@ async def call_with_tool(
         f"Expected tool_use block in response but got: "
         f"{[b.type for b in response.content]}"
     )
+
+
+def _extract_retry_after(exc: anthropic.RateLimitError) -> float | None:
+    """Extract Retry-After seconds from a rate-limit response, if present.
+
+    Checks the standard ``Retry-After`` header first, then falls back to
+    ``x-ratelimit-reset`` (Unix timestamp) which some providers use.
+    """
+    try:
+        headers = exc.response.headers
+        header = headers.get("retry-after")
+        if header is not None:
+            return float(header)
+        # Fallback: x-ratelimit-reset is a Unix timestamp
+        reset_ts = headers.get("x-ratelimit-reset")
+        if reset_ts is not None:
+            import time
+            return max(0.0, float(reset_ts) - time.time())
+    except (AttributeError, ValueError):
+        pass
+    return None
