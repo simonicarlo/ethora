@@ -14,7 +14,7 @@ from typing import Any
 # -- Agent tools (used during deliberation when tools_enabled=True) -----------
 
 WEB_SEARCH_TOOL: dict[str, Any] = {
-    "type": "web_search_20260209",
+    "type": "web_search_20250305",
     "name": "web_search",
     "max_uses": 3,
 }
