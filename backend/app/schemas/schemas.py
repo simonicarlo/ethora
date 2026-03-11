@@ -11,6 +11,8 @@ QuestionType = Literal["binary", "open", "research"]
 SessionStatus = Literal["pending", "running", "proposing", "voting", "closing_statements", "awaiting_human_turn", "complete", "error", "rate_limited"]
 MessageType = Literal["agent", "human", "moderator", "proposal"]
 
+DEFAULT_AGENT_ICON = "smart_toy"
+
 
 # -- Agents ------------------------------------------------------------------
 
@@ -18,7 +20,7 @@ class AgentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     system_prompt: str = Field(min_length=1, max_length=50_000)
     model: str = "claude-sonnet-4-20250514"
-    icon: str = "smart_toy"
+    icon: str = DEFAULT_AGENT_ICON
 
 
 class AgentUpdate(BaseModel):

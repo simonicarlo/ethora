@@ -6,10 +6,12 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog } from '@angular/material/dialog';
 import { DatePipe } from '@angular/common';
 
 import { ApiService } from '../../../core/api.service';
 import { SessionListItem, SessionStatus } from '../../../core/models';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
 
 @Component({
@@ -31,6 +33,7 @@ import { MeshBackground } from '../../../shared/components/mesh-background/mesh-
 export class SessionList {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly sessions = signal<SessionListItem[]>([]);
@@ -96,15 +99,19 @@ export class SessionList {
   }
 
   deleteSession(session: SessionListItem): void {
-    if (!confirm(`Delete this session? This cannot be undone.`)) return;
-
-    this.api.deleteSession(session.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.sessions.update(sessions => sessions.filter(s => s.id !== session.id));
-      },
-      error: (err) => {
-        this.error.set(err?.error?.detail ?? 'Failed to delete session');
-      },
+    const ref = this.dialog.open(ConfirmDialog, {
+      data: { title: 'Delete Session', message: 'Delete this session? This cannot be undone.' },
+    });
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.api.deleteSession(session.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          this.sessions.update(sessions => sessions.filter(s => s.id !== session.id));
+        },
+        error: (err) => {
+          this.error.set(err?.error?.detail ?? 'Failed to delete session');
+        },
+      });
     });
   }
 

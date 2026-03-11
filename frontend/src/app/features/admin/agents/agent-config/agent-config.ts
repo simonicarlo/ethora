@@ -10,9 +10,11 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatDialog } from '@angular/material/dialog';
 
 import { ApiService } from '../../../../core/api.service';
-import { Agent } from '../../../../core/models';
+import { Agent, DEFAULT_AGENT_ICON } from '../../../../core/models';
+import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
 import { AgentTestBench } from '../agent-test-bench/agent-test-bench';
 import { AgentTemplates } from '../agent-templates/agent-templates';
 
@@ -45,6 +47,7 @@ export const AGENT_ICONS = [
 export class AgentConfig {
   private readonly api = inject(ApiService);
   private readonly fb = inject(FormBuilder);
+  private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly agents = signal<Agent[]>([]);
@@ -66,7 +69,7 @@ export class AgentConfig {
     name: ['', Validators.required],
     system_prompt: ['', Validators.required],
     model: ['claude-sonnet-4-20250514'],
-    icon: ['smart_toy'],
+    icon: [DEFAULT_AGENT_ICON],
   });
 
   constructor() {
@@ -94,7 +97,7 @@ export class AgentConfig {
       name: agent.name,
       system_prompt: agent.system_prompt,
       model: agent.model,
-      icon: agent.icon || 'smart_toy',
+      icon: agent.icon || DEFAULT_AGENT_ICON,
     });
   }
 
@@ -102,7 +105,7 @@ export class AgentConfig {
     this.selectedAgent.set(null);
     this.isCreateMode.set(true);
     this.error.set(null);
-    this.form.reset({ name: '', system_prompt: '', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' });
+    this.form.reset({ name: '', system_prompt: '', model: 'claude-sonnet-4-20250514', icon: DEFAULT_AGENT_ICON });
   }
 
   onSave(): void {
@@ -138,17 +141,22 @@ export class AgentConfig {
   onDelete(): void {
     const agent = this.selectedAgent();
     if (!agent) return;
-    if (!confirm(`Delete agent "${agent.name}"? This cannot be undone.`)) return;
 
-    this.api.deleteAgent(agent.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: () => {
-        this.agents.update(list => list.filter(a => a.id !== agent.id));
-        this.selectedAgent.set(null);
-        this.isCreateMode.set(false);
-      },
-      error: (err) => {
-        this.error.set(err?.error?.detail ?? 'Failed to delete agent');
-      },
+    const ref = this.dialog.open(ConfirmDialog, {
+      data: { title: 'Delete Agent', message: `Delete agent "${agent.name}"? This cannot be undone.` },
+    });
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.api.deleteAgent(agent.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          this.agents.update(list => list.filter(a => a.id !== agent.id));
+          this.selectedAgent.set(null);
+          this.isCreateMode.set(false);
+        },
+        error: (err) => {
+          this.error.set(err?.error?.detail ?? 'Failed to delete agent');
+        },
+      });
     });
   }
 

@@ -1,3 +1,6 @@
+/** Default Material icon for agents without a custom icon. */
+export const DEFAULT_AGENT_ICON = 'smart_toy';
+
 export interface Agent {
   id: string;
   name: string;

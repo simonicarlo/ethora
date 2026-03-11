@@ -8,6 +8,7 @@ from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.schemas.schemas import DEFAULT_AGENT_ICON
 
 
 def _utcnow() -> datetime:
@@ -33,7 +34,7 @@ class Agent(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(String, default="claude-sonnet-4-20250514")
-    icon: Mapped[str | None] = mapped_column(String, default="smart_toy")
+    icon: Mapped[str | None] = mapped_column(String, default=DEFAULT_AGENT_ICON)
 
 
 class Council(Base):

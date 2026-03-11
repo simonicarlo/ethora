@@ -4,9 +4,10 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { Agent, MessageType, Reference, StageSetData } from '../../../core/models';
+import { Agent, DEFAULT_AGENT_ICON, MessageType, Reference, StageSetData } from '../../../core/models';
 import { TitleCasePipe } from '@angular/common';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
+import { buildAgentMap } from '../../../shared/utils/agent-map';
 
 export interface ToolActivity {
   agent_id: string;
@@ -61,13 +62,7 @@ export class DebatePanel {
     return this.expandedMessages().has(key);
   }
 
-  readonly agentMap = computed(() => {
-    const map = new Map<string, Agent>();
-    for (const agent of this.agents()) {
-      map.set(agent.id, agent);
-    }
-    return map;
-  });
+  readonly agentMap = computed(() => buildAgentMap(this.agents()));
 
   readonly rounds = computed(() => {
     const msgs = this.messages();
@@ -85,7 +80,7 @@ export class DebatePanel {
             const isModerator = m.message_type === 'moderator';
             const isHuman = m.message_type === 'human' || (!m.message_type && m.agent_id === null);
             const agent = m.agent_id ? this.agentMap().get(m.agent_id) : undefined;
-            const icon = isModerator ? 'shield' : isHuman ? 'person' : (agent?.icon ?? 'smart_toy');
+            const icon = isModerator ? 'shield' : isHuman ? 'person' : (agent?.icon ?? DEFAULT_AGENT_ICON);
             const agentName = isModerator
               ? 'Moderator'
               : isHuman

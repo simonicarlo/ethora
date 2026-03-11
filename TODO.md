@@ -78,15 +78,15 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 3 — Refactoring for maintainability**
 
-- [ ] **Create SSE event constants module** — Replace 18+ hardcoded string literals with constants in `sse/events.py` — **`backend/app/engine/council.py`, `sessions.py`**
-- [ ] **Extract `_system_prompt_for()` helper** — `render_deliberation_system()` called 4x with identical args at lines 210, 316, 408, 494 — **`backend/app/engine/council.py`**
-- [ ] **Extract `_build_debate_text()` helper** — Identical 4-line block at lines 304-307 and 390-393 — **`backend/app/engine/council.py`**
-- [ ] **Consolidate default icon constant** — `'smart_toy'` hardcoded in 10+ locations across both stacks; define `DEFAULT_AGENT_ICON` per stack — **multiple files**
-- [ ] **Extract shared markdown styles** — Duplicated `::ng-deep` markdown CSS in `debate-panel.scss:190-200` and `session-view.scss:235-243`; create `_markdown.scss` mixin
-- [ ] **Unify DI patterns** — Frontend: `human-turn-input.ts`, `human-vote-form.ts` use constructor injection while all others use `inject()`. Backend: `admin.py` uses raw `Depends(get_db)` while others use `DBSession` alias
-- [ ] **Replace `confirm()` with `MatDialog`** — Browser `confirm()` in `council-list.ts:61`, `session-list.ts:99`, `agent-config.ts:141` is inconsistent with Material Design
-- [ ] **Create shared `AgentChip` component** — Agent name+icon template pattern repeated in 4+ templates — **`frontend/src/app/shared/components/`**
-- [ ] **Deduplicate `agentMap` computed signal** — Same map built independently in `session-view.ts` and `debate-panel.ts`; pass as input or extract utility
+- [x] **Create SSE event constants module** — Created `sse/events.py` with 18 named constants; updated `council.py` and `sessions.py` — **`backend/app/sse/events.py`**
+- [x] **Extract `_system_prompt_for()` helper** — Replaced 4 identical `render_deliberation_system()` call sites — **`backend/app/engine/council.py`**
+- [x] **Extract `_build_debate_text()` helper** — Replaced 2 identical debate-text-building blocks — **`backend/app/engine/council.py`**
+- [x] **Consolidate default icon constant** — Added `DEFAULT_AGENT_ICON` per stack; updated 6 frontend and 3 backend references — **`models.ts`, `schemas.py`, multiple files**
+- [x] **Extract shared markdown styles** — Created `_markdown.scss` mixin; updated `debate-panel.scss` and `session-view.scss` — **`frontend/src/styles/_markdown.scss`**
+- [x] **Unify DI patterns** — Backend: replaced 7 raw `Depends(get_db)` with `DBSession` in `admin.py`; frontend already unified with `inject()` — **`backend/app/api/v1/admin.py`**
+- [x] **Replace `confirm()` with `MatDialog`** — Created shared `ConfirmDialog` component; updated `council-list.ts`, `session-list.ts`, `agent-config.ts` — **`frontend/src/app/shared/components/confirm-dialog/`**
+- [x] **Create shared `AgentChip` component** — Created `AgentChip` component; updated `voting-panel.html` and `council-list.html` — **`frontend/src/app/shared/components/agent-chip/`**
+- [x] **Deduplicate `agentMap` computed signal** — Extracted `buildAgentMap()` utility; updated `session-view.ts` and `debate-panel.ts` — **`frontend/src/app/shared/utils/agent-map.ts`**
 
 ---
 

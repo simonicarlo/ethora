@@ -28,6 +28,7 @@ from app.schemas.schemas import (
     VerdictResponse,
 )
 from app.sse.emitter import format_sse
+from app.sse.events import ERROR
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +140,7 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
             except (anthropic.APIError, SQLAlchemyError):
                 logger.exception("Stream error for session %s", session_id)
                 await engine_db.rollback()
-                yield format_sse("error", {"message": "Stream error"})
+                yield format_sse(ERROR, {"message": "Stream error"})
 
     # media_type="text/event-stream" is the standard SSE content type;
     # browsers and EventSource clients rely on it to enable streaming parsing.
