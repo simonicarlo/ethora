@@ -55,15 +55,16 @@ async def get_session_messages(
     """Return all messages and votes for a session (for cold-loading on page reload)."""
     await get_or_404(db, Session, session_id, "Session not found")
 
-    # Fetch messages with round and agent info, ordered by round then creation time.
-    # Message.round and Message.agent are eagerly loaded via selectin.
+    # Select Round.round_number directly from the join to avoid lazy-loading
+    # the msg.round relationship (which fails in async SQLAlchemy).
+    # Message.agent uses lazy="selectin" on the model, so it loads automatically.
     msg_result = await db.execute(
-        select(Message)
+        select(Message, Round.round_number)
         .join(Round, Message.round_id == Round.id)
         .where(Round.session_id == session_id)
         .order_by(Round.round_number, Message.created_at)
     )
-    messages = msg_result.scalars().all()
+    rows = msg_result.all()
 
     vote_result = await db.execute(
         select(Vote).where(Vote.session_id == session_id)
@@ -73,13 +74,13 @@ async def get_session_messages(
     msg_list: list[dict[str, object]] = [
         {
             "id": msg.id,
-            "round_number": msg.round.round_number,
+            "round_number": round_number,
             "agent_id": msg.agent_id,
             "agent_name": msg.agent.name if msg.agent else "Human",
             "content": msg.content,
             "created_at": msg.created_at,
         }
-        for msg in messages
+        for msg, round_number in rows
     ]
 
     return {"messages": msg_list, "votes": votes}
