@@ -29,6 +29,20 @@ Implements four voting mechanisms, each receiving a list of `Vote` ORM objects:
 - **Confidence as weight**: In weighted voting, agent-reported confidence directly scales vote weight.
 - **Consensus requires unanimity**: All agents must agree; no threshold — it's all-or-nothing.
 
+### `prompts/` — Prompt Templates
+
+Editable `.txt` template files with `{variable}` placeholders, loaded and cached by `loader.py`.
+
+| File | Purpose |
+|------|---------|
+| `deliberation_system.txt` | Wraps each agent's custom system prompt with council context (name, participants, voting mechanism, rounds) |
+| `voting_prompt.txt` | Asks agent to cast a JSON vote after deliberation |
+| `continuation_nudge.txt` | Nudge appended when last message is assistant role |
+| `loader.py` | `load_template()`, `render_deliberation_system()`, `render_voting_prompt()`, `render_continuation_nudge()` |
+
+- Uses `str.replace()` chains (not `str.format()`) — safe for user content containing literal braces.
+- Templates are cached in a module-level dict on first load.
+
 ### `council.py` — Session Orchestrator
 
 The main engine entry point. `run_council_session()` is an **async generator** that yields SSE-formatted strings.
@@ -40,12 +54,13 @@ The main engine entry point. `run_council_session()` is an **async generator** t
 3. **Rounds** — For each round (1..N):
    - Creates a `Round` DB row
    - For each agent (sequential — each sees all prior responses):
+     - Builds deliberation system prompt via `render_deliberation_system()` (wraps agent's custom prompt with council context)
      - Builds Claude-compatible messages via `_build_agent_messages()`
      - Calls `call_agent()`, saves `Message` row
      - Yields `agent_message` SSE event
    - Yields `round_complete` SSE event
 4. **Voting** — Sets status to `"voting"`:
-   - Builds a voting prompt, calls each agent, parses JSON vote
+   - Builds voting prompt via `render_voting_prompt()`, calls each agent, parses JSON vote
    - Saves `Vote` rows, yields `voting_cast` SSE per vote
    - Calls `tally_votes()` to determine outcome
 5. **Verdict** — Saves `Verdict`, sets status to `"complete"`, yields `verdict` SSE
@@ -53,9 +68,7 @@ The main engine entry point. `run_council_session()` is an **async generator** t
 
 #### Helpers
 
-- **`_build_agent_messages(history, current_agent, input_claim)`** — Converts flat debate history to Claude API format. Own messages become `"assistant"` role; others become `"user"` role with `[AgentName]:` prefix. Consecutive same-role messages are merged to satisfy the API's alternation constraint. Appends a continuation nudge if the last message is `"assistant"`.
-
-- **`_build_voting_prompt(input_claim, history)`** — Formats the full debate transcript and asks the agent to respond with a JSON vote: `{"value", "confidence", "reasoning"}`.
+- **`_build_agent_messages(history, current_agent, input_claim)`** — Converts flat debate history to Claude API format. Own messages become `"assistant"` role; others become `"user"` role with `[AgentName]:` prefix. Consecutive same-role messages are merged to satisfy the API's alternation constraint. Appends a continuation nudge from template if the last message is `"assistant"`.
 
 - **`_parse_vote(raw_text)`** — Extracts JSON from agent response by finding the outermost `{…}`. Falls back to `{"value": "abstain", "confidence": 0.0, "reasoning": <raw_text>}`.
 
