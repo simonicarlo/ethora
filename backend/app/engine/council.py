@@ -574,8 +574,10 @@ async def run_council_session(
         await _cancel_and_await(summary_tasks)
         logger.exception("Council session %s failed", session_id)
         await db.rollback()
-        session.status = "error"
-        await db.commit()
+        session = await db.get(Session, session_id)
+        if session is not None:
+            session.status = "error"
+            await db.commit()
         yield format_sse("error", {"message": str(exc) or "Internal engine error"})
 
 

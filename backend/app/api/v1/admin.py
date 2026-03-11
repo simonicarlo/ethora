@@ -20,6 +20,7 @@ from app.models.models import (
     Vote,
 )
 from app.schemas.schemas import (
+    ALLOWED_SETTING_KEYS,
     SENSITIVE_KEYS,
     AgentMetricItem,
     AgentStatsResponse,
@@ -255,6 +256,8 @@ async def update_setting(
     body: SettingUpdate,
     db: AsyncSession = Depends(get_db),
 ) -> SettingResponse:
+    if key not in ALLOWED_SETTING_KEYS:
+        raise HTTPException(status_code=400, detail=f"Unknown setting key: '{key}'")
     result = await db.execute(select(AppSetting).where(AppSetting.key == key))
     setting = result.scalar_one_or_none()
 
@@ -281,6 +284,8 @@ async def delete_setting(
     key: str,
     db: AsyncSession = Depends(get_db),
 ) -> None:
+    if key not in ALLOWED_SETTING_KEYS:
+        raise HTTPException(status_code=400, detail=f"Unknown setting key: '{key}'")
     result = await db.execute(select(AppSetting).where(AppSetting.key == key))
     setting = result.scalar_one_or_none()
     if not setting:

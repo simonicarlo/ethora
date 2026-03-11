@@ -14,9 +14,9 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 1 — Fix before any new feature work**
 
-- [ ] **Fix post-rollback session status update** — Re-fetch session via `db.get()` after rollback in generic error handler, matching the `RateLimitError` pattern — **`backend/app/engine/council.py:573-578`**
-- [ ] **Fix `as unknown as Vote` type cast** — Create a proper mapping function from `SseVotingCast` to `Vote` instead of double-casting through `unknown` (missing `id`, `agent_id`) — **`frontend/src/app/features/session/session-view/session-view.ts:434`**
-- [ ] **Validate admin settings keys** — Whitelist allowed setting keys in `PUT /api/v1/admin/settings/{key}` to prevent arbitrary key injection — **`backend/app/api/v1/admin.py:252-276`**
+- [x] **Fix post-rollback session status update** — Re-fetch session via `db.get()` after rollback in generic error handler, matching the `RateLimitError` pattern — **`backend/app/engine/council.py:573-578`**
+- [x] **Fix `as unknown as Vote` type cast** — Create a proper mapping function from `SseVotingCast` to `Vote` instead of double-casting through `unknown` (missing `id`, `agent_id`) — **`frontend/src/app/features/session/session-view/session-view.ts:434`**
+- [x] **Validate admin settings keys** — Whitelist allowed setting keys in `PUT /api/v1/admin/settings/{key}` to prevent arbitrary key injection — **`backend/app/api/v1/admin.py:252-276`**
 
 ---
 

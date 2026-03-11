@@ -149,21 +149,21 @@ class TestErrorLogs:
 class TestSettings:
     async def test_create_and_list_settings(self, client: AsyncClient) -> None:
         resp = await client.put(
-            "/api/v1/admin/settings/test_key",
-            json={"value": "hello_world"},
+            "/api/v1/admin/settings/moderator_model",
+            json={"value": "claude-sonnet-4-20250514"},
         )
         assert resp.status_code == 200
-        assert resp.json()["key"] == "test_key"
-        assert resp.json()["value"] == "hello_world"
+        assert resp.json()["key"] == "moderator_model"
+        assert resp.json()["value"] == "claude-sonnet-4-20250514"
 
         resp = await client.get("/api/v1/admin/settings")
         assert resp.status_code == 200
         keys = [s["key"] for s in resp.json()]
-        assert "test_key" in keys
+        assert "moderator_model" in keys
 
     async def test_update_setting(self, client: AsyncClient) -> None:
-        await client.put("/api/v1/admin/settings/my_key", json={"value": "v1"})
-        resp = await client.put("/api/v1/admin/settings/my_key", json={"value": "v2"})
+        await client.put("/api/v1/admin/settings/cors_origins", json={"value": "v1"})
+        resp = await client.put("/api/v1/admin/settings/cors_origins", json={"value": "v2"})
         assert resp.status_code == 200
         assert resp.json()["value"] == "v2"
 
@@ -179,14 +179,22 @@ class TestSettings:
         assert "secret" not in api_key_setting["value"]
 
     async def test_delete_setting(self, client: AsyncClient) -> None:
-        await client.put("/api/v1/admin/settings/to_delete", json={"value": "bye"})
-        resp = await client.delete("/api/v1/admin/settings/to_delete")
+        await client.put("/api/v1/admin/settings/cors_origins", json={"value": "bye"})
+        resp = await client.delete("/api/v1/admin/settings/cors_origins")
         assert resp.status_code == 204
 
         resp = await client.get("/api/v1/admin/settings")
         keys = [s["key"] for s in resp.json()]
-        assert "to_delete" not in keys
+        assert "cors_origins" not in keys
 
     async def test_delete_setting_not_found(self, client: AsyncClient) -> None:
-        resp = await client.delete("/api/v1/admin/settings/nonexistent")
+        resp = await client.delete("/api/v1/admin/settings/moderator_model")
         assert resp.status_code == 404
+
+    async def test_unknown_key_rejected(self, client: AsyncClient) -> None:
+        resp = await client.put(
+            "/api/v1/admin/settings/arbitrary_key",
+            json={"value": "should_fail"},
+        )
+        assert resp.status_code == 400
+        assert "Unknown setting key" in resp.json()["detail"]
