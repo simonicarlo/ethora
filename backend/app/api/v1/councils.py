@@ -6,8 +6,8 @@ from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 
-from app.api.v1.deps import DBSession, get_or_404
-from app.models.models import Agent, Council, Session, Verdict, council_agents
+from app.api.v1.deps import DBSession, build_session_list, get_or_404
+from app.models.models import Agent, Council, Session, council_agents
 from app.schemas.schemas import (
     AgentCreate,
     AgentResponse,
@@ -174,30 +174,9 @@ async def list_council_sessions(
     db: DBSession,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-) -> list[dict[str, object]]:
+) -> list[SessionListItem]:
     """List all sessions for a specific council, ordered by created_at desc."""
     await get_or_404(db, Council, council_id, "Council not found")
-    stmt = (
-        select(Session, Council.name.label("council_name"), Verdict.summary.label("verdict_summary"))
-        .join(Council, Session.council_id == Council.id)
-        .outerjoin(Verdict, Verdict.session_id == Session.id)
-        .where(Session.council_id == council_id)
-        .order_by(Session.created_at.desc())
-        .offset(skip)
-        .limit(limit)
+    return await build_session_list(
+        db, council_id=council_id, skip=skip, limit=limit,
     )
-    result = await db.execute(stmt)
-    rows = result.all()
-    return [
-        {
-            "id": session.id,
-            "council_id": session.council_id,
-            "council_name": council_name,
-            "input_claim": session.input_claim,
-            "question_type": session.question_type,
-            "status": session.status,
-            "verdict_summary": verdict_summary,
-            "created_at": session.created_at,
-        }
-        for session, council_name, verdict_summary in rows
-    ]

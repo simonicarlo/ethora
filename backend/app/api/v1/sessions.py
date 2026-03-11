@@ -11,7 +11,7 @@ from sqlalchemy import delete as sa_delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import Response, StreamingResponse
 
-from app.api.v1.deps import DBSession, get_or_404
+from app.api.v1.deps import DBSession, build_session_list, get_or_404
 from app.core.database import async_session_factory
 from app.engine.council import run_council_session
 from app.models.models import Council, Message, Round, Session, Verdict, Vote
@@ -23,6 +23,7 @@ from app.schemas.schemas import (
     SessionListItem,
     SessionResponse,
     SessionStateResponse,
+    SessionStatus,
     VerdictResponse,
 )
 from app.sse.emitter import format_sse
@@ -36,38 +37,14 @@ router = APIRouter(prefix="/api/v1", tags=["sessions"])
 async def list_sessions(
     db: DBSession,
     council_id: uuid.UUID | None = None,
-    status: str | None = None,
+    status: SessionStatus | None = None,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-) -> list[dict[str, object]]:
+) -> list[SessionListItem]:
     """List all sessions with optional filters, ordered by created_at desc."""
-    stmt = (
-        select(Session, Council.name.label("council_name"), Verdict.summary.label("verdict_summary"))
-        .join(Council, Session.council_id == Council.id)
-        .outerjoin(Verdict, Verdict.session_id == Session.id)
-        .order_by(Session.created_at.desc())
-        .offset(skip)
-        .limit(limit)
+    return await build_session_list(
+        db, council_id=council_id, status=status, skip=skip, limit=limit,
     )
-    if council_id is not None:
-        stmt = stmt.where(Session.council_id == council_id)
-    if status is not None:
-        stmt = stmt.where(Session.status == status)
-    result = await db.execute(stmt)
-    rows = result.all()
-    return [
-        {
-            "id": session.id,
-            "council_id": session.council_id,
-            "council_name": council_name,
-            "input_claim": session.input_claim,
-            "question_type": session.question_type,
-            "status": session.status,
-            "verdict_summary": verdict_summary,
-            "created_at": session.created_at,
-        }
-        for session, council_name, verdict_summary in rows
-    ]
 
 
 @router.post("/sessions", response_model=SessionResponse, status_code=201)

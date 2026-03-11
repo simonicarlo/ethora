@@ -23,8 +23,9 @@ export class Home {
   readonly recentSessions = signal<SessionListItem[]>([]);
 
   constructor() {
-    this.api.listSessions().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (sessions) => this.recentSessions.set(sessions.slice(0, 5)),
+    this.api.listSessions({ limit: 5 }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (sessions) => this.recentSessions.set(sessions),
+      error: () => this.recentSessions.set([]),
     });
   }
 }

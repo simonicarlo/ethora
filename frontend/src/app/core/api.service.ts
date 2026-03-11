@@ -80,10 +80,11 @@ export class ApiService {
     return this.delete<void>(`/agents/${id}`);
   }
 
-  listSessions(params?: { council_id?: string; status?: string }): Observable<SessionListItem[]> {
+  listSessions(params?: { council_id?: string; status?: string; limit?: number }): Observable<SessionListItem[]> {
     let httpParams = new HttpParams();
     if (params?.council_id) httpParams = httpParams.set('council_id', params.council_id);
     if (params?.status) httpParams = httpParams.set('status', params.status);
+    if (params?.limit) httpParams = httpParams.set('limit', params.limit.toString());
     return this.http.get<SessionListItem[]>(`${this.basePath}/sessions`, { params: httpParams });
   }
 
