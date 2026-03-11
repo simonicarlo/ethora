@@ -4,13 +4,13 @@
 
 <mat-form-field appearance="outline" class="full-width">
   <mat-label>Test Message</mat-label>
-  <textarea matInput [(ngModel)]="testMessage" rows="3"
+  <textarea matInput [ngModel]="testMessage()" (ngModelChange)="testMessage.set($event)" rows="3"
     placeholder="Type a message to test this agent's behavior..."
     (keydown.meta.enter)="send()"
     (keydown.control.enter)="send()"></textarea>
 </mat-form-field>
 
-<button mat-flat-button class="send-action" (click)="send()" [disabled]="!testMessage.trim() || sending()">
+<button mat-flat-button class="send-action" (click)="send()" [disabled]="!testMessage().trim() || sending()">
   @if (sending()) {
     <mat-spinner diameter="20"></mat-spinner>
   } @else {

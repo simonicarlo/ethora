@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import {
   Agent,
   AgentCreate,
+  AgentTestResponse,
   AgentUpdate,
   Council,
   CouncilCreate,
@@ -80,8 +81,8 @@ export class ApiService {
     return this.delete<void>(`/agents/${id}`);
   }
 
-  testAgent(id: string, message: string): Observable<{ response: string }> {
-    return this.post<{ response: string }>(`/agents/${id}/test`, { message });
+  testAgent(id: string, message: string): Observable<AgentTestResponse> {
+    return this.post<AgentTestResponse>(`/agents/${id}/test`, { message });
   }
 
   listSessions(params?: { council_id?: string; status?: string; limit?: number }): Observable<SessionListItem[]> {

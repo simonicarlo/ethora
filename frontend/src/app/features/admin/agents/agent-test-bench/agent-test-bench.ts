@@ -32,13 +32,13 @@ export class AgentTestBench {
 
   readonly agent = input.required<Agent>();
 
-  testMessage = '';
+  readonly testMessage = signal('');
   readonly sending = signal(false);
   readonly response = signal<string | null>(null);
   readonly error = signal<string | null>(null);
 
   send(): void {
-    const message = this.testMessage.trim();
+    const message = this.testMessage().trim();
     if (!message || this.sending()) return;
 
     this.sending.set(true);
