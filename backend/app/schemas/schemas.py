@@ -15,14 +15,14 @@ SessionStatus = Literal["pending", "running", "proposing", "voting", "closing_st
 
 class AgentCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
-    system_prompt: str = Field(min_length=1)
+    system_prompt: str = Field(min_length=1, max_length=50_000)
     model: str = "claude-sonnet-4-20250514"
     icon: str = "smart_toy"
 
 
 class AgentUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
-    system_prompt: str | None = Field(default=None, min_length=1)
+    system_prompt: str | None = Field(default=None, min_length=1, max_length=50_000)
     model: str | None = None
     icon: str | None = None
 
@@ -170,7 +170,7 @@ class SessionStateResponse(BaseModel):
 # -- Human Turn ---------------------------------------------------------------
 
 class HumanTurnRequest(BaseModel):
-    content: str = Field(min_length=1)
+    content: str = Field(min_length=1, max_length=10_000)
 
 
 class HumanTurnResponse(BaseModel):
@@ -178,15 +178,15 @@ class HumanTurnResponse(BaseModel):
 
 
 class HumanVoteRequest(BaseModel):
-    decision: str = Field(min_length=1)
+    decision: str = Field(min_length=1, max_length=1_000)
     confidence: float = Field(ge=0.0, le=1.0)
-    reasoning: str | None = None
+    reasoning: str | None = Field(default=None, max_length=5_000)
 
 
 # -- Agent Test ---------------------------------------------------------------
 
 class AgentTestRequest(BaseModel):
-    message: str = Field(min_length=1)
+    message: str = Field(min_length=1, max_length=10_000)
 
 
 class AgentTestResponse(BaseModel):
@@ -258,4 +258,4 @@ class SettingResponse(BaseModel):
 
 
 class SettingUpdate(BaseModel):
-    value: str = Field(min_length=1)
+    value: str = Field(min_length=1, max_length=10_000)

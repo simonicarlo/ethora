@@ -24,11 +24,11 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 1 — Required before any deployment**
 
-- [ ] **Add authentication to admin endpoints** — At minimum, add API key or basic auth middleware to `/api/v1/admin/*` routes — **`backend/app/api/v1/admin.py`**
-- [ ] **Mask API key in admin UI** — Show only last 4 characters instead of full key in cleartext — **`frontend/src/app/features/admin/settings/admin-settings.html:13`**
-- [ ] **Require `SETTINGS_ENCRYPTION_KEY`** — Fail loudly on startup if encryption key is empty when admin settings feature is used — **`backend/app/core/config.py:9`**
-- [ ] **Add `max_length` to all text input fields** — `HumanTurnRequest.content`, `AgentCreate.system_prompt`, `SessionCreate.input_claim` lack upper bounds — **`backend/app/schemas/schemas.py`**
-- [ ] **Update `.env.example`** — Add `CORS_ORIGINS`, `MODERATOR_MODEL`, `SETTINGS_ENCRYPTION_KEY` — **`.env.example`**
+- [x] **Add authentication to admin endpoints** — API key auth via `X-Admin-Key` header on all `/api/v1/admin/*` routes; skipped when `ADMIN_API_KEY` is empty (dev mode) — **`backend/app/api/v1/admin.py`**
+- [x] **Mask API key in admin UI** — Show only last 4 characters (`****xxxx`) instead of first 4 — **`backend/app/api/v1/admin.py`**
+- [x] **Require `SETTINGS_ENCRYPTION_KEY`** — Fail loudly on startup if encryption key is empty when encrypted settings exist in DB — **`backend/app/main.py`**
+- [x] **Add `max_length` to all text input fields** — Added bounds to 7 Pydantic schema fields — **`backend/app/schemas/schemas.py`**
+- [x] **Update `.env.example`** — Added `CORS_ORIGINS`, `MODERATOR_MODEL`, `SETTINGS_ENCRYPTION_KEY`, `ADMIN_API_KEY` — **`.env.example`**
 
 ---
 
@@ -166,3 +166,4 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 - [ ] **Fact Checker wrapper** — Preconfigured council with Source Critic, Logical Analyst, Devil's Advocate, Synthesizer agents
 - [ ] **Graph visualization panel** — Deferred from PoC
 - [ ] **Tool registry backend persistence** — Per-tool config requires a `tool_config` JSON column on councils
+- [ ] **Frontend admin auth support** — Add `X-Admin-Key` header to admin API requests when `ADMIN_API_KEY` is configured (e.g., via HTTP interceptor or login prompt) — **`frontend/src/app/core/api.service.ts`**

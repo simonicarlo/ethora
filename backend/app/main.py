@@ -44,6 +44,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     else:
         for line in result.stderr.strip().splitlines():
             logging.info(line)
+
+    # Fail loudly if encrypted settings exist but no encryption key is configured
+    if not settings.SETTINGS_ENCRYPTION_KEY:
+        from sqlalchemy import func, select
+
+        from app.core.database import async_session_factory
+        from app.models.models import AppSetting
+
+        async with async_session_factory() as _check_db:
+            setting_count: int = (await _check_db.execute(
+                select(func.count(AppSetting.id))
+            )).scalar_one()
+        if setting_count > 0:
+            raise RuntimeError(
+                "SETTINGS_ENCRYPTION_KEY is not set but %d encrypted setting(s) exist "
+                "in the database. Set SETTINGS_ENCRYPTION_KEY in .env or the environment "
+                "before starting." % setting_count
+            )
+        else:
+            logging.warning(
+                "SETTINGS_ENCRYPTION_KEY is not set. "
+                "Admin settings encryption will not work until a key is provided."
+            )
     yield
 
 

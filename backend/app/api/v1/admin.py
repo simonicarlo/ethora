@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.v1.deps import get_db
+from app.api.v1.deps import AdminKey, get_db
 from app.core.encryption import decrypt_value, encrypt_value
 from app.models.models import (
     Agent,
@@ -33,8 +33,6 @@ from app.schemas.schemas import (
     SettingUpdate,
 )
 
-# TODO: Add authentication/authorization to admin endpoints before production use.
-# Currently open to all requests — acceptable for PoC but must be locked down.
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
@@ -44,7 +42,7 @@ router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
 
 
 @router.get("/stats/sessions", response_model=SessionStatsResponse)
-async def session_stats(db: AsyncSession = Depends(get_db)) -> SessionStatsResponse:
+async def session_stats(_auth: AdminKey, db: AsyncSession = Depends(get_db)) -> SessionStatsResponse:
     # Total sessions
     total = (await db.execute(select(func.count(Session.id)))).scalar_one()
 
@@ -93,7 +91,7 @@ async def session_stats(db: AsyncSession = Depends(get_db)) -> SessionStatsRespo
 
 
 @router.get("/stats/councils", response_model=CouncilStatsResponse)
-async def council_stats(db: AsyncSession = Depends(get_db)) -> CouncilStatsResponse:
+async def council_stats(_auth: AdminKey, db: AsyncSession = Depends(get_db)) -> CouncilStatsResponse:
     # Session count per council + fetch timestamps for duration calc
     rows = (await db.execute(
         select(
@@ -133,7 +131,7 @@ async def council_stats(db: AsyncSession = Depends(get_db)) -> CouncilStatsRespo
 
 
 @router.get("/stats/agents", response_model=AgentStatsResponse)
-async def agent_stats(db: AsyncSession = Depends(get_db)) -> AgentStatsResponse:
+async def agent_stats(_auth: AdminKey, db: AsyncSession = Depends(get_db)) -> AgentStatsResponse:
     # Message count + avg length per agent
     msg_rows = (await db.execute(
         select(
@@ -186,6 +184,7 @@ async def agent_stats(db: AsyncSession = Depends(get_db)) -> AgentStatsResponse:
 
 @router.get("/logs/errors", response_model=list[ErrorLogEntry])
 async def error_logs(
+    _auth: AdminKey,
     limit: int = 50,
     db: AsyncSession = Depends(get_db),
 ) -> list[ErrorLogEntry]:
@@ -233,7 +232,7 @@ async def error_logs(
 
 
 @router.get("/settings", response_model=list[SettingResponse])
-async def list_settings(db: AsyncSession = Depends(get_db)) -> list[SettingResponse]:
+async def list_settings(_auth: AdminKey, db: AsyncSession = Depends(get_db)) -> list[SettingResponse]:
     rows = (await db.execute(
         select(AppSetting).order_by(AppSetting.key)
     )).scalars().all()
@@ -245,7 +244,7 @@ async def list_settings(db: AsyncSession = Depends(get_db)) -> list[SettingRespo
         except Exception:
             value = "<decryption error>"
         if s.key in SENSITIVE_KEYS:
-            value = value[:4] + "****" if len(value) > 4 else "****"
+            value = "****" + value[-4:] if len(value) > 4 else "****"
         results.append(SettingResponse(key=s.key, value=value, updated_at=s.updated_at))
     return results
 
@@ -254,6 +253,7 @@ async def list_settings(db: AsyncSession = Depends(get_db)) -> list[SettingRespo
 async def update_setting(
     key: str,
     body: SettingUpdate,
+    _auth: AdminKey,
     db: AsyncSession = Depends(get_db),
 ) -> SettingResponse:
     if key not in ALLOWED_SETTING_KEYS:
@@ -274,7 +274,7 @@ async def update_setting(
 
     display_value = body.value
     if key in SENSITIVE_KEYS:
-        display_value = display_value[:4] + "****" if len(display_value) > 4 else "****"
+        display_value = "****" + display_value[-4:] if len(display_value) > 4 else "****"
 
     return SettingResponse(key=setting.key, value=display_value, updated_at=setting.updated_at)
 
@@ -282,6 +282,7 @@ async def update_setting(
 @router.delete("/settings/{key}", status_code=204)
 async def delete_setting(
     key: str,
+    _auth: AdminKey,
     db: AsyncSession = Depends(get_db),
 ) -> None:
     if key not in ALLOWED_SETTING_KEYS:

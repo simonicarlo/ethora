@@ -8,6 +8,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.models import Agent, Council, Message, Round, Session, Verdict, Vote
 
 
@@ -175,7 +176,9 @@ class TestSettings:
         resp = await client.get("/api/v1/admin/settings")
         assert resp.status_code == 200
         api_key_setting = next(s for s in resp.json() if s["key"] == "anthropic_api_key")
-        assert "****" in api_key_setting["value"]
+        # Masking shows last 4 chars: "****-key"
+        assert api_key_setting["value"].startswith("****")
+        assert api_key_setting["value"] == "****-key"
         assert "secret" not in api_key_setting["value"]
 
     async def test_delete_setting(self, client: AsyncClient) -> None:
@@ -198,3 +201,40 @@ class TestSettings:
         )
         assert resp.status_code == 400
         assert "Unknown setting key" in resp.json()["detail"]
+
+
+class TestAdminAuth:
+    """Test X-Admin-Key header authentication for admin endpoints."""
+
+    async def test_rejects_when_key_required_but_missing(
+        self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "ADMIN_API_KEY", "test-admin-secret")
+        resp = await client.get("/api/v1/admin/stats/sessions")
+        assert resp.status_code == 403
+        assert "admin API key" in resp.json()["detail"]
+
+    async def test_rejects_wrong_key(
+        self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "ADMIN_API_KEY", "correct-key")
+        resp = await client.get(
+            "/api/v1/admin/stats/sessions",
+            headers={"X-Admin-Key": "wrong-key"},
+        )
+        assert resp.status_code == 403
+
+    async def test_accepts_correct_key(
+        self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "ADMIN_API_KEY", "correct-key")
+        resp = await client.get(
+            "/api/v1/admin/stats/sessions",
+            headers={"X-Admin-Key": "correct-key"},
+        )
+        assert resp.status_code == 200
+
+    async def test_open_when_no_key_configured(self, client: AsyncClient) -> None:
+        """Default: ADMIN_API_KEY is empty — no header needed (dev mode)."""
+        resp = await client.get("/api/v1/admin/stats/sessions")
+        assert resp.status_code == 200
