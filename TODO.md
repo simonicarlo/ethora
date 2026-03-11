@@ -276,6 +276,7 @@ Stream B (CRUD) ─────────┘
 ### Tooling Configuration
 
 - [ ] **Tool registry panel** — Enable/disable available tools (web search, file edit, etc.) per council — **`features/admin/tools/`**
+- [ ] **Tool management**   -  Potentially allow configuration of tools by adjusting parameters. - **`features/admin/tools/`**
 - [ ] **API key management** — Configure and rotate LLM API keys from the UI (stored encrypted) — **`features/admin/settings/`**
 - [ ] **Model configuration** — Set default model, temperature, max tokens per agent or council — **`features/admin/settings/`**
 
