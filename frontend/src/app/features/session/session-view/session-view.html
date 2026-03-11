@@ -19,12 +19,13 @@
     <app-debate-panel
       [messages]="messages()"
       [agents]="agents()"
-      [currentRound]="currentRound()" />
+      [currentRound]="currentRound()"
+      [inputClaim]="inputClaim()" />
 
     @if (showHumanTurnInput()) {
       <app-human-turn-input
         [sessionId]="sessionId()"
-        (submitted)="onHumanTurnSubmitted()" />
+        (submitted)="onHumanTurnSubmitted($event)" />
     }
 
     @if (isVotingPhase()) {
