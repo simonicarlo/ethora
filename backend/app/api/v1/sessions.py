@@ -50,7 +50,7 @@ async def get_session(session_id: uuid.UUID, db: DBSession) -> Session:
 @router.get("/sessions/{session_id}/messages", response_model=SessionStateResponse)
 async def get_session_messages(
     session_id: uuid.UUID, db: DBSession
-) -> dict[str, list[dict[str, object]]]:
+) -> SessionStateResponse:
     """Return all messages and votes for a session (for cold-loading on page reload)."""
     await get_or_404(db, Session, session_id, "Session not found")
 

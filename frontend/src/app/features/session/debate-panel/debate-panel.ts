@@ -6,7 +6,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { Agent } from '../../../core/models';
 
 export interface DebateMessage {
-  agent_id: string;
+  agent_id: string | null;
+  agent_name?: string;
   round: number;
   content: string;
 }
@@ -22,6 +23,7 @@ export class DebatePanel {
   readonly messages = input.required<DebateMessage[]>();
   readonly agents = input.required<Agent[]>();
   readonly currentRound = input<number>(0);
+  readonly inputClaim = input<string>('');
 
   readonly agentMap = computed(() => {
     const map = new Map<string, Agent>();
@@ -36,7 +38,7 @@ export class DebatePanel {
     if (msgs.length === 0) return [];
 
     const maxRound = Math.max(...msgs.map((m) => m.round));
-    const rounds: { round: number; messages: (DebateMessage & { agentName: string })[] }[] = [];
+    const rounds: { round: number; messages: (DebateMessage & { agentName: string; isHuman: boolean })[] }[] = [];
 
     for (let r = 1; r <= maxRound; r++) {
       rounds.push({
@@ -45,7 +47,10 @@ export class DebatePanel {
           .filter((m) => m.round === r)
           .map((m) => ({
             ...m,
-            agentName: this.agentMap().get(m.agent_id)?.name ?? 'Unknown Agent',
+            isHuman: m.agent_id === null,
+            agentName: m.agent_id === null
+              ? (m.agent_name ?? 'Human')
+              : (this.agentMap().get(m.agent_id)?.name ?? m.agent_name ?? 'Unknown Agent'),
           })),
       });
     }

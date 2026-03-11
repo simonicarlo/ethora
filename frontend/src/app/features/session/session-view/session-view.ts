@@ -48,14 +48,19 @@ export class SessionView implements OnInit {
   readonly votingMechanism = signal<VotingMechanism>('majority');
   readonly agents = signal<Agent[]>([]);
   readonly waitingForHuman = signal(false);
+  readonly inputClaim = signal('');
   readonly loading = signal(true);
   private sseSub: Subscription | null = null;
 
-  readonly isVotingPhase = computed(
-    () =>
-      (this.sessionStatus() === 'voting' || this.sessionStatus() === 'complete') &&
-      this.votes().length > 0,
-  );
+  readonly isVotingPhase = computed(() => {
+    const status = this.sessionStatus();
+    const voteCount = this.votes().length;
+    const agentCount = this.agents().length;
+    return (
+      (status === 'complete' && voteCount > 0) ||
+      (status === 'voting' && agentCount > 0 && voteCount >= agentCount)
+    );
+  });
   readonly showHumanTurnInput = computed(
     () => this.sessionStatus() === 'awaiting_human_turn',
   );
@@ -73,7 +78,11 @@ export class SessionView implements OnInit {
     this.initializeSession(id);
   }
 
-  onHumanTurnSubmitted(): void {
+  onHumanTurnSubmitted(content: string): void {
+    this.messages.update((m) => [
+      ...m,
+      { agent_id: null, agent_name: 'You', round: this.currentRound(), content },
+    ]);
     this.waitingForHuman.set(false);
     this.sessionStatus.set('pending');
     // Re-connect SSE — backend resets session to "pending" after human turn
@@ -91,7 +100,10 @@ export class SessionView implements OnInit {
     this.api
       .getSession(sessionId)
       .pipe(
-        tap((session) => this.sessionStatus.set(session.status)),
+        tap((session) => {
+          this.sessionStatus.set(session.status);
+          this.inputClaim.set(session.input_claim);
+        }),
         switchMap((session) => this.api.getCouncil(session.council_id)),
       )
       .subscribe({
@@ -135,13 +147,12 @@ export class SessionView implements OnInit {
   private loadHistoricalState(sessionId: string, onComplete?: () => void): void {
     this.api.getSessionMessages(sessionId).subscribe({
       next: (state) => {
-        const debateMessages: DebateMessage[] = state.messages
-          .filter((m) => m.agent_id !== null)
-          .map((m) => ({
-            agent_id: m.agent_id!,
-            round: m.round_number,
-            content: m.content,
-          }));
+        const debateMessages: DebateMessage[] = state.messages.map((m) => ({
+          agent_id: m.agent_id,
+          agent_name: m.agent_name ?? undefined,
+          round: m.round_number,
+          content: m.content,
+        }));
         this.messages.set(debateMessages);
 
         if (state.messages.length > 0) {

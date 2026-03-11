@@ -10,11 +10,11 @@ import { HumanTurnInput } from './human-turn-input';
   imports: [HumanTurnInput],
   template: `<app-human-turn-input
     [sessionId]="sessionId()"
-    (submitted)="submitted = true" />`,
+    (submitted)="submittedContent = $event" />`,
 })
 class TestHost {
   readonly sessionId = signal('sess-1');
-  submitted = false;
+  submittedContent = '';
 }
 
 describe('HumanTurnInput', () => {
@@ -73,7 +73,7 @@ describe('HumanTurnInput', () => {
     req.flush({ status: 'accepted' });
     fixture.detectChanges();
 
-    expect(host.submitted).toBe(true);
+    expect(host.submittedContent).toBe('I think we should consider...');
   });
 
   it('should show error message on failure', () => {
@@ -92,7 +92,7 @@ describe('HumanTurnInput', () => {
 
     const errorText = fixture.nativeElement.querySelector('.error-text');
     expect(errorText.textContent).toContain('Session is not awaiting human turn');
-    expect(host.submitted).toBe(false);
+    expect(host.submittedContent).toBe('');
   });
 
   it('should not submit when content is only whitespace', () => {

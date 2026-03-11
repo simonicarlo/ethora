@@ -20,7 +20,7 @@ import { ApiService } from '../../../core/api.service';
 })
 export class HumanTurnInput {
   readonly sessionId = input.required<string>();
-  readonly submitted = output<void>();
+  readonly submitted = output<string>();
 
   readonly content = signal('');
   readonly submitting = signal(false);
@@ -34,11 +34,12 @@ export class HumanTurnInput {
     this.submitting.set(true);
     this.error.set('');
 
-    this.api.sendHumanTurn(this.sessionId(), this.content().trim()).subscribe({
+    const trimmed = this.content().trim();
+    this.api.sendHumanTurn(this.sessionId(), trimmed).subscribe({
       next: () => {
         this.submitting.set(false);
         this.content.set('');
-        this.submitted.emit();
+        this.submitted.emit(trimmed);
       },
       error: (err) => {
         this.submitting.set(false);
