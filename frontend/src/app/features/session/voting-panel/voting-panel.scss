@@ -30,18 +30,18 @@
 
 .vote-chip {
   &.affirm {
-    --mat-chip-label-text-color: #1b5e20;
-    background-color: #e8f5e9;
+    --mat-chip-label-text-color: #4caf50;
+    background-color: rgba(46, 125, 50, 0.15);
   }
 
   &.oppose {
-    --mat-chip-label-text-color: #b71c1c;
-    background-color: #ffebee;
+    --mat-chip-label-text-color: #ef5350;
+    background-color: rgba(198, 40, 40, 0.15);
   }
 
   &.neutral {
-    --mat-chip-label-text-color: #e65100;
-    background-color: #fff3e0;
+    --mat-chip-label-text-color: #ff9800;
+    background-color: rgba(230, 81, 0, 0.15);
   }
 }
 
@@ -81,9 +81,9 @@ mat-progress-bar {
 }
 
 .candidate-summary {
+  @include glass-panel;
   margin-bottom: 20px;
   padding: 16px;
-  background: var(--mat-sys-surface-variant, #f5f5f5);
   border-radius: 12px;
 
   h3 {

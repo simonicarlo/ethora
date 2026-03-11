@@ -1,5 +1,6 @@
 @use 'variables' as *;
 @use 'mixins' as *;
+@use 'animations' as *;
 
 :host {
   display: block;
@@ -64,6 +65,9 @@
 .council-card {
   @include glass-card;
   @include hover-glow;
+  backdrop-filter: blur(var(--ac-glass-blur-heavy));
+  animation: ac-card-enter 400ms $easing-decelerate both;
+  @include stagger-children(ac-card-enter, 60ms);
 
   .spacer {
     flex: 1;

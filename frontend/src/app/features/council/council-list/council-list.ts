@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApiService } from '../../../core/api.service';
 import { Council } from '../../../core/models';
+import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
 import { StartSessionDialog } from '../../session/start-session-dialog/start-session-dialog';
 
 @Component({
@@ -23,6 +24,7 @@ import { StartSessionDialog } from '../../session/start-session-dialog/start-ses
     MatIconModule,
     MatMenuModule,
     MatProgressSpinnerModule,
+    MeshBackground,
   ],
   templateUrl: './council-list.html',
   styleUrl: './council-list.scss',

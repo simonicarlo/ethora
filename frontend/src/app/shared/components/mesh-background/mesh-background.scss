@@ -1,0 +1,157 @@
+// ── Mesh drift keyframes ──
+
+@keyframes ac-mesh-drift-1 {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
+  33%  { transform: translate(5%, -8%) scale(1.1) rotate(5deg); }
+  66%  { transform: translate(-3%, 6%) scale(0.95) rotate(-3deg); }
+  100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes ac-mesh-drift-2 {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
+  25%  { transform: translate(-6%, 4%) scale(1.05) rotate(-4deg); }
+  50%  { transform: translate(4%, -6%) scale(0.9) rotate(6deg); }
+  75%  { transform: translate(-2%, -3%) scale(1.08) rotate(-2deg); }
+  100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+}
+
+@keyframes ac-mesh-pulse-1 { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+@keyframes ac-mesh-pulse-2 { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+@keyframes ac-mesh-pulse-3 { 0%, 100% { opacity: 0.9; } 50% { opacity: 0.6; } }
+
+:host { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+
+.mesh-layer { position: absolute; inset: 0; }
+
+// ── Animation assignments ──
+
+.mesh-layer--primary .mesh-blob { animation: 8s ease-in-out infinite; }
+.mesh-layer--secondary .mesh-blob { animation: 10s ease-in-out infinite; }
+
+.mesh-layer--primary {
+  .blob-1 { animation-name: ac-mesh-drift-1, ac-mesh-pulse-1; }
+  .blob-2 { animation-name: ac-mesh-drift-1, ac-mesh-pulse-2; animation-delay: -2s; }
+  .blob-3 { animation-name: ac-mesh-drift-1, ac-mesh-pulse-3; animation-delay: -5s; }
+}
+
+.mesh-layer--secondary {
+  .blob-1 { animation-name: ac-mesh-drift-2, ac-mesh-pulse-2; animation-delay: -1s; }
+  .blob-2 { animation-name: ac-mesh-drift-2, ac-mesh-pulse-3; animation-delay: -4s; }
+  .blob-3 { animation-name: ac-mesh-drift-2, ac-mesh-pulse-1; animation-delay: -7s; }
+}
+
+// ── Blobs — distinct geometric shapes ──
+
+.mesh-blob { position: absolute; filter: blur(var(--ac-mesh-blur)); will-change: transform, opacity; }
+
+// Primary layer: ellipse, squircle, pill
+.mesh-layer--primary {
+  .blob-1 { border-radius: 50%; width: 48vw; height: 32vw; top: -10%; left: -5%; }                       // wide ellipse
+  .blob-2 { border-radius: 28%; width: 38vw; height: 38vw; top: 30%; right: -10%; }                      // squircle
+  .blob-3 { border-radius: 50% / 30%; width: 44vw; height: 24vw; bottom: -5%; left: 20%; }               // pill / lozenge
+}
+
+// Secondary layer: diamond, teardrop, lens
+.mesh-layer--secondary {
+  .blob-1 { border-radius: 10% 50% 50% 50%; width: 30vw; height: 30vw; top: 10%; left: 30%; }           // soft teardrop
+  .blob-2 { border-radius: 50% 0; width: 32vw; height: 32vw; bottom: 10%; right: 5%; }                   // lens / leaf
+  .blob-3 { border-radius: 50% 50% 50% 0; width: 26vw; height: 26vw; top: 50%; left: -5%; }             // petal
+}
+
+// Tertiary + sparkles — hidden by default, used by home scheme
+.mesh-layer--tertiary, .mesh-layer--sparkles { display: none; }
+
+// ── Blink keyframe for sparkles ──
+@keyframes ac-blink {
+  0%, 100% { opacity: 0; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+// ── Color schemes ──
+
+@mixin scheme-colors($prefix) {
+  .mesh-layer--primary {
+    .blob-1 { background: var(--ac-mesh-#{$prefix}-1); }
+    .blob-2 { background: var(--ac-mesh-#{$prefix}-2); }
+    .blob-3 { background: var(--ac-mesh-#{$prefix}-3); }
+  }
+  .mesh-layer--secondary {
+    .blob-1 { background: var(--ac-mesh-#{$prefix}-2); }
+    .blob-2 { background: var(--ac-mesh-#{$prefix}-3); }
+    .blob-3 { background: var(--ac-mesh-#{$prefix}-1); }
+  }
+}
+
+:host[data-scheme='councils']  { @include scheme-colors(councils); }
+:host[data-scheme='sessions']  { @include scheme-colors(sessions); }
+:host[data-scheme='dialogue']  { @include scheme-colors(dialogue); }
+:host[data-scheme='home'] {
+  @include scheme-colors(home);
+
+  // Scattered shapes — no two near the same edge zone
+  .mesh-layer--primary {
+    .blob-1 { width: 19vw; height: 12vw; top: -2%; left: 11%; }
+    .blob-2 { width: 15vw; height: 15vw; top: 22%; right: -3%; }
+    .blob-3 { width: 22vw; height: 10vw; bottom: 6%; left: -4%; }
+  }
+  .mesh-layer--secondary {
+    .blob-1 { width: 12vw; height: 12vw; bottom: -1%; right: 18%; }
+    .blob-2 { width: 10vw; height: 16vw; top: 58%; left: 3%; }
+    .blob-3 { width: 17vw; height: 10vw; top: 1%; right: 5%; }
+  }
+
+  // Tertiary — scattered mid-field accents
+  .mesh-layer--tertiary {
+    display: block;
+    .mesh-blob { animation: 12s ease-in-out infinite; }
+    .blob-1 {
+      animation-name: ac-mesh-drift-1, ac-mesh-pulse-3; animation-delay: -3s;
+      border-radius: 50%;
+      width: 11vw; height: 11vw; top: 35%; right: 10%;
+      background: var(--ac-mesh-home-1);
+    }
+    .blob-2 {
+      animation-name: ac-mesh-drift-2, ac-mesh-pulse-1; animation-delay: -7s;
+      border-radius: 50% / 30%;
+      width: 14vw; height: 7vw; bottom: 28%; left: 6%;
+      background: var(--ac-mesh-home-2);
+    }
+    .blob-3 {
+      animation-name: ac-mesh-drift-1, ac-mesh-pulse-2; animation-delay: -10s;
+      border-radius: 28%;
+      width: 8vw; height: 8vw; bottom: 18%; right: 4%;
+      background: var(--ac-mesh-home-3);
+    }
+    .blob-4 {
+      animation-name: ac-mesh-drift-2, ac-mesh-pulse-3; animation-delay: -1s;
+      border-radius: 50% 50% 50% 0;
+      width: 9vw; height: 9vw; top: 8%; left: 32%;
+      background: var(--ac-mesh-home-1);
+    }
+  }
+
+  // Tiny blurred blink sparkles
+  .mesh-layer--sparkles {
+    display: block;
+
+    .sparkle {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(6px);
+      will-change: opacity, transform;
+      animation: ac-blink ease-in-out infinite;
+    }
+    .s1 { width: 2.5vw; height: 2.5vw; top: 12%; left: 5%;  animation-duration: 3s;   animation-delay: 0s;    background: var(--ac-mesh-home-1); }
+    .s2 { width: 1.8vw; height: 1.8vw; top: 7%;  right: 14%; animation-duration: 4.5s; animation-delay: -1.2s; background: var(--ac-mesh-home-2); }
+    .s3 { width: 2vw;   height: 2vw;   top: 45%; left: 8%;  animation-duration: 3.5s; animation-delay: -2.5s; background: var(--ac-mesh-home-3); }
+    .s4 { width: 1.5vw; height: 1.5vw; top: 72%; right: 7%; animation-duration: 5s;   animation-delay: -0.8s; background: var(--ac-mesh-home-1); }
+    .s5 { width: 2.2vw; height: 2.2vw; bottom: 12%; left: 22%; animation-duration: 4s; animation-delay: -3s;  background: var(--ac-mesh-home-2); }
+    .s6 { width: 1.6vw; height: 1.6vw; top: 30%; right: 3%; animation-duration: 3.8s; animation-delay: -1.8s; background: var(--ac-mesh-home-3); }
+    .s7 { width: 2vw;   height: 2vw;   bottom: 5%; right: 28%; animation-duration: 4.2s; animation-delay: -2.2s; background: var(--ac-mesh-home-1); }
+    .s8 { width: 1.4vw; height: 1.4vw; top: 18%; left: 30%; animation-duration: 5.5s; animation-delay: -4s;  background: var(--ac-mesh-home-2); }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-blob { animation: none !important; }
+}

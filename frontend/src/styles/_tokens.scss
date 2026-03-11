@@ -38,6 +38,21 @@
   --ac-glass-blur: 8px;
   --ac-glass-blur-heavy: 16px;
 
+  // ── Mesh Gradient Backgrounds (light — lower opacity, more blur) ──
+  --ac-mesh-councils-1: rgba(99, 103, 255, 0.15);
+  --ac-mesh-councils-2: rgba(168, 85, 247, 0.12);
+  --ac-mesh-councils-3: rgba(59, 130, 246, 0.12);
+  --ac-mesh-sessions-1: rgba(34, 211, 238, 0.12);
+  --ac-mesh-sessions-2: rgba(59, 130, 246, 0.12);
+  --ac-mesh-sessions-3: rgba(168, 85, 247, 0.08);
+  --ac-mesh-dialogue-1: rgba(251, 146, 60, 0.12);
+  --ac-mesh-dialogue-2: rgba(244, 63, 94, 0.10);
+  --ac-mesh-dialogue-3: rgba(168, 85, 247, 0.10);
+  --ac-mesh-home-1: rgba(99, 103, 255, 0.10);
+  --ac-mesh-home-2: rgba(201, 190, 255, 0.10);
+  --ac-mesh-home-3: rgba(255, 219, 253, 0.08);
+  --ac-mesh-blur: 40px;
+
   // ── Shadows (layered for realism) ──
   --ac-shadow-xs: 0 1px 2px rgba(28, 27, 31, 0.05);
   --ac-shadow-sm: 0 1px 3px rgba(28, 27, 31, 0.08), 0 1px 2px rgba(28, 27, 31, 0.04);
@@ -104,6 +119,21 @@
   --ac-glass-bg: rgba(28, 27, 31, 0.5);
   --ac-glass-bg-heavy: rgba(28, 27, 31, 0.7);
   --ac-glass-border: rgba(255, 255, 255, 0.08);
+
+  // ── Mesh Gradient Backgrounds (dark — full saturation) ──
+  --ac-mesh-councils-1: rgba(99, 103, 255, 0.35);
+  --ac-mesh-councils-2: rgba(168, 85, 247, 0.3);
+  --ac-mesh-councils-3: rgba(59, 130, 246, 0.28);
+  --ac-mesh-sessions-1: rgba(34, 211, 238, 0.3);
+  --ac-mesh-sessions-2: rgba(59, 130, 246, 0.3);
+  --ac-mesh-sessions-3: rgba(168, 85, 247, 0.22);
+  --ac-mesh-dialogue-1: rgba(251, 146, 60, 0.3);
+  --ac-mesh-dialogue-2: rgba(244, 63, 94, 0.25);
+  --ac-mesh-dialogue-3: rgba(168, 85, 247, 0.22);
+  --ac-mesh-home-1: rgba(99, 103, 255, 0.25);
+  --ac-mesh-home-2: rgba(201, 190, 255, 0.22);
+  --ac-mesh-home-3: rgba(255, 219, 253, 0.18);
+  --ac-mesh-blur: 30px;
 
   // ── Shadows ──
   --ac-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);

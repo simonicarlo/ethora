@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { Agent, MessageType, Reference } from '../../../core/models';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 export interface ToolActivity {
   agent_id: string;
@@ -22,7 +23,7 @@ export interface DebateMessage {
 
 @Component({
   selector: 'app-debate-panel',
-  imports: [MatCardModule, MatIconModule, MatDividerModule],
+  imports: [MatCardModule, MatIconModule, MatDividerModule, MarkdownPipe],
   templateUrl: './debate-panel.html',
   styleUrl: './debate-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
