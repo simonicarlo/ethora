@@ -243,6 +243,13 @@ class ErrorLogEntry(BaseModel):
 
 SENSITIVE_KEYS: set[str] = {"anthropic_api_key", "settings_encryption_key"}
 
+ALLOWED_SETTING_KEYS: set[str] = {
+    "anthropic_api_key",
+    "settings_encryption_key",
+    "moderator_model",
+    "cors_origins",
+}
+
 
 class SettingResponse(BaseModel):
     key: str

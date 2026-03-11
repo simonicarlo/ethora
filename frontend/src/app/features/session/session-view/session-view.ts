@@ -431,7 +431,7 @@ export class SessionView implements OnInit {
         this.votingInProgress.set(false);
         this.votes.update((v) => [
           ...v,
-          { ...data, value: data.vote ?? data.value ?? '' } as unknown as Vote,
+          this.mapSseVotingCastToVote(data),
         ]);
         break;
       }
@@ -469,5 +469,15 @@ export class SessionView implements OnInit {
         break;
       }
     }
+  }
+
+  private mapSseVotingCastToVote(data: SseVotingCast): Vote {
+    return {
+      id: '',
+      agent_id: data.agent_id,
+      value: data.vote ?? data.value ?? '',
+      confidence: data.confidence,
+      reasoning: data.reasoning,
+    };
   }
 }
