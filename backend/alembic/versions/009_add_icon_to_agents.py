@@ -1,7 +1,7 @@
-"""Add summary column to messages table
+"""Add icon column to agents
 
-Revision ID: 006
-Revises: 005
+Revision ID: 009
+Revises: 008
 Create Date: 2026-03-11
 """
 from __future__ import annotations
@@ -12,18 +12,15 @@ import sqlalchemy as sa
 from alembic import op
 
 
-revision: str = "006"
-down_revision: Union[str, None] = "005"
+revision: str = "009"
+down_revision: Union[str, None] = "008"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "messages",
-        sa.Column("summary", sa.Text(), nullable=True),
-    )
+    op.add_column("agents", sa.Column("icon", sa.String(), nullable=True, server_default="smart_toy"))
 
 
 def downgrade() -> None:
-    op.drop_column("messages", "summary")
+    op.drop_column("agents", "icon")
