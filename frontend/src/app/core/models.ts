@@ -11,6 +11,12 @@ export interface AgentCreate {
   model?: string;
 }
 
+export interface AgentUpdate {
+  name?: string;
+  system_prompt?: string;
+  model?: string;
+}
+
 export interface Council {
   id: string;
   name: string;
@@ -26,6 +32,14 @@ export interface CouncilCreate {
   voting_mechanism?: VotingMechanism;
   allow_human_turns?: boolean;
   agent_ids: string[];
+}
+
+export interface CouncilUpdate {
+  name?: string;
+  rounds?: number;
+  voting_mechanism?: VotingMechanism;
+  allow_human_turns?: boolean;
+  agent_ids?: string[];
 }
 
 export type VotingMechanism = 'majority' | 'weighted' | 'consensus' | 'human_in_loop';

@@ -7,10 +7,12 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { ApiService } from '../../../core/api.service';
 import { Council } from '../../../core/models';
 import { StartSessionDialog } from '../../session/start-session-dialog/start-session-dialog';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-council-list',
@@ -30,6 +32,7 @@ export class CouncilList {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly councils = signal<Council[]>([]);
@@ -65,6 +68,26 @@ export class CouncilList {
       ).subscribe({
         next: (session) => this.router.navigate(['/sessions', session.id]),
         error: (err) => this.error.set(err?.message ?? 'Failed to create session'),
+      });
+    });
+  }
+
+  deleteCouncil(council: Council): void {
+    const ref = this.dialog.open(ConfirmDialog, {
+      data: {
+        title: 'Delete Council',
+        message: `Are you sure you want to delete "${council.name}"?`,
+      },
+    });
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
+      if (!confirmed) return;
+      this.api.deleteCouncil(council.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: () => {
+          this.councils.update(councils => councils.filter(c => c.id !== council.id));
+        },
+        error: (err) => {
+          this.snackBar.open(err?.error?.detail ?? 'Failed to delete council', 'Dismiss', { duration: 5000 });
+        },
       });
     });
   }

@@ -53,6 +53,14 @@
             <mat-icon>play_arrow</mat-icon>
             Start Session
           </button>
+          <a mat-button [routerLink]="['/councils', council.id, 'edit']">
+            <mat-icon>edit</mat-icon>
+            Edit
+          </a>
+          <button mat-button color="warn" (click)="deleteCouncil(council)">
+            <mat-icon>delete</mat-icon>
+            Delete
+          </button>
         </mat-card-actions>
       </mat-card>
     }

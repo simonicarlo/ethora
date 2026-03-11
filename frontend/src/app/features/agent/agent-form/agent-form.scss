@@ -1,0 +1,24 @@
+@use 'variables' as *;
+
+.form-card {
+  padding: $space-4;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.error-text {
+  color: var(--mat-sys-error);
+  margin: $space-4 0;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: $space-6;
+
+  mat-spinner {
+    display: inline-block;
+  }
+}
