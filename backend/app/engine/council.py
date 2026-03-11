@@ -29,6 +29,13 @@ from app.sse.emitter import format_sse
 logger = logging.getLogger(__name__)
 
 
+async def _cancel_and_await(tasks: list[asyncio.Task[None]]) -> None:
+    """Cancel all tasks and await their completion for clean shutdown."""
+    for t in tasks:
+        t.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
 async def _summarize_in_background(
     message_id: uuid.UUID,
     agent_id: uuid.UUID,
@@ -38,7 +45,12 @@ async def _summarize_in_background(
     round_num: int,
     queue: asyncio.Queue[dict[str, object]],
 ) -> None:
-    """Fire-and-forget: summarize an agent response and persist to DB."""
+    """Fire-and-forget: summarize an agent response and persist to DB.
+
+    Uses async_session_factory() directly (not the request-scoped session)
+    because this runs as an independent background task after the request
+    handler has returned control to the SSE generator.
+    """
     try:
         summary = await summarize_agent_response(
             agent_name=agent_name,
@@ -184,6 +196,9 @@ async def run_council_session(
                     queue=summary_queue,
                 ))
                 summary_tasks.append(task)
+
+                # Prune completed tasks to avoid unbounded accumulation
+                summary_tasks = [t for t in summary_tasks if not t.done()]
 
                 history.append((agent.name, agent.id, agent_response.content))
 
@@ -390,8 +405,7 @@ async def run_council_session(
         await db.commit()
 
     except RateLimitError as exc:
-        for t in summary_tasks:
-            t.cancel()
+        await _cancel_and_await(summary_tasks)
         logger.warning("Council session %s rate-limited: %s", session_id, exc)
         await db.rollback()
         session = await db.get(Session, session_id)
@@ -403,8 +417,7 @@ async def run_council_session(
             "retry_after": exc.retry_after,
         })
     except (anthropic.APIError, SQLAlchemyError) as exc:
-        for t in summary_tasks:
-            t.cancel()
+        await _cancel_and_await(summary_tasks)
         logger.exception("Council session %s failed", session_id)
         await db.rollback()
         session.status = "error"
