@@ -6,6 +6,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApiService } from '../../../core/api.service';
@@ -20,6 +21,7 @@ import { StartSessionDialog } from '../../session/start-session-dialog/start-ses
     MatCardModule,
     MatChipsModule,
     MatIconModule,
+    MatMenuModule,
     MatProgressSpinnerModule,
   ],
   templateUrl: './council-list.html',
