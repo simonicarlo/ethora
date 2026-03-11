@@ -38,6 +38,7 @@ describe('ApiService', () => {
           rounds: 3,
           voting_mechanism: 'majority' as const,
           allow_human_turns: false,
+          tools_enabled: false,
           agents: [],
         },
       ];

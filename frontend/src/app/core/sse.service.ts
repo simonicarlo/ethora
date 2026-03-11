@@ -1,7 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs';
 
-const SSE_EVENTS = ['agent_message', 'round_complete', 'candidate_proposed', 'candidates_finalized', 'moderator_action', 'voting_cast', 'verdict', 'awaiting_human_turn', 'awaiting_human_vote', 'error'] as const;
+const SSE_EVENTS = ['agent_message', 'round_complete', 'tool_use', 'candidate_proposed', 'candidates_finalized', 'moderator_action', 'voting_cast', 'verdict', 'awaiting_human_turn', 'awaiting_human_vote', 'error'] as const;
 
 export type SseEventType = (typeof SSE_EVENTS)[number];
 

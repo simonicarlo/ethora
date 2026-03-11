@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Table, Text
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -42,6 +43,7 @@ class Council(Base):
     rounds: Mapped[int] = mapped_column(Integer, default=3)
     voting_mechanism: Mapped[str] = mapped_column(String, default="majority")
     allow_human_turns: Mapped[bool] = mapped_column(Boolean, default=False)
+    tools_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # lazy="selectin": eagerly loads related objects in a second SELECT.
     # Required because async SQLAlchemy forbids implicit lazy loading (no sync I/O).
@@ -84,6 +86,7 @@ class Message(Base):
     agent_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("agents.id"), nullable=True)
     message_type: Mapped[str] = mapped_column(String, default="agent", nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    references: Mapped[list[dict[str, str | None]] | None] = mapped_column(JSON, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     round: Mapped[Round] = relationship("Round", back_populates="messages")

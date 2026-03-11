@@ -3,7 +3,13 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { Agent, MessageType } from '../../../core/models';
+import { Agent, MessageType, Reference } from '../../../core/models';
+
+export interface ToolActivity {
+  agent_id: string;
+  agent_name: string;
+  tool_name: string;
+}
 
 export interface DebateMessage {
   agent_id: string | null;
@@ -11,6 +17,7 @@ export interface DebateMessage {
   message_type?: MessageType;
   round: number;
   content: string;
+  references?: Reference[];
 }
 
 @Component({
@@ -25,6 +32,7 @@ export class DebatePanel {
   readonly agents = input.required<Agent[]>();
   readonly currentRound = input<number>(0);
   readonly inputClaim = input<string>('');
+  readonly activeToolUse = input<ToolActivity | null>(null);
 
   readonly agentMap = computed(() => {
     const map = new Map<string, Agent>();

@@ -41,6 +41,7 @@ class CouncilCreate(BaseModel):
     rounds: int = Field(default=3, ge=1, le=20)
     voting_mechanism: VotingMechanism = "majority"
     allow_human_turns: bool = False
+    tools_enabled: bool = False
     agent_ids: list[uuid.UUID] = Field(min_length=2)
 
 
@@ -49,6 +50,7 @@ class CouncilUpdate(BaseModel):
     rounds: int | None = Field(default=None, ge=1, le=20)
     voting_mechanism: VotingMechanism | None = None
     allow_human_turns: bool | None = None
+    tools_enabled: bool | None = None
     agent_ids: list[uuid.UUID] | None = Field(default=None, min_length=2)
 
 
@@ -58,6 +60,7 @@ class CouncilResponse(BaseModel):
     rounds: int
     voting_mechanism: VotingMechanism
     allow_human_turns: bool
+    tools_enabled: bool
     agents: list[AgentResponse]
 
     model_config = ConfigDict(from_attributes=True)
@@ -97,11 +100,18 @@ class SessionListItem(BaseModel):
 
 # -- Messages -----------------------------------------------------------------
 
+class ReferenceResponse(BaseModel):
+    url: str
+    title: str | None = None
+    snippet: str | None = None
+
+
 class MessageResponse(BaseModel):
     id: uuid.UUID
     round_id: uuid.UUID
     agent_id: uuid.UUID | None = None
     content: str
+    references: list[ReferenceResponse] = []
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -141,6 +151,7 @@ class MessageWithContext(BaseModel):
     agent_name: str | None = None
     message_type: str = "agent"
     content: str
+    references: list[ReferenceResponse] = []
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

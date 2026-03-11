@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.database import Base
+from app.engine.agent import AgentResponse, Reference, ToolInvocation
 from app.engine.council import run_council_session
 from app.models.models import (
     Agent,
@@ -95,6 +96,11 @@ def _mock_vote_tool_result(value: str = "true", confidence: float = 0.85) -> dic
     return {"value": value, "confidence": confidence, "reasoning": "test reasoning"}
 
 
+def _agent_response(content: str) -> AgentResponse:
+    """Create a simple AgentResponse with no references or tool invocations."""
+    return AgentResponse(content=content)
+
+
 def _parse_sse_events(events: list[str]) -> list[tuple[str, dict]]:
     """Parse raw SSE strings into (event_type, data) tuples."""
     parsed = []
@@ -118,8 +124,8 @@ async def test_full_session_majority_vote(db: AsyncSession) -> None:
     """Full flow: 1 round, 2 agents, majority vote → verdict."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="majority")
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return f"Debate response from {agent.name}"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response(f"Debate response from {agent.name}")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -161,8 +167,8 @@ async def test_session_status_transitions(db: AsyncSession) -> None:
         if not statuses or statuses[-1] != s.status:
             statuses.append(s.status)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.8)
@@ -184,8 +190,8 @@ async def test_multiple_rounds(db: AsyncSession) -> None:
     """Verify correct number of round_complete events for multi-round session."""
     session = await _seed_council(db, num_agents=2, rounds=3)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -212,8 +218,8 @@ async def test_agent_messages_persisted(db: AsyncSession) -> None:
     """Verify messages are saved to the DB."""
     session = await _seed_council(db, num_agents=2, rounds=1)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return f"Response from {agent.name}"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response(f"Response from {agent.name}")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -237,8 +243,8 @@ async def test_votes_persisted(db: AsyncSession) -> None:
     """Verify votes are saved to the DB."""
     session = await _seed_council(db, num_agents=2, rounds=1)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.75)
@@ -261,8 +267,8 @@ async def test_verdict_persisted(db: AsyncSession) -> None:
     """Verify verdict is saved to the DB."""
     session = await _seed_council(db, num_agents=2, rounds=1)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("false", 0.8)
@@ -283,8 +289,8 @@ async def test_rounds_persisted(db: AsyncSession) -> None:
     """Verify round rows are created in the DB."""
     session = await _seed_council(db, num_agents=2, rounds=2)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -309,8 +315,8 @@ async def test_human_in_loop_yields_awaiting_event(db: AsyncSession) -> None:
     """human_in_loop mechanism should yield awaiting_human_vote and stop."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="human_in_loop")
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -339,8 +345,8 @@ async def test_weighted_voting(db: AsyncSession) -> None:
     """Weighted voting: high-confidence minority should win."""
     session = await _seed_council(db, num_agents=3, rounds=1, voting_mechanism="weighted")
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate point."
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate point.")
 
     tool_call_count = 0
 
@@ -370,8 +376,8 @@ async def test_consensus_disagreement(db: AsyncSession) -> None:
     """Consensus voting with disagreement → no_consensus."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="consensus")
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate."
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate.")
 
     tool_call_count = 0
 
@@ -402,7 +408,7 @@ async def test_llm_error_sets_error_status(db: AsyncSession) -> None:
     # Commit seed data so rollback in error handler doesn't undo it.
     await db.commit()
 
-    async def mock_call_agent(agent, messages, system_prompt):
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
         raise anthropic.APIConnectionError(request=None, message="API connection failed")
 
     with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
@@ -426,8 +432,8 @@ async def test_vote_missing_confidence_defaults_to_zero(db: AsyncSession) -> Non
     """Tool returning missing confidence field should default to 0.0."""
     session = await _seed_council(db, num_agents=2, rounds=1)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate."
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate.")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         # Tool returns data without confidence (edge case)
@@ -451,8 +457,8 @@ async def test_sse_event_format(db: AsyncSession) -> None:
     """Verify SSE events follow the expected format."""
     session = await _seed_council(db, num_agents=2, rounds=1)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.8)
@@ -478,8 +484,8 @@ async def test_agent_message_event_fields(db: AsyncSession) -> None:
     """agent_message events should have all required fields."""
     session = await _seed_council(db, num_agents=2, rounds=1)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -545,8 +551,8 @@ async def test_human_turn_pauses_after_round(db: AsyncSession) -> None:
     """With allow_human_turns=True and 2 rounds, engine pauses after round 1."""
     session = await _seed_council(db, num_agents=2, rounds=2, allow_human_turns=True)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return f"Response from {agent.name}"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response(f"Response from {agent.name}")
 
     with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
         events = []
@@ -573,8 +579,8 @@ async def test_human_turn_no_pause_on_last_round(db: AsyncSession) -> None:
     """With allow_human_turns=True and 1 round, no pause (goes to voting)."""
     session = await _seed_council(db, num_agents=2, rounds=1, allow_human_turns=True)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -598,8 +604,8 @@ async def test_human_turn_no_pause_when_disabled(db: AsyncSession) -> None:
     """With allow_human_turns=False, no pause even with multiple rounds."""
     session = await _seed_council(db, num_agents=2, rounds=2, allow_human_turns=False)
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return "Debate response"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response("Debate response")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.9)
@@ -624,8 +630,8 @@ async def test_resume_after_human_turn(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=2, allow_human_turns=True)
     session_id = session.id  # Capture before engine commit expires the ORM object
 
-    async def mock_call_agent(agent, messages, system_prompt):
-        return f"Response from {agent.name}"
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        return _agent_response(f"Response from {agent.name}")
 
     # Run round 1 — engine will pause (and commit)
     with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
@@ -649,8 +655,8 @@ async def test_resume_after_human_turn(db: AsyncSession) -> None:
     await db.flush()
 
     # Resume — engine should run round 2 and proceed to voting
-    async def mock_call_agent_r2(agent, messages, system_prompt):
-        return f"Round 2 response from {agent.name}"
+    async def mock_call_agent_r2(agent, messages, system_prompt, tools=None):
+        return _agent_response(f"Round 2 response from {agent.name}")
 
     async def mock_call_with_tool(*, model, messages, system_prompt, tool):
         return _mock_vote_tool_result("true", 0.85)
@@ -680,3 +686,92 @@ async def test_resume_after_human_turn(db: AsyncSession) -> None:
     rounds = result.scalars().all()
     assert len(rounds) == 2
     assert rounds[1].round_number == 2
+
+
+# -- Tool Use Tests --
+
+
+async def test_tools_enabled_emits_tool_use_events(db: AsyncSession) -> None:
+    """Council with tools_enabled=True should emit tool_use SSE events and persist references."""
+    session = await _seed_council(db, num_agents=2, rounds=1)
+    # Enable tools on the council
+    result = await db.execute(select(Council).where(Council.id == session.council_id))
+    council = result.scalar_one()
+    council.tools_enabled = True
+    await db.flush()
+
+    mock_refs = [
+        Reference(url="https://example.com/1", title="Source 1", snippet="Snippet 1"),
+        Reference(url="https://example.com/2", title="Source 2", snippet="Snippet 2"),
+    ]
+    mock_tool_invocations = [
+        ToolInvocation(tool_name="web_search", tool_input={"query": "test query"}),
+    ]
+
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        # Verify tools are passed when tools_enabled=True
+        assert tools is not None, "Expected tools to be passed for tools_enabled council"
+        return AgentResponse(
+            content=f"Response from {agent.name} with sources",
+            references=mock_refs,
+            tool_invocations=mock_tool_invocations,
+        )
+
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
+        events = []
+        async for event in run_council_session(session.id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    # Should have tool_use events
+    assert "tool_use" in event_types
+    tool_use_events = [e for e in parsed if e[0] == "tool_use"]
+    assert len(tool_use_events) == 2  # One per agent
+    assert tool_use_events[0][1]["tool_name"] == "web_search"
+
+    # agent_message events should include references
+    agent_msgs = [e for e in parsed if e[0] == "agent_message"]
+    assert len(agent_msgs) == 2
+    assert len(agent_msgs[0][1]["references"]) == 2
+    assert agent_msgs[0][1]["references"][0]["url"] == "https://example.com/1"
+
+    # Verify references are persisted in DB
+    msg_result = await db.execute(select(Message))
+    messages = msg_result.scalars().all()
+    assert all(m.references is not None and len(m.references) == 2 for m in messages)
+
+
+async def test_tools_disabled_does_not_pass_tools(db: AsyncSession) -> None:
+    """Council with tools_enabled=False should not pass tools to call_agent."""
+    session = await _seed_council(db, num_agents=2, rounds=1)
+    # tools_enabled defaults to False
+
+    async def mock_call_agent(agent, messages, system_prompt, tools=None):
+        assert tools is None, "Expected no tools for tools_disabled council"
+        return _agent_response(f"Response from {agent.name}")
+
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
+        events = []
+        async for event in run_council_session(session.id, db):
+            events.append(event)
+
+    parsed = _parse_sse_events(events)
+    event_types = [e[0] for e in parsed]
+
+    # Should NOT have tool_use events
+    assert "tool_use" not in event_types
+    assert "verdict" in event_types

@@ -16,6 +16,7 @@ const mockCouncils: Council[] = [
     rounds: 3,
     voting_mechanism: 'majority',
     allow_human_turns: false,
+    tools_enabled: false,
     agents: [
       { id: 'a1', name: 'Analyst', system_prompt: 'You are an analyst.', model: 'claude-sonnet-4-20250514' },
       { id: 'a2', name: 'Critic', system_prompt: 'You are a critic.', model: 'claude-sonnet-4-20250514' },
@@ -27,6 +28,7 @@ const mockCouncils: Council[] = [
     rounds: 5,
     voting_mechanism: 'consensus',
     allow_human_turns: true,
+    tools_enabled: false,
     agents: [
       { id: 'a3', name: 'Philosopher', system_prompt: 'You are a philosopher.', model: 'claude-sonnet-4-20250514' },
     ],

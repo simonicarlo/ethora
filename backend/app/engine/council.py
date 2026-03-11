@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.engine.agent import call_agent, call_with_tool
+from app.engine.agent import AgentResponse, call_agent, call_with_tool
 from app.engine.moderator import CandidateEntry, deduplicate_candidates
 from app.engine.prompts.loader import (
     render_candidate_proposal,
@@ -19,7 +19,7 @@ from app.engine.prompts.loader import (
     render_deliberation_system,
     render_voting_prompt,
 )
-from app.engine.tools import CAST_VOTE_TOOL, PROPOSE_CANDIDATES_TOOL
+from app.engine.tools import AGENT_TOOLS, CAST_VOTE_TOOL, PROPOSE_CANDIDATES_TOOL
 from app.engine.voting import HumanVoteRequired, tally_votes
 from app.models.models import Agent, Council, Message, Round, Session, Verdict, Vote
 from app.sse.emitter import format_sse
@@ -71,6 +71,9 @@ async def run_council_session(
             db.add(db_round)
             await db.flush()
 
+            # Resolve tools for this council once per round
+            tools = AGENT_TOOLS if council.tools_enabled else None
+
             for agent in agents:
                 messages = _build_agent_messages(history, agent, session.input_claim)
                 system_prompt = render_deliberation_system(
@@ -81,23 +84,43 @@ async def run_council_session(
                     rounds=council.rounds,
                     agent_system_prompt=agent.system_prompt,
                 )
-                content = await call_agent(agent, messages, system_prompt)
+                agent_response: AgentResponse = await call_agent(
+                    agent, messages, system_prompt, tools=tools,
+                )
+
+                # Emit tool_use SSE events for any tools the agent invoked
+                for invocation in agent_response.tool_invocations:
+                    yield format_sse("tool_use", {
+                        "agent_id": str(agent.id),
+                        "agent_name": agent.name,
+                        "tool_name": invocation.tool_name,
+                        "tool_input": invocation.tool_input,
+                    })
+
+                # Serialize references for DB storage
+                refs_json = (
+                    [r.to_dict() for r in agent_response.references]
+                    if agent_response.references
+                    else None
+                )
 
                 msg = Message(
                     round_id=db_round.id,
                     agent_id=agent.id,
-                    content=content,
+                    content=agent_response.content,
+                    references=refs_json,
                 )
                 db.add(msg)
                 await db.flush()
 
-                history.append((agent.name, agent.id, content))
+                history.append((agent.name, agent.id, agent_response.content))
 
                 yield format_sse("agent_message", {
                     "agent_id": str(agent.id),
                     "agent_name": agent.name,
                     "round": round_num,
-                    "content": content,
+                    "content": agent_response.content,
+                    "references": refs_json or [],
                 })
 
             yield format_sse("round_complete", {"round": round_num})

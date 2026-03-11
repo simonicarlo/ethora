@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
-import { DebatePanel, DebateMessage } from './debate-panel';
+import { DebatePanel, DebateMessage, ToolActivity } from './debate-panel';
 import { Agent } from '../../../core/models';
 
 const mockAgents: Agent[] = [
@@ -23,7 +23,8 @@ const mockMessages: DebateMessage[] = [
       [messages]="messages()"
       [agents]="agents()"
       [currentRound]="currentRound()"
-      [inputClaim]="inputClaim()" />
+      [inputClaim]="inputClaim()"
+      [activeToolUse]="activeToolUse()" />
   `,
 })
 class TestHost {
@@ -31,6 +32,7 @@ class TestHost {
   agents = signal<Agent[]>(mockAgents);
   currentRound = signal(0);
   inputClaim = signal('');
+  activeToolUse = signal<ToolActivity | null>(null);
 }
 
 describe('DebatePanel', () => {
@@ -153,5 +155,61 @@ describe('DebatePanel', () => {
     fixture.detectChanges();
     const empty = fixture.nativeElement.querySelector('.empty-state');
     expect(empty).toBeFalsy();
+  });
+
+  it('should show tool-use indicator when activeToolUse is set', () => {
+    host.messages.set(mockMessages);
+    host.activeToolUse.set({ agent_id: 'a1', agent_name: 'Analyst', tool_name: 'web_search' });
+    fixture.detectChanges();
+
+    const indicator = fixture.nativeElement.querySelector('.tool-use-indicator');
+    expect(indicator).toBeTruthy();
+    expect(indicator.textContent).toContain('Analyst');
+    expect(indicator.textContent).toContain('searching the web');
+  });
+
+  it('should not show tool-use indicator when activeToolUse is null', () => {
+    host.messages.set(mockMessages);
+    host.activeToolUse.set(null);
+    fixture.detectChanges();
+
+    const indicator = fixture.nativeElement.querySelector('.tool-use-indicator');
+    expect(indicator).toBeFalsy();
+  });
+
+  it('should render references as numbered citation links', () => {
+    host.messages.set([{
+      agent_id: 'a1',
+      round: 1,
+      content: 'Here is my analysis.',
+      references: [
+        { url: 'https://example.com/source1', title: 'Source One', snippet: 'A snippet' },
+        { url: 'https://example.com/source2', title: null, snippet: null },
+      ],
+    }]);
+    fixture.detectChanges();
+
+    const refLinks = fixture.nativeElement.querySelectorAll('.reference-link');
+    expect(refLinks.length).toBe(2);
+    expect(refLinks[0].textContent).toContain('[1]');
+    expect(refLinks[0].textContent).toContain('Source One');
+    expect(refLinks[0].getAttribute('href')).toBe('https://example.com/source1');
+    expect(refLinks[0].getAttribute('target')).toBe('_blank');
+    // Second reference has no title — should fall back to URL
+    expect(refLinks[1].textContent).toContain('[2]');
+    expect(refLinks[1].textContent).toContain('https://example.com/source2');
+  });
+
+  it('should not show references section when references array is empty', () => {
+    host.messages.set([{
+      agent_id: 'a1',
+      round: 1,
+      content: 'No sources here.',
+      references: [],
+    }]);
+    fixture.detectChanges();
+
+    const refList = fixture.nativeElement.querySelector('.references-list');
+    expect(refList).toBeFalsy();
   });
 });

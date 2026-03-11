@@ -32,9 +32,15 @@
           </mat-form-field>
         </div>
 
-        <mat-checkbox formControlName="allow_human_turns" class="human-turns-checkbox">
-          Allow human turns between rounds
-        </mat-checkbox>
+        <div class="checkbox-group">
+          <mat-checkbox formControlName="allow_human_turns">
+            Allow human turns between rounds
+          </mat-checkbox>
+
+          <mat-checkbox formControlName="tools_enabled">
+            Enable agent tools (web search)
+          </mat-checkbox>
+        </div>
 
         <h3 class="agents-heading">Agents</h3>
 
