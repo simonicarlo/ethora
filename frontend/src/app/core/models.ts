@@ -33,12 +33,14 @@ export interface CouncilCreate {
 export type CouncilUpdate = Partial<CouncilCreate>;
 
 export type VotingMechanism = 'majority' | 'weighted' | 'consensus' | 'human_in_loop';
-export type SessionStatus = 'pending' | 'running' | 'voting' | 'awaiting_human_turn' | 'complete' | 'error';
+export type QuestionType = 'binary' | 'open';
+export type SessionStatus = 'pending' | 'running' | 'proposing' | 'voting' | 'awaiting_human_turn' | 'complete' | 'error';
 
 export interface Session {
   id: string;
   council_id: string;
   input_claim: string;
+  question_type: QuestionType;
   status: SessionStatus;
   created_at: string;
 }
@@ -46,6 +48,7 @@ export interface Session {
 export interface SessionCreate {
   council_id: string;
   input_claim: string;
+  question_type?: QuestionType;
 }
 
 export interface Message {
@@ -128,4 +131,19 @@ export interface SseAwaitingHumanVote {
 
 export interface SseError {
   message: string;
+}
+
+export interface SseCandidateProposed {
+  agent_id: string;
+  agent_name: string;
+  candidates: string[];
+}
+
+export interface SseCandidatesFinalized {
+  candidates: string[];
+}
+
+export interface SseModeratorAction {
+  action: string;
+  explanation: string;
 }

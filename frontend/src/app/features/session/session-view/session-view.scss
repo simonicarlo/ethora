@@ -49,9 +49,61 @@
     color: var(--mat-sys-on-secondary-container, #6a1b9a);
   }
 
+  &.proposing {
+    background-color: var(--mat-sys-tertiary-container, #fff3e0);
+    color: var(--mat-sys-on-tertiary-container, #e65100);
+  }
+
   &.error {
     background-color: var(--mat-sys-error-container, #ffebee);
     color: var(--mat-sys-on-error-container, #c62828);
+  }
+}
+
+.candidates-section {
+  background: var(--mat-sys-surface-variant, #f5f5f5);
+  border-radius: 12px;
+  padding: 20px;
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+  }
+
+  h3 {
+    margin: 12px 0 8px;
+    font-size: 1rem;
+  }
+}
+
+.proposal-card {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #e0e0e0);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  ul {
+    margin: 4px 0 0;
+    padding-left: 20px;
+  }
+}
+
+.moderator-note {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--mat-sys-surface, #fff);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.finalized-candidates {
+  margin-top: 12px;
+
+  ol {
+    padding-left: 20px;
+    margin: 4px 0 0;
   }
 }
 

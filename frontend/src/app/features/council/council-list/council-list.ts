@@ -71,9 +71,10 @@ export class CouncilList {
       data: council,
       width: '520px',
     });
-    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((claim) => {
-      if (!claim) return;
-      this.api.createSession({ council_id: council.id, input_claim: claim }).pipe(
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
+      if (!result) return;
+      const { claim, questionType } = result;
+      this.api.createSession({ council_id: council.id, input_claim: claim, question_type: questionType }).pipe(
         takeUntilDestroyed(this.destroyRef),
       ).subscribe({
         next: (session) => this.router.navigate(['/sessions', session.id]),

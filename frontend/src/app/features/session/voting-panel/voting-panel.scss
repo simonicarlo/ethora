@@ -79,3 +79,41 @@ mat-progress-bar {
   padding: 8px 0;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.candidate-summary {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--mat-sys-surface-variant, #f5f5f5);
+  border-radius: 12px;
+
+  h3 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+  }
+}
+
+.candidate-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  .candidate-name {
+    flex: 1;
+    font-weight: 500;
+    min-width: 120px;
+  }
+
+  .candidate-count {
+    font-size: 0.875rem;
+    color: var(--mat-sys-on-surface-variant);
+    min-width: 60px;
+    text-align: right;
+  }
+
+  mat-progress-bar {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+}

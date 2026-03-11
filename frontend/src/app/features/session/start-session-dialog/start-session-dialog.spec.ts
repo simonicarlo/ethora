@@ -79,7 +79,7 @@ describe('StartSessionDialog', () => {
     fixture.detectChanges();
     const btn: HTMLButtonElement = fixture.nativeElement.querySelector('[data-testid="start-btn"]');
     btn.click();
-    expect(dialogRef.close).toHaveBeenCalledWith('Is the earth flat?');
+    expect(dialogRef.close).toHaveBeenCalledWith({ claim: 'Is the earth flat?', questionType: 'binary' });
   });
 
   it('should close without result when Cancel is clicked', () => {
