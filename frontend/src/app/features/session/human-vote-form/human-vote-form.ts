@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,6 +25,7 @@ import { Verdict } from '../../../core/models';
   ],
   templateUrl: './human-vote-form.html',
   styleUrl: './human-vote-form.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HumanVoteForm {
   readonly sessionId = input.required<string>();

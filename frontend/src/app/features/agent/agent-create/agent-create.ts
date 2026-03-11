@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -25,11 +26,13 @@ import { ApiService } from '../../../core/api.service';
   ],
   templateUrl: './agent-create.html',
   styleUrl: './agent-create.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgentCreate {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly submitting = signal(false);
   readonly error = signal<string | null>(null);
@@ -50,7 +53,7 @@ export class AgentCreate {
     this.submitting.set(true);
     this.error.set(null);
 
-    this.api.createAgent(this.form.getRawValue()).subscribe({
+    this.api.createAgent(this.form.getRawValue()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.router.navigate(['/agents']);
       },

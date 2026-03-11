@@ -5,7 +5,9 @@ import logging
 import uuid
 from collections.abc import AsyncGenerator
 
+import anthropic
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -105,7 +107,7 @@ async def run_council_session(
             parsed = _parse_vote(raw_vote)
 
             try:
-                confidence = float(parsed.get("confidence", 0.0))
+                confidence = max(0.0, min(1.0, float(parsed.get("confidence", 0.0))))
             except (TypeError, ValueError):
                 confidence = 0.0
 
@@ -156,7 +158,7 @@ async def run_council_session(
 
         await db.commit()
 
-    except Exception as exc:
+    except (anthropic.APIError, SQLAlchemyError) as exc:
         logger.exception("Council session %s failed", session_id)
         await db.rollback()
         session.status = "error"
@@ -239,6 +241,7 @@ def _parse_vote(raw_text: str) -> dict:
             pass
 
     # Fallback: treat entire response as reasoning
+    logger.warning("Failed to parse vote JSON, falling back to abstain: %.200s", raw_text)
     return {"value": "abstain", "confidence": 0.0, "reasoning": raw_text}
 
 

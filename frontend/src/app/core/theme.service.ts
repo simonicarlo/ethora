@@ -1,10 +1,11 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { DestroyRef, Injectable, signal, effect, inject } from '@angular/core';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly STORAGE_KEY = 'ac-theme';
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly mode = signal<ThemeMode>(this.loadSavedMode());
   readonly isDark = signal(false);
@@ -21,13 +22,14 @@ export class ThemeService {
     });
 
     // Listen for system preference changes
-    window
-      .matchMedia('(prefers-color-scheme: dark)')
-      .addEventListener('change', () => {
-        if (this.mode() === 'system') {
-          this.applyTheme('system');
-        }
-      });
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const listener = () => {
+      if (this.mode() === 'system') {
+        this.applyTheme('system');
+      }
+    };
+    mediaQuery.addEventListener('change', listener);
+    this.destroyRef.onDestroy(() => mediaQuery.removeEventListener('change', listener));
   }
 
   toggle(): void {

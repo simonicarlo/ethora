@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -23,18 +24,20 @@ import { StartSessionDialog } from '../../session/start-session-dialog/start-ses
   ],
   templateUrl: './council-list.html',
   styleUrl: './council-list.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CouncilList {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly councils = signal<Council[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
   constructor() {
-    this.api.getCouncils().subscribe({
+    this.api.getCouncils().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (councils) => {
         this.councils.set(councils);
         this.loading.set(false);
@@ -55,9 +58,11 @@ export class CouncilList {
       data: council,
       width: '520px',
     });
-    ref.afterClosed().subscribe((claim) => {
+    ref.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((claim) => {
       if (!claim) return;
-      this.api.createSession({ council_id: council.id, input_claim: claim }).subscribe({
+      this.api.createSession({ council_id: council.id, input_claim: claim }).pipe(
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
         next: (session) => this.router.navigate(['/sessions', session.id]),
         error: (err) => this.error.set(err?.message ?? 'Failed to create session'),
       });

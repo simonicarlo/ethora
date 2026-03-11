@@ -9,6 +9,7 @@ import json
 import uuid
 from unittest.mock import patch
 
+import anthropic
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -353,7 +354,7 @@ async def test_llm_error_sets_error_status(db: AsyncSession) -> None:
     await db.commit()
 
     async def mock_call_agent(agent, messages, system_prompt):
-        raise RuntimeError("API connection failed")
+        raise anthropic.APIConnectionError(request=None, message="API connection failed")
 
     with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
         events = []
