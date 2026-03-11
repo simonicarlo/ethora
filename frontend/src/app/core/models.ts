@@ -11,6 +11,8 @@ export interface AgentCreate {
   model?: string;
 }
 
+export type AgentUpdate = Partial<AgentCreate>;
+
 export interface Council {
   id: string;
   name: string;
@@ -27,6 +29,8 @@ export interface CouncilCreate {
   allow_human_turns?: boolean;
   agent_ids: string[];
 }
+
+export type CouncilUpdate = Partial<CouncilCreate>;
 
 export type VotingMechanism = 'majority' | 'weighted' | 'consensus' | 'human_in_loop';
 export type SessionStatus = 'pending' | 'running' | 'voting' | 'awaiting_human_turn' | 'complete' | 'error';
