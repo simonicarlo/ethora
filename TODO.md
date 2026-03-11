@@ -1,303 +1,168 @@
 # TODO — Ethora
 
 > Tracked backlog of implementation work. Updated by Claude as work progresses.
-> Items are grouped into parallelizable work units. Dependencies noted where they exist.
-> See `SPEC.md` for the full API contract and SSE alignment details.
+> Items grouped by priority and area. See `REVIEW.md` for full audit details.
+> See `SPEC.md` for API contracts and SSE alignment details.
 
-## Completed
+## Completed Sections (collapsed)
 
-- [x] **Implement `engine/council.py`** — Orchestrate rounds, collect messages, emit SSE events, trigger voting
-- [x] **Implement `engine/agent.py`** — Call Claude API, pass system prompt + conversation history
-- [x] **Implement `engine/voting.py`** — All four mechanisms: majority, weighted, consensus, human_in_loop
-- [x] **Wire up SSE stream** (`sessions.py:stream_session`) — Connect engine to SSE event generator
-- [x] **Implement human turn injection** (`sessions.py:submit_human_turn`) — Pause-resume flow
-- [x] **Add `selectinload` to council list query** — Eager-load agents on `list_councils`
-- [x] **Extract `get_or_404` helper** — Generic fetch-by-ID-or-404 in `deps.py`
-- [x] **SSE endpoint DB session lifetime** — Dedicated DB session inside the stream generator
-- [x] **Home page** — Landing page with project description and CTA
-- [x] **Council list page** — Material card grid with links
-- [x] **Council create form** — Reactive form for name, rounds, voting, agent selection
-- [x] **Session view** — Multi-panel debate UI with agent messages, voting, verdict
-- [x] **SSE integration in session view** — Subscribe to `SseService.connect()` and render events
+Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See git history for details.
 
 ---
 
-## 1. SSE & Type Alignment (frontend)
+## 1. Critical Fixes
 
-> **Independent — no backend changes needed. Start here before other frontend work.**
+> **Priority 1 — Fix before any new feature work**
 
-- [x] **Add `awaiting_human_turn` to `SessionStatus` type** (`models.ts`) — Backend sends this status but frontend type doesn't include it
-- [x] **Add `awaiting_human_turn` + `awaiting_human_vote` + `error` to `SSE_EVENTS`** (`sse.service.ts`) — Frontend doesn't listen for these backend events
-- [x] **Handle `awaiting_human_turn` SSE event** (`session-view.ts`) — Replace `status` event handler with proper `awaiting_human_turn` case; set `waitingForHuman` signal
-- [x] **Handle `awaiting_human_vote` SSE event** (`session-view.ts`) — Show human vote form when this event fires
-- [x] **Handle `error` SSE event** (`session-view.ts`) — Set session status to `error` with message from backend
-- [x] **Map `vote` → `value` in `voting_cast` handler** (`session-view.ts`) — Backend sends `vote` field, frontend `Vote` interface expects `value`
-- [x] **Remove dead `status` event handling** (`session-view.ts`) — The generic `status` case is unreachable once specific events are handled
+- [ ] **Fix post-rollback session status update** — Re-fetch session via `db.get()` after rollback in generic error handler, matching the `RateLimitError` pattern — **`backend/app/engine/council.py:573-578`**
+- [ ] **Fix `as unknown as Vote` type cast** — Create a proper mapping function from `SseVotingCast` to `Vote` instead of double-casting through `unknown` (missing `id`, `agent_id`) — **`frontend/src/app/features/session/session-view/session-view.ts:434`**
+- [ ] **Validate admin settings keys** — Whitelist allowed setting keys in `PUT /api/v1/admin/settings/{key}` to prevent arbitrary key injection — **`backend/app/api/v1/admin.py:252-276`**
 
 ---
 
-## 2. Human Turn Input (frontend)
+## 2. Security Hardening
 
-> **Depends on: SSE & Type Alignment (section 1)**
+> **Priority 1 — Required before any deployment**
 
-- [x] **Create `HumanTurnInput` component** — Text area + submit button, shown between rounds when `awaiting_human_turn`
-- [x] **Wire `HumanTurnInput` into `SessionView`** — Show when `sessionStatus === 'awaiting_human_turn'`, call `ApiService.sendHumanTurn()`
-- [x] **Re-connect SSE after human turn submission** — After `POST /human-turn` returns 202, re-call `GET /stream` (session resets to `pending`)
-
----
-
-## 3. Agent Creation UI (frontend)
-
-> **Independent — can be worked in parallel with all other sections.**
-
-- [x] **Create `AgentList` component** — Display agents in a Material table/card grid
-- [x] **Create `AgentCreate` component** — Form with name, system prompt (textarea), model selector
-- [x] **Add routes** — `/agents` → `AgentList`, `/agents/new` → `AgentCreate`
-- [x] **Add nav link** — "Agents" item in toolbar navigation
+- [ ] **Add authentication to admin endpoints** — At minimum, add API key or basic auth middleware to `/api/v1/admin/*` routes — **`backend/app/api/v1/admin.py`**
+- [ ] **Mask API key in admin UI** — Show only last 4 characters instead of full key in cleartext — **`frontend/src/app/features/admin/settings/admin-settings.html:13`**
+- [ ] **Require `SETTINGS_ENCRYPTION_KEY`** — Fail loudly on startup if encryption key is empty when admin settings feature is used — **`backend/app/core/config.py:9`**
+- [ ] **Add `max_length` to all text input fields** — `HumanTurnRequest.content`, `AgentCreate.system_prompt`, `SessionCreate.input_claim` lack upper bounds — **`backend/app/schemas/schemas.py`**
+- [ ] **Update `.env.example`** — Add `CORS_ORIGINS`, `MODERATOR_MODEL`, `SETTINGS_ENCRYPTION_KEY` — **`.env.example`**
 
 ---
 
-## 4. Start Session Flow (frontend)
+## 3. Frontend Reliability
 
-> **Independent — can be worked in parallel.**
+> **Priority 2 — Stability and correctness**
 
-- [x] **Create `StartSessionDialog`** — Material dialog with text input for the claim/question
-- [x] **Add "Start Session" button to council cards** — On `CouncilList`, each card gets a button that opens the dialog
-- [x] **Wire dialog → API → navigation** — `POST /sessions` with council_id + claim, then `router.navigate(['/sessions', id])`
-
----
-
-## 5. Session View Hardening (frontend)
-
-> **Depends on: SSE & Type Alignment (section 1)**
-
-- [x] **Handle already-complete sessions** — If `GET /sessions/{id}` returns `status: 'complete'`, fetch verdict directly instead of opening SSE stream
-- [x] **Status-aware initialization** — Check session status on load: `complete` → fetch verdict, `error` → show error, `awaiting_human_turn` → show human input, `pending` → connect SSE
-- [x] **Display connection/loading state** — Show spinner or status indicator while SSE is connecting
+- [ ] **Add `takeUntilDestroyed()` to unprotected subscriptions** — `session-view.ts:161,195,228`, `human-turn-input.ts:38`, `human-vote-form.ts:54`, `admin-settings.ts:93-126`, `agent-test-bench.ts:48`
+- [ ] **Add SSE reconnection with exponential backoff** — Currently SSE drops terminate the Observable with no recovery path — **`frontend/src/app/core/sse.service.ts`**
+- [ ] **Add wildcard 404 route** — No `{ path: '**' }` catch-all; invalid URLs show blank page — **`frontend/src/app/app.routes.ts`**
+- [ ] **Fix chart colors for light theme** — Hardcoded `rgba(255,255,255,...)` makes charts invisible on light theme — **`frontend/src/app/features/admin/stats/stats-dashboard.ts:51-64`**
 
 ---
 
-## 6. Infrastructure
+## 4. Type Safety & Contracts
 
-- [x] **Alembic migrations** — Replace `create_all()` with proper migration setup for production
-- [x] **Pin Python dependency versions** in `requirements.txt`
-- [x] **Add pagination** to `list_agents` and `list_councils` endpoints
+> **Priority 2 — Align frontend/backend types and fix SPEC drift**
 
----
-
-## 7. Code Quality (deferred from codebase audit)
-
-- [ ] **Replace global Anthropic client with DI** (`backend/app/engine/agent.py`) — Module-level singleton couples agent module to client lifecycle; use FastAPI dependency injection instead
-- [ ] **Use SQLAlchemy Enum for status/voting fields** (`backend/app/models/models.py`) — `voting_mechanism` and `status` are plain `String` columns; convert to `Enum` type with migration for DB-level constraint
-- [ ] **Global HTTP error interceptor** (frontend) — Each component handles errors independently; add centralized `HttpInterceptor` for consistent error handling
-- [ ] **Centralized `SessionStateService`** (frontend) — Session state is managed inline in `SessionView`; extract to a dedicated service for reuse and testability
-- [ ] **Optimize ORM eager loading** (`backend/app/models/models.py`) — All relationships use `lazy="selectin"` globally; profile and switch to `lazy="select"` where eager loading is unnecessary
-- [ ] **Add tests for `ThemeService` and `app.routes.ts`** (frontend) — These files lack test coverage
+- [ ] **Update SPEC.md** — Add 6 missing SSE events (`agent_typing`, `summary_ready`, `voting_started`, `closing_statement`, `moderator_action`, `rate_limited`), 3 missing statuses (`proposing`, `closing_statements`, `rate_limited`), `research` question type, and updated `agent_message` shape
+- [ ] **Add `summary` field to frontend `Message` interface** — Backend `MessageResponse` includes it, but base `Message` type omits it — **`frontend/src/app/core/models.ts:80-87`**
+- [ ] **Fix `voting_cast` SSE field mismatch** — Backend sends `vote`, frontend has dual `vote?`/`value?` workaround. Pick one field name and align both sides — **`council.py:528`, `models.ts:183`**
+- [ ] **Remove `$any()` from templates** — Replace with typed helper methods or template refs in `human-turn-input.html:14`, `human-vote-form.html:34`, `tool-registry.html:38,42`
+- [ ] **Type `let row` in MatTable** — Implicit `any` in `error-log-viewer.html:22-47` circumvents strict templates
+- [ ] **Use `Literal` type for `MessageWithContext.message_type`** on backend — Currently untyped `str` — **`backend/app/schemas/schemas.py:156`**
+- [ ] **Add `SseVotingStarted` interface** — Event is handled but has no type definition — **`frontend/src/app/core/models.ts`**
+- [ ] **Replace `Any` usages with TypedDicts** — `agent.py:41,72,81`, `tools.py:16,26,49`, `emitter.py:7` — add required comments or replace with typed alternatives
 
 ---
 
-## Phase 2 — Dependency Graph
+## 5. Backend Code Quality
 
-```
-Stream A (Prompts) ─────┬──→ Stream D (Open Voting)
-                        └──→ Stream E (Dual Response)
+> **Priority 2 — Data integrity and robustness**
 
-Stream B (CRUD) ─────────────→ §17 Admin Dashboard
-Stream C (Human Turn Fix) ──→ §16 Session History
-
-Stream F (Tool Use) ─────┐
-Stream G (File Upload) ──┼──→ Stream H (File Editing)
-Stream D (Open Voting) ──┘
-
-§16 Session History ─────┬──→ §17 Admin Dashboard
-Stream B (CRUD) ─────────┘
-```
-
-**Can start in parallel (no deps):** A, B, C, F, G
-**After Stream A:** D, E
-**After Stream C:** §16 Session History
-**After §16 + B:** §17 Admin Dashboard
-**After D + F + G:** H
+- [ ] **Use SQLAlchemy Enum for status/voting columns** — `voting_mechanism` and `status` are plain `String`; add DB-level constraint via migration — **`backend/app/models/models.py:45,61`**
+- [ ] **Add ORM cascade deletes** — Add `cascade="all, delete-orphan"` to relationships and `ON DELETE CASCADE` to FKs; remove manual cascade in `sessions.py:248-261` — **`backend/app/models/models.py`**
+- [ ] **Add FK indexes** — `Round.session_id`, `Message.round_id`, `Vote.session_id`, `Vote.agent_id` lack indexes (PostgreSQL doesn't auto-index FKs) — **`backend/app/models/models.py`**
+- [ ] **Replace `assert` with proper guards** — `councils.py:158`, `council.py:566` — `assert` is stripped with `-O` flag
+- [ ] **Narrow moderator exception handling** — `moderator.py:69,97,132,166` catch bare `except Exception`; use specific exceptions — **`backend/app/engine/moderator.py`**
+- [ ] **Validate `council_id` exists on session creation** — Currently FK violation returns 500 instead of 404 — **`backend/app/api/v1/sessions.py:52-60`**
+- [ ] **Return `SessionStateResponse` instance from `get_session_messages`** — Currently returns raw dict, bypassing Pydantic validation — **`backend/app/api/v1/sessions.py:111`**
+- [ ] **Use `TallyResult` TypedDict for `tally_votes` return** — Currently `dict[str, str | float]` is too loose — **`backend/app/engine/voting.py:15`**
+- [ ] **Replace global Anthropic client with DI** — Module-level singleton is not task-safe and ignores runtime key changes — **`backend/app/engine/agent.py:53-65`**
 
 ---
 
-## 8. Stream A — System Prompt Extraction & Enhancement
+## 6. Code Duplication & Consistency
 
-> **Priority 1 · Depends on: nothing · Blocks: D, E**
+> **Priority 3 — Refactoring for maintainability**
 
-- [x] Create `backend/app/engine/prompts/` directory with editable template files (`deliberation_system.txt`, `voting_prompt.txt`, `continuation_nudge.txt`)
-- [x] Build prompt template loader with variable interpolation (agent name, council name, other agents, round count, voting mechanism)
-- [x] Wrap each agent's `system_prompt` with deliberation framing ("You are in a deliberation council…", other agents, voting mechanism, rounds)
-- [x] Update **`_build_voting_prompt`** in `council.py` to use template file instead of inline f-string
-- [x] Update **`_build_agent_messages`** continuation nudge to use template
-
----
-
-## 9. Stream B — Agent & Council CRUD (Edit + Delete)
-
-> **Priority 1 · Depends on: nothing**
-
-- [x] Add `PUT /api/v1/agents/{id}` — update agent (name, system_prompt, model) — **`councils.py`**
-- [x] Add `DELETE /api/v1/agents/{id}` — cascade-remove from councils; fail 409 if any council would have <2 agents — **`councils.py`**
-- [x] Add `PUT /api/v1/councils/{id}` — update council (name, rounds, voting_mechanism, allow_human_turns, agent_ids) — **`councils.py`**
-- [x] Add `DELETE /api/v1/councils/{id}` — fail if active sessions exist — **`councils.py`**
-- [x] Add `AgentUpdate` and `CouncilUpdate` Pydantic schemas — **`schemas.py`**
-- [x] Frontend: edit pages for agents and councils (reuse create forms, pre-populate) — **`agent/`, `council/`**
-- [x] Frontend: delete buttons with confirmation dialogs — **`agent-list/`, `council-list/`**
-- [x] Frontend: routes `/agents/:id/edit`, `/councils/:id/edit` — **`app.routes.ts`**
-- [x] Frontend: add edit/delete actions to list views — **`api.service.ts`**
+- [ ] **Create SSE event constants module** — Replace 18+ hardcoded string literals with constants in `sse/events.py` — **`backend/app/engine/council.py`, `sessions.py`**
+- [ ] **Extract `_system_prompt_for()` helper** — `render_deliberation_system()` called 4x with identical args at lines 210, 316, 408, 494 — **`backend/app/engine/council.py`**
+- [ ] **Extract `_build_debate_text()` helper** — Identical 4-line block at lines 304-307 and 390-393 — **`backend/app/engine/council.py`**
+- [ ] **Consolidate default icon constant** — `'smart_toy'` hardcoded in 10+ locations across both stacks; define `DEFAULT_AGENT_ICON` per stack — **multiple files**
+- [ ] **Extract shared markdown styles** — Duplicated `::ng-deep` markdown CSS in `debate-panel.scss:190-200` and `session-view.scss:235-243`; create `_markdown.scss` mixin
+- [ ] **Unify DI patterns** — Frontend: `human-turn-input.ts`, `human-vote-form.ts` use constructor injection while all others use `inject()`. Backend: `admin.py` uses raw `Depends(get_db)` while others use `DBSession` alias
+- [ ] **Replace `confirm()` with `MatDialog`** — Browser `confirm()` in `council-list.ts:61`, `session-list.ts:99`, `agent-config.ts:141` is inconsistent with Material Design
+- [ ] **Create shared `AgentChip` component** — Agent name+icon template pattern repeated in 4+ templates — **`frontend/src/app/shared/components/`**
+- [ ] **Deduplicate `agentMap` computed signal** — Same map built independently in `session-view.ts` and `debate-panel.ts`; pass as input or extract utility
 
 ---
 
-## 10. Stream C — Fix Human Turn Mechanism
+## 7. Test Coverage
 
-> **Priority 1 · Depends on: nothing**
+> **Priority 3 — Fill gaps identified in review**
 
-**Reported symptoms:** errors on human input prompt; agent answers disappear on reload; voting panel appears prematurely.
+### Frontend (10 untested components)
+- [ ] `admin-dashboard.ts`
+- [ ] `agent-config.ts`
+- [ ] `agent-test-bench.ts`
+- [ ] `agent-templates.ts`
+- [ ] `tool-registry.ts`
+- [ ] `admin-settings.ts`
+- [ ] `stats-dashboard.ts`
+- [ ] `error-log-viewer.ts`
+- [ ] `session-list.ts`
+- [ ] `council-form.ts`
+- [ ] **Create shared test fixtures** — Mock agent/council/session objects repeated in 6+ spec files; extract to `test-utils/fixtures.ts`
 
-- [x] Investigate: SSE stream errors when `awaiting_human_turn` fires — **`council.py`, `sessions.py`**
-- [x] Add `GET /api/v1/sessions/{id}/messages` endpoint to fetch historical messages — **`sessions.py`**
-- [x] Frontend: load existing messages/votes from API on session-view init before connecting SSE — **`session-view.ts`**
-- [x] Fix SSE pause/resume flow — ensure stream doesn't error on human turn pause — **`council.py`**
-- [x] Fix voting panel visibility — only show when status is `voting` or `complete` — **`session-view.ts`**
-- [x] E2E test: human turns enabled → prompt → submit → rounds continue
-
----
-
-## 11. Stream D — Open-Ended Voting
-
-> **Priority 2 · Depends on: Stream A**
-
-- [x] Add candidate proposal phase: after deliberation, agents propose candidate answers for open-ended questions — **`council.py`**
-- [x] Collect and deduplicate candidates, present list to all agents for voting
-- [x] Update voting prompt template: binary mode (`true`/`false`) vs open mode (vote on candidates) — **`prompts/voting_prompt.txt`**
-- [x] Add `question_type: Literal["binary", "open"]` to **Session** schema (per-session, user picks at start) — **`schemas.py`, `models.py`**
-- [x] Add SSE events: `candidate_proposed`, `candidates_finalized` — **`council.py`**
-- [x] Frontend: update start-session dialog with question type picker — **`start-session-dialog/`**
-- [x] Frontend: update voting panel to display candidates and open-ended results — **`voting-panel/`**
+### Backend (untested modules)
+- [ ] `app/engine/agent.py` — LLM client wrapper
+- [ ] `app/engine/tools.py` — Tool schema definitions
+- [ ] `app/core/config.py` — Settings loading
 
 ---
 
-## 12. Stream E — Moderator-Driven Chat Summarization
+## 8. Infrastructure & DevOps
 
-> **Priority 2 · Depends on: Stream A**
+> **Priority 3 — Production readiness**
 
-- [x] Add `summary: Mapped[str | None]` to `Message` model + Alembic migration (`006`) — **`models.py`**
-- [x] Add `SUMMARIZE_RESPONSE_TOOL` tool schema — **`tools.py`**
-- [x] Add moderator summarization prompt template — **`prompts/moderator_summarize.txt`**
-- [x] Add `render_moderator_summarize()` to prompt loader — **`prompts/loader.py`**
-- [x] Add `summarize_agent_response()` moderator function — **`moderator.py`**
-- [x] Integrate moderator summarization into council orchestrator (after message flush, before SSE emit) — **`council.py`**
-- [x] Update `MessageResponse` and `MessageWithContext` schemas with `summary` field — **`schemas.py`**
-- [x] Update cold-load endpoint to include `summary` — **`sessions.py`**
-- [x] Update SSE `agent_message` event to include `summary` field — **`council.py`**
-- [x] Frontend: add `summary` to `SseAgentMessage` and `MessageWithContext` — **`models.ts`**
-- [x] Frontend: pass `summary` through SSE handler and history loader — **`session-view.ts`**
-- [x] Frontend: show summary by default in debate panel cards, expand/collapse on click — **`debate-panel/`**
+- [ ] **Add `restart: unless-stopped`** to all docker-compose services — **`docker-compose.yml`**
+- [ ] **Deep health check** — Verify DB connectivity in `/health` endpoint — **`backend/app/main.py:72-74`**
+- [ ] **Centralized logging** — Configure global log level, format, and handlers instead of ad-hoc `logging.getLogger()` per module
+- [ ] **Update `pytest-asyncio`** — Pinned at extremely old `1.3.0` — **`backend/requirements.txt`**
+- [ ] **Add request size limits** — No middleware for body size; `max_length` missing on several schema fields
+- [ ] **Rename app title** — "Agent Council API" → "Ethora API" in OpenAPI docs — **`backend/app/main.py:51`**
+- [ ] **Update stale CLAUDE.md files** — Engine and SSE CLAUDE.md files reference outdated event lists and `create_all()`
 
 ---
 
-## 13. Stream F — Agent Tool Use
+## 9. UX Polish
 
-> **Priority 3 · Depends on: nothing · Blocks: H**
+> **Priority 3 — Nice-to-haves**
 
-- [x] Define tool schemas for Anthropic API `tools` parameter (start with `web_search`) — **`agent.py`**
-- [x] Update `call_agent()` to handle `tool_use` blocks: execute tools, send `tool_result`, loop until final text — **`agent.py`**
-- [x] Add `tools_enabled: Mapped[bool]` to Council model + migration — **`models.py`**
-- [x] Add `references` JSON column to `Message` model + migration — **`models.py`**
-- [x] Extract references (url, title, snippet) from `web_search` tool results and attach to agent message — **`agent.py`**
-- [x] Include `references` array in `agent_message` SSE event and `MessageResponse` schema — **`council.py`, `schemas.py`**
-- [x] Emit `tool_use` SSE events during tool execution — **`council.py`**
-- [x] Frontend: tool-use indicator in debate panel ("Searching the web…") — **`debate-panel/`**
-- [x] Frontend: render references as clickable citation links below agent messages — **`debate-panel/`**
-- [x] Frontend: toggle for tools in council create/edit form — **`council-create/`**
+- [ ] **Add `aria-label` attributes** — Delete buttons, icon-picker, mat-slider, menu triggers across multiple components
+- [ ] **Remove `console.log/warn/error`** — Production debug logging in `session-view.ts:453,460,467`
+- [ ] **Fix N+1 queries in admin stats** — `admin.py:108-129,149-168,207-216` issue per-entity queries; use joins or window functions
+- [ ] **Consistent `delete_setting` response** — Returns `None` instead of `Response(status_code=204)` like other delete endpoints — **`backend/app/api/v1/admin.py:279-288`**
+- [ ] **Move `import time` to module level** — Currently inside function body — **`backend/app/engine/agent.py:211`**
 
 ---
 
-## 14. Stream G — File Upload for Context
+## 10. File Upload & Collaborative Editing (Feature)
 
-> **Priority 3 · Depends on: nothing · Blocks: H**
+> **Priority 4 — New features**
 
-- [ ] Add `POST /api/v1/sessions/{id}/files` — multipart upload, store under `uploads/{session_id}/` — new **`files.py`**
-- [ ] Create `SessionFile` model (`id, session_id, filename, path, mime_type, size, created_at`) + migration — **`models.py`**
-- [ ] Include file contents in agent context (text files inline, PDFs via `pypdf`) — **`council.py`**
-- [ ] Frontend: file upload component in start-session dialog (drag-and-drop + picker) — **`start-session-dialog/`**
+### File Upload (Stream G)
+- [ ] Add `POST /api/v1/sessions/{id}/files` — multipart upload, store under `uploads/{session_id}/` — **`files.py`**
+- [ ] Create `SessionFile` model + migration — **`models.py`**
+- [ ] Include file contents in agent context — **`council.py`**
+- [ ] Frontend: file upload component in start-session dialog — **`start-session-dialog/`**
 - [ ] Frontend: show uploaded files in session view header — **`session-view/`**
-- [ ] Add support for links to resources aswell
+- [ ] Add support for links to resources as well
+
+### Collaborative File Editing (Stream H — depends on D + F + G)
+- [ ] Add `file_edit` tool for agents — **`agent.py`**
+- [ ] Collect proposed edits, consensus voting — **`council.py`**
+- [ ] Apply edits on consensus; `FileVersion` model — **`models.py`**
+- [ ] Frontend: show file diffs — **`session-view/`**
+- [ ] Agents can add links to sources and reference them
 
 ---
 
-## 15. Stream H — Collaborative File Editing Under Consensus
+## 11. Future
 
-> **Priority 4 · Depends on: D + F + G**
-
-- [ ] Add `file_edit` tool for agents to propose changes to uploaded files — **`agent.py`**
-- [ ] Collect proposed edits, present to all agents for consensus voting — **`council.py`**
-- [ ] Apply edits on consensus; track versions with `FileVersion` model — **`models.py`**
-- [ ] Frontend: show file diffs in session view — **`session-view/`**
-- [ ] Agents can add links to sources and reference them in their answers.
-
----
-
-## 16. Session History & Recovery
-
-> **Priority 2 · Depends on: Stream C (messages endpoint)**
-
-### Backend
-
-- [x] **Add `GET /api/v1/sessions` endpoint** — List all sessions with optional filters (`council_id`, `status`), ordered by `created_at` desc, paginated — **`sessions.py`**
-- [x] **Implement `GET /api/v1/sessions/{id}/messages`** — Return all messages for a session grouped by round (already in SPEC, not yet implemented) — **`sessions.py`**
-- [x] **Add `GET /api/v1/councils/{id}/sessions`** — List sessions for a specific council — **`councils.py`**
-- [x] **Add `DELETE /api/v1/sessions/{id}`** — Delete a session and cascade to rounds/messages/votes/verdict — **`sessions.py`**
-- [x] **Add `SessionListResponse` schema** with session metadata + council name + verdict summary (if complete) — **`schemas.py`**
-
-### Frontend
-
-- [x] **Create `SessionList` component** — Table view of past sessions with status badges (running/complete/error/awaiting input), council name, claim preview, date — **`features/session/session-list/`**
-- [x] **Add `/sessions` route** — Wire `SessionList` into routing and toolbar nav — **`app.routes.ts`**
-- [x] **Add `listSessions()` and `getMessages()` to `ApiService`** — **`api.service.ts`**
-- [x] **Load historical messages on session-view init** — Before connecting SSE, call `GET /sessions/{id}/messages` to restore transcript on page reload or re-visit — **`session-view.ts`**
-- [x] **Add "Recent Sessions" widget to Home page** — Show last 5 sessions with status and link — **`features/home/`**
-- [x] **Add "View Sessions" link on council cards** — Navigate to `/sessions?council_id={id}` — **`council-list/`**
-- [x] **Delete session action** — Delete button with confirmation dialog in session list — **`session-list/`**
-
----
-
-## 17. Admin Dashboard
-
-> **Priority 3 · Depends on: Stream B (CRUD), Session History (section 16)**
-
-### Overview
-
-- [x] **Create `/admin` route and `AdminDashboard` component** — Top-level admin page with sidebar navigation — **`features/admin/`**
-- [x] **Add "Admin" link to toolbar** — Visible in main navigation — **`app.component.ts`**
-
-### Agent Management
-
-- [x] **Agent configuration panel** — Full CRUD for agents with inline editing of system prompts, model selection, and preview — **`features/admin/agents/`**
-- [x] **Agent test bench** — Send a test message to an agent and see the response without creating a session — **`features/admin/agents/`**
-- [x] **Agent templates library** — Pre-built agent personas (Devil's Advocate, Fact Checker, Synthesizer, etc.) that can be cloned — **`features/admin/agents/`**
-
-### Tooling Configuration
-
-- [x] **Tool registry panel** — Enable/disable available tools (web search, file edit, etc.) per council — **`features/admin/tools/`**
-- [x] **Tool management**   -  Potentially allow configuration of tools by adjusting parameters. - **`features/admin/tools/`**
-- [x] **API key management** — Configure and rotate LLM API keys from the UI (stored encrypted) — **`features/admin/settings/`**
-- [x] **Model configuration** — Set default model, temperature, max tokens per agent or council — **`features/admin/settings/`**
-
-### Statistics & Monitoring
-
-- [x] **Session stats dashboard** — Total sessions, completion rate, avg rounds per session, sessions over time chart — **`features/admin/stats/`**
-- [x] **Council usage stats** — Most-used councils, sessions per council, avg deliberation time — **`features/admin/stats/`**
-- [x] **Agent performance metrics** — Response times, avg message length, voting alignment — **`features/admin/stats/`**
-- [x] **Backend stats endpoints** — `GET /api/v1/admin/stats/sessions`, `GET /api/v1/admin/stats/agents` — **`api/v1/admin.py`**
-- [x] **Error log viewer** — View recent session errors with stack traces and context — **`features/admin/logs/`**
-
----
-
-## 18. Future
-
-- [ ] **Admin endpoint authentication** — Add auth/authorization to `/api/v1/admin/*` endpoints before production (`backend/app/api/v1/admin.py`)
-- [ ] **Tool registry backend persistence** — Per-tool config persistence requires a `tool_config` JSON column on councils
 - [ ] **Fact Checker wrapper** — Preconfigured council with Source Critic, Logical Analyst, Devil's Advocate, Synthesizer agents
 - [ ] **Graph visualization panel** — Deferred from PoC
+- [ ] **Tool registry backend persistence** — Per-tool config requires a `tool_config` JSON column on councils
