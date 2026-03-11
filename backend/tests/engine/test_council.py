@@ -91,8 +91,8 @@ async def _seed_council(
     return session
 
 
-def _mock_agent_vote_json(value: str = "true", confidence: float = 0.85) -> str:
-    return json.dumps({"value": value, "confidence": confidence, "reasoning": "test reasoning"})
+def _mock_vote_tool_result(value: str = "true", confidence: float = 0.85) -> dict:
+    return {"value": value, "confidence": confidence, "reasoning": "test reasoning"}
 
 
 def _parse_sse_events(events: list[str]) -> list[tuple[str, dict]]:
@@ -117,17 +117,17 @@ def _parse_sse_events(events: list[str]) -> list[tuple[str, dict]]:
 async def test_full_session_majority_vote(db: AsyncSession) -> None:
     """Full flow: 1 round, 2 agents, majority vote → verdict."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="majority")
-    call_count = 0
 
     async def mock_call_agent(agent, messages, system_prompt):
-        nonlocal call_count
-        call_count += 1
-        # First 2 calls are debate, next 2 are votes
-        if call_count <= 2:
-            return f"Debate response from {agent.name}"
-        return _mock_agent_vote_json("true", 0.9)
+        return f"Debate response from {agent.name}"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -162,10 +162,14 @@ async def test_session_status_transitions(db: AsyncSession) -> None:
             statuses.append(s.status)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.8)
+        return "Debate response"
+
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.8)
 
     with (
         patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
         patch.object(db, "flush", side_effect=tracking_flush),
     ):
         async for _ in run_council_session(session.id, db):
@@ -181,9 +185,15 @@ async def test_multiple_rounds(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=3)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.9)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -205,7 +215,13 @@ async def test_agent_messages_persisted(db: AsyncSession) -> None:
     async def mock_call_agent(agent, messages, system_prompt):
         return f"Response from {agent.name}"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         async for _ in run_council_session(session.id, db):
             pass
 
@@ -222,9 +238,15 @@ async def test_votes_persisted(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=1)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.75)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.75)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         async for _ in run_council_session(session.id, db):
             pass
 
@@ -240,9 +262,15 @@ async def test_verdict_persisted(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=1)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("false", 0.8)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("false", 0.8)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         async for _ in run_council_session(session.id, db):
             pass
 
@@ -256,9 +284,15 @@ async def test_rounds_persisted(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=2)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.9)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         async for _ in run_council_session(session.id, db):
             pass
 
@@ -276,9 +310,15 @@ async def test_human_in_loop_yields_awaiting_event(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="human_in_loop")
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.9)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -298,20 +338,24 @@ async def test_human_in_loop_yields_awaiting_event(db: AsyncSession) -> None:
 async def test_weighted_voting(db: AsyncSession) -> None:
     """Weighted voting: high-confidence minority should win."""
     session = await _seed_council(db, num_agents=3, rounds=1, voting_mechanism="weighted")
-    call_count = 0
 
     async def mock_call_agent(agent, messages, system_prompt):
-        nonlocal call_count
-        call_count += 1
-        # First 3 are debate, next 3 are votes
-        if call_count <= 3:
-            return "Debate point."
-        # Agent 0 votes true with 0.95, agents 1-2 vote false with 0.1 each
-        if call_count == 4:
-            return _mock_agent_vote_json("true", 0.95)
-        return _mock_agent_vote_json("false", 0.1)
+        return "Debate point."
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    tool_call_count = 0
+
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        nonlocal tool_call_count
+        tool_call_count += 1
+        # Agent 0 votes true with 0.95, agents 1-2 vote false with 0.1 each
+        if tool_call_count == 1:
+            return _mock_vote_tool_result("true", 0.95)
+        return _mock_vote_tool_result("false", 0.1)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -325,18 +369,23 @@ async def test_weighted_voting(db: AsyncSession) -> None:
 async def test_consensus_disagreement(db: AsyncSession) -> None:
     """Consensus voting with disagreement → no_consensus."""
     session = await _seed_council(db, num_agents=2, rounds=1, voting_mechanism="consensus")
-    call_count = 0
 
     async def mock_call_agent(agent, messages, system_prompt):
-        nonlocal call_count
-        call_count += 1
-        if call_count <= 2:
-            return "Debate."
-        if call_count == 3:
-            return _mock_agent_vote_json("true", 0.9)
-        return _mock_agent_vote_json("false", 0.8)
+        return "Debate."
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    tool_call_count = 0
+
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        nonlocal tool_call_count
+        tool_call_count += 1
+        if tool_call_count == 1:
+            return _mock_vote_tool_result("true", 0.9)
+        return _mock_vote_tool_result("false", 0.8)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -373,26 +422,28 @@ async def test_llm_error_sets_error_status(db: AsyncSession) -> None:
     assert s.status == "error"
 
 
-async def test_malformed_vote_falls_back_to_abstain(db: AsyncSession) -> None:
-    """Agent returning non-JSON vote should be recorded as abstain."""
+async def test_vote_missing_confidence_defaults_to_zero(db: AsyncSession) -> None:
+    """Tool returning missing confidence field should default to 0.0."""
     session = await _seed_council(db, num_agents=2, rounds=1)
-    call_count = 0
 
     async def mock_call_agent(agent, messages, system_prompt):
-        nonlocal call_count
-        call_count += 1
-        if call_count <= 2:
-            return "Debate."
-        return "I think the answer is probably true but I'm not sure"
+        return "Debate."
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        # Tool returns data without confidence (edge case)
+        return {"value": "true", "reasoning": "because"}
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
 
     result = await db.execute(select(Vote).where(Vote.session_id == session.id))
     votes = result.scalars().all()
-    assert all(v.value == "abstain" for v in votes)
+    assert all(v.value == "true" for v in votes)
     assert all(v.confidence == 0.0 for v in votes)
 
 
@@ -401,9 +452,15 @@ async def test_sse_event_format(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=1)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.8)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.8)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -422,9 +479,15 @@ async def test_agent_message_event_fields(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=1)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.9)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -511,9 +574,15 @@ async def test_human_turn_no_pause_on_last_round(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=1, allow_human_turns=True)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.9)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -530,9 +599,15 @@ async def test_human_turn_no_pause_when_disabled(db: AsyncSession) -> None:
     session = await _seed_council(db, num_agents=2, rounds=2, allow_human_turns=False)
 
     async def mock_call_agent(agent, messages, system_prompt):
-        return _mock_agent_vote_json("true", 0.9)
+        return "Debate response"
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent):
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.9)
+
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session.id, db):
             events.append(event)
@@ -574,17 +649,16 @@ async def test_resume_after_human_turn(db: AsyncSession) -> None:
     await db.flush()
 
     # Resume — engine should run round 2 and proceed to voting
-    vote_mock_count = 0
+    async def mock_call_agent_r2(agent, messages, system_prompt):
+        return f"Round 2 response from {agent.name}"
 
-    async def mock_call_agent_vote(agent, messages, system_prompt):
-        nonlocal vote_mock_count
-        vote_mock_count += 1
-        # First 2 calls are round 2 debate, next 2 are votes
-        if vote_mock_count <= 2:
-            return f"Round 2 response from {agent.name}"
-        return _mock_agent_vote_json("true", 0.85)
+    async def mock_call_with_tool(*, model, messages, system_prompt, tool):
+        return _mock_vote_tool_result("true", 0.85)
 
-    with patch("app.engine.council.call_agent", side_effect=mock_call_agent_vote):
+    with (
+        patch("app.engine.council.call_agent", side_effect=mock_call_agent_r2),
+        patch("app.engine.council.call_with_tool", side_effect=mock_call_with_tool),
+    ):
         events = []
         async for event in run_council_session(session_id, db):
             events.append(event)

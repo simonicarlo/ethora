@@ -15,14 +15,6 @@ from typing import Literal
 _TEMPLATES_DIR = Path(__file__).parent
 _cache: dict[str, str] = {}
 
-# Pre-built vote format strings (injected as {vote_format} in voting_prompt.txt)
-_BINARY_VOTE_FORMAT = (
-    '{"value": "true" or "false", "confidence": 0.0 to 1.0, "reasoning": "your reasoning"}'
-)
-_OPEN_VOTE_FORMAT = (
-    '{"value": "<your chosen candidate>", "confidence": 0.0 to 1.0, "reasoning": "your reasoning"}'
-)
-
 
 def load_template(name: str) -> str:
     """Load a template file by name, caching the result."""
@@ -77,9 +69,8 @@ def render_voting_prompt(
     question_type: Literal["binary", "open"] = "binary",
     candidates: list[str] | None = None,
 ) -> str:
-    """Render the voting prompt with the appropriate vote format."""
+    """Render the voting prompt (format is enforced by the tool schema, not the prompt)."""
     template = load_template("voting_prompt.txt")
-    vote_format = _BINARY_VOTE_FORMAT if question_type == "binary" else _OPEN_VOTE_FORMAT
 
     if candidates:
         numbered = "\n".join(f"  {i+1}. {c}" for i, c in enumerate(candidates))
@@ -90,7 +81,6 @@ def render_voting_prompt(
     return _render(template, {
         "input_claim": input_claim,
         "debate_text": debate_text,
-        "vote_format": vote_format,
         "candidates_section": candidates_section,
     })
 

@@ -1,12 +1,11 @@
 """Tests for council.py helper functions — pure logic, no DB or LLM calls."""
 from __future__ import annotations
 
-import json
 import uuid
 
 import pytest
 
-from app.engine.council import _build_agent_messages, _parse_vote
+from app.engine.council import _build_agent_messages
 from app.models.models import Agent
 
 
@@ -117,56 +116,6 @@ class TestBuildAgentMessages:
             assert msgs[i]["role"] != msgs[i - 1]["role"], (
                 f"Consecutive same role at index {i}: {msgs[i-1]['role']}"
             )
-
-
-# -- _parse_vote --
-
-
-class TestParseVote:
-    def test_clean_json(self) -> None:
-        raw = '{"value": "true", "confidence": 0.85, "reasoning": "evidence strong"}'
-        result = _parse_vote(raw)
-        assert result["value"] == "true"
-        assert result["confidence"] == 0.85
-        assert result["reasoning"] == "evidence strong"
-
-    def test_json_with_surrounding_text(self) -> None:
-        raw = 'Here is my vote:\n{"value": "false", "confidence": 0.6, "reasoning": "weak"}\nThank you.'
-        result = _parse_vote(raw)
-        assert result["value"] == "false"
-        assert result["confidence"] == 0.6
-
-    def test_json_in_markdown_code_block(self) -> None:
-        raw = '```json\n{"value": "true", "confidence": 0.9, "reasoning": "solid"}\n```'
-        result = _parse_vote(raw)
-        assert result["value"] == "true"
-
-    def test_invalid_json_falls_back(self) -> None:
-        raw = "I vote true with high confidence"
-        result = _parse_vote(raw)
-        assert result["value"] == "abstain"
-        assert result["confidence"] == 0.0
-        assert result["reasoning"] == raw
-
-    def test_empty_string_falls_back(self) -> None:
-        result = _parse_vote("")
-        assert result["value"] == "abstain"
-
-    def test_malformed_json_falls_back(self) -> None:
-        raw = '{value: true, confidence: high}'
-        result = _parse_vote(raw)
-        assert result["value"] == "abstain"
-        assert result["reasoning"] == raw
-
-    def test_nested_braces(self) -> None:
-        raw = '{"value": "true", "confidence": 0.7, "reasoning": "because {reasons}"}'
-        result = _parse_vote(raw)
-        assert result["value"] == "true"
-
-    def test_whitespace_handling(self) -> None:
-        raw = '   \n  {"value": "false", "confidence": 0.5, "reasoning": "unsure"}  \n  '
-        result = _parse_vote(raw)
-        assert result["value"] == "false"
 
 
 # -- _build_agent_messages with human messages --

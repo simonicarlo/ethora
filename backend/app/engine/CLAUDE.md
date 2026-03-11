@@ -9,6 +9,7 @@ The `engine/` package contains the core deliberation logic that orchestrates mul
 Thin wrapper around the Anthropic Claude API.
 
 - **`call_agent(agent, messages, system_prompt) -> str`** — Sends a message list to Claude and returns the complete response text. Uses a module-level singleton `AsyncAnthropic` client.
+- **`call_with_tool(*, model, messages, system_prompt, tool) -> dict`** — Calls Claude with a single forced tool, returning the parsed tool input dict. Used for voting, proposals, and moderator dedup to guarantee structured output.
 - No token-level streaming — returns the full response at once.
 - Model is read from the `Agent` ORM object (defaults to `claude-sonnet-4-20250514`).
 
@@ -36,7 +37,7 @@ Editable `.txt` template files with `{variable}` placeholders, loaded and cached
 | File | Purpose |
 |------|---------|
 | `deliberation_system.txt` | Wraps each agent's custom system prompt with council context (name, participants, voting mechanism, rounds) |
-| `voting_prompt.txt` | Asks agent to cast a JSON vote after deliberation |
+| `voting_prompt.txt` | Asks agent to cast a vote via the `cast_vote` tool |
 | `continuation_nudge.txt` | Nudge appended when last message is assistant role |
 | `loader.py` | `load_template()`, `render_deliberation_system()`, `render_voting_prompt()`, `render_continuation_nudge()` |
 
@@ -60,7 +61,7 @@ The main engine entry point. `run_council_session()` is an **async generator** t
      - Yields `agent_message` SSE event
    - Yields `round_complete` SSE event
 4. **Voting** — Sets status to `"voting"`:
-   - Builds voting prompt via `render_voting_prompt()`, calls each agent, parses JSON vote
+   - Builds voting prompt via `render_voting_prompt()`, calls each agent via `call_with_tool()` with `CAST_VOTE_TOOL`
    - Saves `Vote` rows, yields `voting_cast` SSE per vote
    - Calls `tally_votes()` to determine outcome
 5. **Verdict** — Saves `Verdict`, sets status to `"complete"`, yields `verdict` SSE
@@ -70,7 +71,6 @@ The main engine entry point. `run_council_session()` is an **async generator** t
 
 - **`_build_agent_messages(history, current_agent, input_claim)`** — Converts flat debate history to Claude API format. Own messages become `"assistant"` role; others become `"user"` role with `[AgentName]:` prefix. Consecutive same-role messages are merged to satisfy the API's alternation constraint. Appends a continuation nudge from template if the last message is `"assistant"`.
 
-- **`_parse_vote(raw_text)`** — Extracts JSON from agent response by finding the outermost `{…}`. Falls back to `{"value": "abstain", "confidence": 0.0, "reasoning": <raw_text>}`.
 
 ## SSE Event Types
 
@@ -89,4 +89,4 @@ The main engine entry point. `run_council_session()` is an **async generator** t
 - **Sequential agent calls within a round**: Each agent sees all prior responses before replying, enabling genuine back-and-forth debate.
 - **No token streaming**: SSE fires once per completed agent response (not per token), keeping the protocol simple.
 - **Dedicated DB session**: The SSE stream endpoint creates its own `AsyncSession` via `async_session_factory()` because the request-scoped session closes when the endpoint handler returns, but `StreamingResponse` keeps the generator alive after that.
-- **Vote parsing resilience**: JSON extraction uses `find`/`rfind` to handle LLMs that wrap JSON in markdown or preamble. Falls back to `abstain` on unparseable responses.
+- **Structured output via tool_use**: Voting, candidate proposals, and moderator dedup use Claude's `tool_use` API with forced `tool_choice` to guarantee structured output — no JSON parsing needed. Tool schemas are defined in `tools.py`.

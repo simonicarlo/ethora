@@ -5,14 +5,14 @@ candidate proposals. Designed for extensibility (round summaries, tie-breaking, 
 """
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass
 from typing import TypedDict
 
 from app.core.config import settings
-from app.engine.agent import get_client
+from app.engine.agent import call_with_tool
 from app.engine.prompts.loader import render_moderator_deduplicate
+from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL
 
 logger = logging.getLogger(__name__)
 
@@ -53,15 +53,12 @@ async def deduplicate_candidates(
     )
 
     try:
-        client = get_client()
-        response = await client.messages.create(
+        parsed = await call_with_tool(
             model=settings.MODERATOR_MODEL,
-            max_tokens=2048,
-            system="You are a neutral session moderator. Respond only with the requested JSON.",
             messages=[{"role": "user", "content": prompt}],
+            system_prompt="You are a neutral session moderator.",
+            tool=DEDUPLICATE_CANDIDATES_TOOL,
         )
-        raw_response = response.content[0].text
-        parsed = _parse_moderator_response(raw_response)
         return ModeratorResult(
             action="deduplicate_candidates",
             candidates=parsed["candidates"],
@@ -70,22 +67,6 @@ async def deduplicate_candidates(
     except Exception:
         logger.warning("Moderator LLM call failed, falling back to exact-match dedup", exc_info=True)
         return _fallback_dedup(raw_candidates)
-
-
-def _parse_moderator_response(raw_text: str) -> dict[str, str | list[str]]:
-    """Extract and validate JSON from moderator response."""
-    text = raw_text.strip()
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        parsed = json.loads(text[start:end + 1])
-        candidates = parsed.get("candidates", [])
-        if not isinstance(candidates, list) or not all(isinstance(c, str) for c in candidates):
-            raise ValueError(
-                f"Moderator response 'candidates' is not a list of strings: {type(candidates)}"
-            )
-        return parsed
-    raise ValueError(f"No JSON found in moderator response: {text[:200]}")
 
 
 def _fallback_dedup(raw_candidates: list[CandidateEntry]) -> ModeratorResult:

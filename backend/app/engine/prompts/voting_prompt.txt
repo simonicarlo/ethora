@@ -6,6 +6,4 @@ Here is the full debate:
 
 {debate_text}
 {candidates_section}
-Based on the deliberation, please cast your vote. Respond with ONLY a JSON object in this exact format:
-{vote_format}
-Do not include any other text outside the JSON.
+Based on the deliberation, cast your vote using the cast_vote tool.

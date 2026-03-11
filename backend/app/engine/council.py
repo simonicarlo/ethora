@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.engine.agent import call_agent
+from app.engine.agent import call_agent, call_with_tool
 from app.engine.moderator import CandidateEntry, deduplicate_candidates
 from app.engine.prompts.loader import (
     render_candidate_proposal,
@@ -19,6 +19,7 @@ from app.engine.prompts.loader import (
     render_deliberation_system,
     render_voting_prompt,
 )
+from app.engine.tools import CAST_VOTE_TOOL, PROPOSE_CANDIDATES_TOOL
 from app.engine.voting import HumanVoteRequired, tally_votes
 from app.models.models import Agent, Council, Message, Round, Session, Verdict, Vote
 from app.sse.emitter import format_sse
@@ -138,8 +139,14 @@ async def run_council_session(
                     rounds=council.rounds,
                     agent_system_prompt=agent.system_prompt,
                 )
-                raw_proposal = await call_agent(agent, proposal_messages, proposal_system)
-                agent_candidates = _parse_candidates(raw_proposal)
+                parsed_proposal = await call_with_tool(
+                    model=agent.model,
+                    messages=proposal_messages,
+                    system_prompt=proposal_system,
+                    tool=PROPOSE_CANDIDATES_TOOL,
+                )
+                # "candidates" is guaranteed by the tool schema's required fields
+                agent_candidates = parsed_proposal["candidates"]
 
                 raw_proposals.append({
                     "agent_id": str(agent.id),
@@ -214,20 +221,24 @@ async def run_council_session(
                 rounds=council.rounds,
                 agent_system_prompt=agent.system_prompt,
             )
-            raw_vote = await call_agent(agent, vote_messages, vote_system_prompt)
-            parsed = _parse_vote(raw_vote)
+            parsed_vote = await call_with_tool(
+                model=agent.model,
+                messages=vote_messages,
+                system_prompt=vote_system_prompt,
+                tool=CAST_VOTE_TOOL,
+            )
 
             try:
-                confidence = max(0.0, min(1.0, float(parsed.get("confidence", 0.0))))
+                confidence = max(0.0, min(1.0, float(parsed_vote.get("confidence", 0.0))))
             except (TypeError, ValueError):
                 confidence = 0.0
 
             vote = Vote(
                 session_id=session.id,
                 agent_id=agent.id,
-                value=parsed.get("value", "abstain"),
+                value=parsed_vote.get("value", "abstain"),
                 confidence=confidence,
-                reasoning=parsed.get("reasoning"),
+                reasoning=parsed_vote.get("reasoning"),
             )
             db.add(vote)
             await db.flush()
@@ -316,42 +327,6 @@ def _build_agent_messages(
 
     return messages
 
-
-
-def _parse_candidates(raw_text: str) -> list[str]:
-    """Parse JSON candidates array from agent response, with fallback."""
-    text = raw_text.strip()
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        try:
-            parsed = json.loads(text[start:end + 1])
-            candidates = parsed.get("candidates", [])
-            if isinstance(candidates, list) and all(isinstance(c, str) for c in candidates):
-                return candidates
-        except json.JSONDecodeError:
-            pass
-
-    # Fallback: treat entire response as a single candidate
-    logger.warning("Failed to parse candidates JSON, using raw text: %.200s", raw_text)
-    return [raw_text.strip()[:200]]
-
-
-def _parse_vote(raw_text: str) -> dict:
-    """Parse JSON vote from agent response, with fallback."""
-    text = raw_text.strip()
-    # Try to extract JSON from the response
-    start = text.find("{")
-    end = text.rfind("}")
-    if start != -1 and end != -1 and end > start:
-        try:
-            return json.loads(text[start:end + 1])
-        except json.JSONDecodeError:
-            pass
-
-    # Fallback: treat entire response as reasoning
-    logger.warning("Failed to parse vote JSON, falling back to abstain: %.200s", raw_text)
-    return {"value": "abstain", "confidence": 0.0, "reasoning": raw_text}
 
 
 async def _load_history_from_db(
