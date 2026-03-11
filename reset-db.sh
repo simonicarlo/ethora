@@ -4,7 +4,7 @@
 set -euo pipefail
 
 read -rp "This will wipe the dev database. Continue? [y/N] " confirm
-if [[ "${confirm,,}" != "y" ]]; then
+if [[ "$confirm" != [yY] ]]; then
     echo "Aborted."
     exit 0
 fi
