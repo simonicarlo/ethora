@@ -10,6 +10,16 @@
       <p>Loading session…</p>
     </div>
   } @else {
+    @if (sessionStatus() === 'rate_limited') {
+      <div class="rate-limit-banner">
+        <p>The AI provider's rate limit was reached. The session progress has been saved.</p>
+        @if (retryAfter(); as seconds) {
+          <p class="retry-hint">Suggested wait: {{ seconds }} seconds</p>
+        }
+        <button class="resume-button" (click)="resumeSession()">Resume Session</button>
+      </div>
+    }
+
     @if (sessionStatus() === 'error') {
       <div class="error-banner">
         <p>This session encountered an error and cannot continue.</p>

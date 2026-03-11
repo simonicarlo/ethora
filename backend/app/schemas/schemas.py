@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 VotingMechanism = Literal["majority", "weighted", "consensus", "human_in_loop"]
 QuestionType = Literal["binary", "open"]
-SessionStatus = Literal["pending", "running", "proposing", "voting", "awaiting_human_turn", "complete", "error"]
+SessionStatus = Literal["pending", "running", "proposing", "voting", "awaiting_human_turn", "complete", "error", "rate_limited"]
 
 
 # -- Agents ------------------------------------------------------------------

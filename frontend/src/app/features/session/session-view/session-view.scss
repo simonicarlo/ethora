@@ -54,6 +54,11 @@
     color: var(--mat-sys-on-tertiary-container, #e65100);
   }
 
+  &.rate_limited {
+    background-color: var(--mat-sys-tertiary-container, #fff3e0);
+    color: var(--mat-sys-on-tertiary-container, #e65100);
+  }
+
   &.error {
     background-color: var(--mat-sys-error-container, #ffebee);
     color: var(--mat-sys-on-error-container, #c62828);
@@ -117,6 +122,35 @@
   p {
     color: var(--mat-sys-on-surface-variant, #616161);
     font-size: 0.875rem;
+  }
+}
+
+.rate-limit-banner {
+  background-color: var(--mat-sys-tertiary-container, #fff3e0);
+  border: 1px solid var(--mat-sys-tertiary, #ffb74d);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--mat-sys-on-tertiary-container, #e65100);
+
+  .retry-hint {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+
+  .resume-button {
+    margin-top: 12px;
+    padding: 8px 20px;
+    border: none;
+    border-radius: 6px;
+    background-color: var(--mat-sys-primary, #1976d2);
+    color: var(--mat-sys-on-primary, #fff);
+    font-weight: 500;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.9;
+    }
   }
 }
 
