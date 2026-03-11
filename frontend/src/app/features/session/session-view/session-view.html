@@ -72,6 +72,14 @@
       </section>
     }
 
+    @if (votingInProgress()) {
+      <div class="voting-indicator">
+        <mat-icon>how_to_vote</mat-icon>
+        <span>Agents are voting</span>
+        <span class="voting-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+      </div>
+    }
+
     @if (isVotingPhase()) {
       <app-voting-panel
         [votes]="votes()"

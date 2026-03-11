@@ -126,18 +126,6 @@ def render_moderator_summarize(
     })
 
 
-def render_session_summary(
-    *,
-    input_claim: str,
-    agent_summaries: str,
-) -> str:
-    """Render the session-level summary prompt."""
-    template = load_template("session_summary.txt")
-    return _render(template, {
-        "input_claim": input_claim,
-        "agent_summaries": agent_summaries,
-    })
-
 
 def render_continuation_nudge() -> str:
     """Return the continuation nudge text."""

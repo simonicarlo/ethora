@@ -72,7 +72,6 @@ async def build_session_list(
             question_type=session.question_type,
             status=session.status,
             verdict_summary=verdict_summary,
-            discussion_summary=session.discussion_summary,
             created_at=session.created_at,
         )
         for session, council_name, verdict_summary in result.all()

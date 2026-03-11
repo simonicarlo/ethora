@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
-from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response, summarize_session
+from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response
 from app.engine.prompts.loader import (
     render_candidate_proposal,
     render_continuation_nudge,
@@ -242,31 +242,18 @@ async def run_council_session(
                 })
                 return
 
+        # -- Signal voting phase early for binary questions (no proposal phase) --
+        # Emitted *before* summary gather so the UI shows instant feedback;
+        # open-ended questions emit after candidate finalization instead (below).
+        if session.question_type != "open":
+            yield format_sse("voting_started", {
+                "message": "Agents are casting their votes",
+            })
+
         # -- Wait for all background summaries before voting --
         await asyncio.gather(*summary_tasks, return_exceptions=True)
         for sse_event in await _drain_summaries(summary_queue, db, collected_summaries):
             yield sse_event
-
-        # -- Generate session-level discussion summary --
-        if collected_summaries:
-            # Filter to summaries from the final round (not a positional slice,
-            # since background failures may cause fewer entries than agents)
-            last_round = council.rounds
-            last_round_summaries = [
-                (name, summary)
-                for rnd, name, summary in collected_summaries
-                if rnd == last_round
-            ]
-            # Fall back to all summaries if none survived from the last round
-            if not last_round_summaries:
-                last_round_summaries = [(name, summary) for _, name, summary in collected_summaries]
-            discussion_summary = await summarize_session(
-                input_claim=session.input_claim,
-                agent_summaries=last_round_summaries,
-            )
-            if discussion_summary:
-                session.discussion_summary = discussion_summary
-                await db.flush()
 
         # -- Build debate text (shared by proposal + voting) --
         debate_lines = []
@@ -357,6 +344,10 @@ async def run_council_session(
         # -- Voting phase --
         session.status = "voting"
         await db.flush()
+        if session.question_type == "open":
+            yield format_sse("voting_started", {
+                "message": "Agents are casting their votes",
+            })
 
         question_type = session.question_type if session.question_type in ("binary", "open") else "binary"
         voting_prompt = render_voting_prompt(

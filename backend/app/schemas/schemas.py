@@ -96,7 +96,6 @@ class SessionListItem(BaseModel):
     question_type: QuestionType
     status: SessionStatus
     verdict_summary: str | None = None
-    discussion_summary: str | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
