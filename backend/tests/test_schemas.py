@@ -5,7 +5,7 @@ import uuid
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.schemas import AgentCreate, CouncilCreate, HumanVoteRequest
+from app.schemas.schemas import AgentCreate, AgentUpdate, CouncilCreate, CouncilUpdate, HumanVoteRequest
 
 
 class TestAgentCreate:
@@ -21,6 +21,38 @@ class TestAgentCreate:
     def test_empty_system_prompt_fails(self) -> None:
         with pytest.raises(ValidationError):
             AgentCreate(name="Bot", system_prompt="")
+
+
+class TestAgentUpdateSchema:
+    def test_all_fields_optional(self) -> None:
+        update = AgentUpdate()
+        assert update.name is None
+        assert update.system_prompt is None
+        assert update.model is None
+
+    def test_partial_update(self) -> None:
+        update = AgentUpdate(name="New Name")
+        assert update.name == "New Name"
+        assert update.system_prompt is None
+
+    def test_name_validation(self) -> None:
+        with pytest.raises(ValidationError):
+            AgentUpdate(name="")
+
+
+class TestCouncilUpdateSchema:
+    def test_all_fields_optional(self) -> None:
+        update = CouncilUpdate()
+        assert update.name is None
+
+    def test_partial_update(self) -> None:
+        update = CouncilUpdate(name="New Name", rounds=5)
+        assert update.name == "New Name"
+        assert update.rounds == 5
+
+    def test_agent_ids_min_length(self) -> None:
+        with pytest.raises(ValidationError):
+            CouncilUpdate(agent_ids=["one-id"])
 
 
 class TestCouncilCreate:
