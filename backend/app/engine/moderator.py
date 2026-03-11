@@ -11,8 +11,8 @@ from typing import TypedDict
 
 from app.core.config import settings
 from app.engine.agent import call_with_tool
-from app.engine.prompts.loader import render_moderator_deduplicate, render_moderator_summarize
-from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL, SUMMARIZE_RESPONSE_TOOL
+from app.engine.prompts.loader import render_moderator_deduplicate, render_moderator_summarize, render_session_summary
+from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL, SUMMARIZE_RESPONSE_TOOL, SUMMARIZE_SESSION_TOOL
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +96,43 @@ async def summarize_agent_response(
         return parsed.get("summary")
     except Exception:
         logger.warning("Moderator summarization failed for agent %s", agent_name, exc_info=True)
+        return None
+
+
+async def summarize_session(
+    input_claim: str,
+    agent_summaries: list[tuple[str, str]],
+) -> str | None:
+    """Use the moderator LLM to produce a 2-3 sentence session-level summary.
+
+    Args:
+        input_claim: The original question/claim being deliberated.
+        agent_summaries: List of (agent_name, summary) pairs from the final round.
+
+    Returns None on failure — the session list falls back to showing no summary.
+    """
+    if not agent_summaries:
+        return None
+
+    summaries_text = "\n".join(
+        f"- {name}: {summary}" for name, summary in agent_summaries
+    )
+
+    prompt = render_session_summary(
+        input_claim=input_claim,
+        agent_summaries=summaries_text,
+    )
+
+    try:
+        parsed = await call_with_tool(
+            model=settings.MODERATOR_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            system_prompt=MODERATOR_SYSTEM_PROMPT,
+            tool=SUMMARIZE_SESSION_TOOL,
+        )
+        return parsed.get("summary")
+    except Exception:
+        logger.warning("Session summarization failed", exc_info=True)
         return None
 
 

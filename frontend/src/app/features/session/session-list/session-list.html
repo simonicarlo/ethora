@@ -41,6 +41,9 @@
             &middot; {{ statusLabel(session.status) }}
             &middot; {{ session.created_at | date:'medium' }}
           </span>
+          @if (session.discussion_summary) {
+            <span class="discussion-preview">{{ session.discussion_summary }}</span>
+          }
           @if (session.verdict_summary) {
             <span class="verdict-preview">{{ session.verdict_summary }}</span>
           }

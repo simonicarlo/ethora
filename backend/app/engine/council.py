@@ -14,7 +14,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import async_session_factory
 from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
-from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response
+from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response, summarize_session
 from app.engine.prompts.loader import (
     render_candidate_proposal,
     render_continuation_nudge,
@@ -77,13 +77,22 @@ async def _summarize_in_background(
         )
 
 
-def _drain_summaries(queue: asyncio.Queue[dict[str, object]]) -> list[str]:
-    """Non-blocking drain of summary_ready SSE events from the queue."""
+def _drain_summaries(
+    queue: asyncio.Queue[dict[str, object]],
+    collector: list[tuple[str, str]] | None = None,
+) -> list[str]:
+    """Non-blocking drain of summary_ready SSE events from the queue.
+
+    If collector is provided, appends (agent_name, summary) tuples for
+    session-level summary generation.
+    """
     events: list[str] = []
     while True:
         try:
             data = queue.get_nowait()
             events.append(format_sse("summary_ready", data))
+            if collector is not None:
+                collector.append((str(data["agent_name"]), str(data["summary"])))
         except asyncio.QueueEmpty:
             break
     return events
@@ -109,6 +118,7 @@ async def run_council_session(
 
     summary_queue: asyncio.Queue[dict[str, object]] = asyncio.Queue()
     summary_tasks: list[asyncio.Task[None]] = []
+    collected_summaries: list[tuple[str, str]] = []
 
     try:
         # -- Mark running --
@@ -212,13 +222,13 @@ async def run_council_session(
                 })
 
                 # Drain any completed summaries
-                for sse_event in _drain_summaries(summary_queue):
+                for sse_event in _drain_summaries(summary_queue, collected_summaries):
                     yield sse_event
 
             yield format_sse("round_complete", {"round": round_num})
 
             # Drain summaries after round
-            for sse_event in _drain_summaries(summary_queue):
+            for sse_event in _drain_summaries(summary_queue, collected_summaries):
                 yield sse_event
 
             # -- Human turn pause (skip last round so voting can proceed) --
@@ -233,8 +243,20 @@ async def run_council_session(
 
         # -- Wait for all background summaries before voting --
         await asyncio.gather(*summary_tasks, return_exceptions=True)
-        for sse_event in _drain_summaries(summary_queue):
+        for sse_event in _drain_summaries(summary_queue, collected_summaries):
             yield sse_event
+
+        # -- Generate session-level discussion summary --
+        if collected_summaries:
+            # Use last round's summaries (final positions) for the session summary
+            last_round_summaries = collected_summaries[-len(agents):]
+            discussion_summary = await summarize_session(
+                input_claim=session.input_claim,
+                agent_summaries=last_round_summaries,
+            )
+            if discussion_summary:
+                session.discussion_summary = discussion_summary
+                await db.flush()
 
         # -- Build debate text (shared by proposal + voting) --
         debate_lines = []

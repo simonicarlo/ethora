@@ -58,6 +58,7 @@ class Session(Base):
     input_claim: Mapped[str] = mapped_column(Text, nullable=False)
     question_type: Mapped[str] = mapped_column(String, default="binary")
     status: Mapped[str] = mapped_column(String, default="pending")
+    discussion_summary: Mapped[str | None] = mapped_column(Text, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     council: Mapped[Council] = relationship("Council", lazy="selectin")
