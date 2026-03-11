@@ -96,7 +96,134 @@
 
 ---
 
-## 8. Future (Phase 2)
+## Phase 2 — Dependency Graph
+
+```
+Stream A (Prompts) ─────┬──→ Stream D (Open Voting)
+                        └──→ Stream E (Dual Response)
+
+Stream B (CRUD)          (independent)
+Stream C (Human Turn Fix) (independent)
+
+Stream F (Tool Use) ─────┐
+Stream G (File Upload) ──┼──→ Stream H (File Editing)
+Stream D (Open Voting) ──┘
+```
+
+**Can start in parallel (no deps):** A, B, C, F, G
+**After Stream A:** D, E
+**After D + F + G:** H
+
+---
+
+## 8. Stream A — System Prompt Extraction & Enhancement
+
+> **Priority 1 · Depends on: nothing · Blocks: D, E**
+
+- [ ] Create `backend/app/engine/prompts/` directory with editable template files (`deliberation_system.txt`, `voting_prompt.txt`, `continuation_nudge.txt`)
+- [ ] Build prompt template loader with variable interpolation (agent name, council name, other agents, round count, voting mechanism)
+- [ ] Wrap each agent's `system_prompt` with deliberation framing ("You are in a deliberation council…", other agents, voting mechanism, rounds)
+- [ ] Update **`_build_voting_prompt`** in `council.py` to use template file instead of inline f-string
+- [ ] Update **`_build_agent_messages`** continuation nudge to use template
+
+---
+
+## 9. Stream B — Agent & Council CRUD (Edit + Delete)
+
+> **Priority 1 · Depends on: nothing**
+
+- [ ] Add `PUT /api/v1/agents/{id}` — update agent (name, system_prompt, model) — **`councils.py`**
+- [ ] Add `DELETE /api/v1/agents/{id}` — cascade-remove from councils; fail 409 if any council would have <2 agents — **`councils.py`**
+- [ ] Add `PUT /api/v1/councils/{id}` — update council (name, rounds, voting_mechanism, allow_human_turns, agent_ids) — **`councils.py`**
+- [ ] Add `DELETE /api/v1/councils/{id}` — fail if active sessions exist — **`councils.py`**
+- [ ] Add `AgentUpdate` and `CouncilUpdate` Pydantic schemas — **`schemas.py`**
+- [ ] Frontend: edit pages for agents and councils (reuse create forms, pre-populate) — **`agent/`, `council/`**
+- [ ] Frontend: delete buttons with confirmation dialogs — **`agent-list/`, `council-list/`**
+- [ ] Frontend: routes `/agents/:id/edit`, `/councils/:id/edit` — **`app.routes.ts`**
+- [ ] Frontend: add edit/delete actions to list views — **`api.service.ts`**
+
+---
+
+## 10. Stream C — Fix Human Turn Mechanism
+
+> **Priority 1 · Depends on: nothing**
+
+**Reported symptoms:** errors on human input prompt; agent answers disappear on reload; voting panel appears prematurely.
+
+- [ ] Investigate: SSE stream errors when `awaiting_human_turn` fires — **`council.py`, `sessions.py`**
+- [ ] Add `GET /api/v1/sessions/{id}/messages` endpoint to fetch historical messages — **`sessions.py`**
+- [ ] Frontend: load existing messages/votes from API on session-view init before connecting SSE — **`session-view.ts`**
+- [ ] Fix SSE pause/resume flow — ensure stream doesn't error on human turn pause — **`council.py`**
+- [ ] Fix voting panel visibility — only show when status is `voting` or `complete` — **`session-view.ts`**
+- [ ] E2E test: human turns enabled → prompt → submit → rounds continue
+
+---
+
+## 11. Stream D — Open-Ended Voting
+
+> **Priority 2 · Depends on: Stream A**
+
+- [ ] Add candidate proposal phase: after deliberation, agents propose candidate answers for open-ended questions — **`council.py`**
+- [ ] Collect and deduplicate candidates, present list to all agents for voting
+- [ ] Update voting prompt template: binary mode (`true`/`false`) vs open mode (vote on candidates) — **`prompts/voting_prompt.txt`**
+- [ ] Add `question_type: Literal["binary", "open"]` to **Session** schema (per-session, user picks at start) — **`schemas.py`, `models.py`**
+- [ ] Add SSE events: `candidate_proposed`, `candidates_finalized` — **`council.py`**
+- [ ] Frontend: update start-session dialog with question type picker — **`start-session-dialog/`**
+- [ ] Frontend: update voting panel to display candidates and open-ended results — **`voting-panel/`**
+
+---
+
+## 12. Stream E — Dual Response Format (Answer + Summary)
+
+> **Priority 2 · Depends on: Stream A**
+
+- [ ] Update system prompt template: instruct agents to end responses with `---SUMMARY---` block — **`prompts/deliberation_system.txt`**
+- [ ] Parse agent responses to extract `content` and `summary` — **`council.py`**
+- [ ] Add `summary: Mapped[str | None]` to `Message` model + Alembic migration — **`models.py`**
+- [ ] Update SSE `agent_message` event to include `summary` field — **`council.py`**
+- [ ] Update `MessageResponse` schema — **`schemas.py`**
+- [ ] Frontend: show summary by default in debate panel cards, expand on hover/click — **`debate-panel/`**
+- [ ] Frontend: update `Message` interface — **`models.ts`**
+
+---
+
+## 13. Stream F — Agent Tool Use
+
+> **Priority 3 · Depends on: nothing · Blocks: H**
+
+- [ ] Define tool schemas for Anthropic API `tools` parameter (start with `web_search`) — **`agent.py`**
+- [ ] Update `call_agent()` to handle `tool_use` blocks: execute tools, send `tool_result`, loop until final text — **`agent.py`**
+- [ ] Add `tools_enabled: Mapped[bool]` to Council model + migration — **`models.py`**
+- [ ] Emit `tool_use` SSE events during tool execution — **`council.py`**
+- [ ] Frontend: tool-use indicator in debate panel ("Searching the web…") — **`debate-panel/`**
+- [ ] Frontend: toggle for tools in council create/edit form — **`council-create/`**
+
+---
+
+## 14. Stream G — File Upload for Context
+
+> **Priority 3 · Depends on: nothing · Blocks: H**
+
+- [ ] Add `POST /api/v1/sessions/{id}/files` — multipart upload, store under `uploads/{session_id}/` — new **`files.py`**
+- [ ] Create `SessionFile` model (`id, session_id, filename, path, mime_type, size, created_at`) + migration — **`models.py`**
+- [ ] Include file contents in agent context (text files inline, PDFs via `pypdf`) — **`council.py`**
+- [ ] Frontend: file upload component in start-session dialog (drag-and-drop + picker) — **`start-session-dialog/`**
+- [ ] Frontend: show uploaded files in session view header — **`session-view/`**
+
+---
+
+## 15. Stream H — Collaborative File Editing Under Consensus
+
+> **Priority 4 · Depends on: D + F + G**
+
+- [ ] Add `file_edit` tool for agents to propose changes to uploaded files — **`agent.py`**
+- [ ] Collect proposed edits, present to all agents for consensus voting — **`council.py`**
+- [ ] Apply edits on consensus; track versions with `FileVersion` model — **`models.py`**
+- [ ] Frontend: show file diffs in session view — **`session-view/`**
+
+---
+
+## 16. Future
 
 - [ ] **Fact Checker wrapper** — Preconfigured council with Source Critic, Logical Analyst, Devil's Advocate, Synthesizer agents
 - [ ] **Graph visualization panel** — Deferred from PoC

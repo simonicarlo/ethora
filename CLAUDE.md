@@ -19,8 +19,21 @@ ethora/
 ├── backend/           # FastAPI app
 ├── docker-compose.yml
 ├── .env               # secrets (never commit)
-└── CLAUDE.md
+├── CLAUDE.md
+├── SPEC.md            # API contracts, SSE events, session lifecycle, UI spec
+└── TODO.md            # Tracked backlog of implementation work
 ```
+
+### SPEC.md
+
+`SPEC.md` is the **source of truth** for frontend–backend integration. It defines:
+- API contracts (endpoints, request/response schemas, error codes)
+- SSE event names, data shapes, and wire format
+- Session lifecycle state machine
+- Voting mechanisms and question types
+- UI component inventory and navigation routes
+
+All implementation must conform to `SPEC.md`. When adding new endpoints, events, or UI components, update the spec first.
 
 ---
 
@@ -35,6 +48,13 @@ ethora/
 | Live updates | SSE (backend pushes; frontend via `EventSource` + RxJS) |
 | Database   | PostgreSQL 16, SQLAlchemy ORM, Alembic          |
 | Deployment | Docker Compose                                  |
+
+---
+
+## Coding Standards
+
+- **Python**: All functions must have full type annotations. All I/O uses Pydantic models. Never use `Any` unless absolutely unavoidable (with explicit comment explaining why).
+- **TypeScript**: No `any` in production code. Use proper interfaces and types for all data structures, function parameters, and return values. Test files may use `any` for mocking only with eslint-disable comment.
 
 ---
 
