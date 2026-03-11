@@ -88,3 +88,4 @@ coverage/
 # ============================================
 .claude/worktrees/
 docs/superpowers/plans/
+.superpowers

@@ -170,7 +170,8 @@ export class SessionView implements OnInit {
               id: a.id,
               name: a.name,
               icon: a.icon || 'smart_toy',
-              description: a.system_prompt.split(/[.!]\s/)[0]?.slice(0, 80) || a.name,
+              // NB: approximates backend's _extract_role_summary(); minor regex divergence is acceptable
+              description: a.system_prompt.split(/[.!][\s\n]/)[0]?.slice(0, 80) || a.name,
             })),
             rounds: council.rounds,
             voting_mechanism: council.voting_mechanism,

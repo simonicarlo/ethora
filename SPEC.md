@@ -288,6 +288,8 @@ Precondition: session must be in `pending` status (returns 409 otherwise).
 
 | Event name | Data fields | When emitted |
 |------------|-------------|-------------|
+| `stage_set` | `council_name`, `input_claim`, `agents[]`, `rounds`, `voting_mechanism`, `question_type`, `intro_text` | Once at session start (before round 1); `intro_text` is initially `null` |
+| `stage_set_intro` | `intro_text` | After LLM generates the moderator intro (updates the stage-set card); may not fire if generation fails |
 | `agent_message` | `agent_id`, `agent_name`, `round`, `content`, `summary`, `references` | After each agent completes its response |
 | `round_complete` | `round` | After all agents in a round have responded |
 | `awaiting_human_turn` | `round`, `message` | After a round when `allow_human_turns` is enabled (not last round) |
@@ -308,7 +310,7 @@ event: <event_name>\ndata: <json>\n\n
 
 ### Frontend SSE event list
 
-The frontend `SseService` must listen for all events in the table above: `agent_message`, `round_complete`, `awaiting_human_turn`, `tool_use`, `candidate_proposed`, `candidates_finalized`, `voting_cast`, `awaiting_human_vote`, `verdict`, `error`.
+The frontend `SseService` must listen for all events in the table above: `stage_set`, `stage_set_intro`, `agent_message`, `round_complete`, `awaiting_human_turn`, `tool_use`, `candidate_proposed`, `candidates_finalized`, `voting_cast`, `awaiting_human_vote`, `verdict`, `error`.
 
 ### Phase 1 alignment gaps (resolved)
 
