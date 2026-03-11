@@ -357,21 +357,24 @@ Follow this sequence when working on tasks:
    git merge --abort
    ```
 
-5. **Push and create PR** — Use the `/commit-push-pr` skill (`commit-commands:commit-push-pr`):
+5. **Push and create PR** — Push the branch and create a GitHub PR using `gh`:
    ```
-   /commit-push-pr
+   git push -u origin <branch-name>
+   gh pr create --title "..." --body "..."
    ```
-   This pushes the branch and creates a Bitbucket PR in one step.
+   Or use the `/commit-push-pr` skill (`commit-commands:commit-push-pr`) which handles both steps.
 
-6. **Review** — Use `/review-pr` to post automated review feedback on the PR.
+6. **Review** — Use `gh pr view` or `/review-pr` to review PR status and feedback.
 
-### Pull Requests (Bitbucket)
-- PRs are created via the `commit-commands:commit-push-pr` skill
-- Reviewer is configured via `BITBUCKET_REVIEWER` in `.env.bitbucket`
+### Pull Requests (GitHub)
+- Remote: `origin` → GitHub (`github.com`)
+- PRs are created via `gh pr create` or the `commit-commands:commit-push-pr` skill
 - All work merges to `main` via PR — no direct pushes
+- Use `gh pr list`, `gh pr view`, `gh pr merge` for PR management
 
 ### Code Reviews
-- The `review-pr` skill reviews PRs against `TODO.md` and posts structured feedback on Bitbucket
+- Use `gh pr checks` and `gh pr diff` to review PR status
+- The `/review-pr` skill can post structured review feedback
 - Invoke manually with `/review-pr [PR_NUMBER]`
 - Claude checks for: bugs, security issues, style consistency, missing types, test coverage gaps
 
