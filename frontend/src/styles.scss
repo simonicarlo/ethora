@@ -109,6 +109,12 @@ body {
   border-radius: v.$radius-pill !important;
 }
 
+// Card avatar icons — remove circular clip so Material Icons render fully
+mat-icon.mat-mdc-card-avatar {
+  border-radius: 0 !important;
+  overflow: visible !important;
+}
+
 // Glass cards
 .mat-mdc-card {
   border-radius: v.$radius-lg !important;
