@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnIni
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, switchMap, tap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/api.service';
 import { SseService } from '../../../core/sse.service';
@@ -36,7 +37,7 @@ import { MeshBackground } from '../../../shared/components/mesh-background/mesh-
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatProgressSpinnerModule, MeshBackground],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MeshBackground],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -66,6 +67,7 @@ export class SessionView implements OnInit {
   readonly moderatorExplanation = signal<string | null>(null);
   readonly activeToolUse = signal<ToolActivity | null>(null);
   readonly typingAgent = signal<{ agent_id: string; agent_name: string } | null>(null);
+  readonly votingInProgress = signal(false);
   readonly retryAfter = signal<number | null>(null);
   private sseSub: Subscription | null = null;
 
@@ -345,6 +347,13 @@ export class SessionView implements OnInit {
         this.moderatorExplanation.set(data.explanation);
         break;
       }
+      case 'voting_started': {
+        this.sessionStatus.set('voting');
+        this.votingInProgress.set(true);
+        this.typingAgent.set(null);
+        this.activeToolUse.set(null);
+        break;
+      }
       case 'voting_cast': {
         const data = raw as SseVotingCast;
         this.sessionStatus.set('voting');
@@ -357,6 +366,7 @@ export class SessionView implements OnInit {
       case 'verdict': {
         this.verdict.set(raw as Verdict);
         this.sessionStatus.set('complete');
+        this.votingInProgress.set(false);
         break;
       }
       case 'awaiting_human_turn': {
