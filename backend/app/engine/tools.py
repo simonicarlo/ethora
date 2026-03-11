@@ -67,6 +67,21 @@ PROPOSE_CANDIDATES_TOOL: dict[str, Any] = {
     },
 }
 
+SUMMARIZE_RESPONSE_TOOL: dict[str, Any] = {
+    "name": "summarize_response",
+    "description": "Produce a concise 1-2 sentence summary of an agent's response.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "summary": {
+                "type": "string",
+                "description": "A 1-2 sentence summary capturing the agent's key argument or position",
+            },
+        },
+        "required": ["summary"],
+    },
+}
+
 DEDUPLICATE_CANDIDATES_TOOL: dict[str, Any] = {
     "name": "deduplicate_candidates",
     "description": "Merge semantically equivalent candidates and return the normalized list.",

@@ -110,6 +110,7 @@ export interface MessageWithContext {
   agent_name: string | null;
   message_type: MessageType;
   content: string;
+  summary?: string | null;
   references: Reference[];
   created_at: string;
 }
@@ -126,6 +127,7 @@ export interface SseAgentMessage {
   agent_name: string;
   round: number;
   content: string;
+  summary?: string | null;
   references: Reference[];
 }
 

@@ -111,6 +111,7 @@ class MessageResponse(BaseModel):
     round_id: uuid.UUID
     agent_id: uuid.UUID | None = None
     content: str
+    summary: str | None = None
     references: list[ReferenceResponse] = []
     created_at: datetime
 
@@ -151,6 +152,7 @@ class MessageWithContext(BaseModel):
     agent_name: str | None = None
     message_type: str = "agent"
     content: str
+    summary: str | None = None
     references: list[ReferenceResponse] = []
     created_at: datetime
 

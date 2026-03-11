@@ -198,6 +198,7 @@ export class SessionView implements OnInit {
             message_type: m.message_type,
             round: m.round_number,
             content: m.content,
+            summary: m.summary,
             references: m.references ?? [],
           }));
         this.messages.set(debateMessages);
@@ -290,6 +291,7 @@ export class SessionView implements OnInit {
           agent_name: data.agent_name,
           round: data.round,
           content: data.content,
+          summary: data.summary,
           references: data.references ?? [],
         }]);
         this.currentRound.set(data.round);

@@ -66,6 +66,33 @@
     }
   }
 
+  .message-summary {
+    font-style: italic;
+    opacity: 0.8;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .expand-toggle {
+    margin-top: 4px;
+    padding: 0 8px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    min-height: 28px;
+    line-height: 28px;
+
+    mat-icon {
+      font-size: 1rem;
+      width: 1rem;
+      height: 1rem;
+      margin-right: 4px;
+    }
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
   &.moderator-card {
     border-left: 4px solid var(--mat-sys-tertiary, #e65100);
     background: color-mix(in srgb, var(--mat-sys-tertiary, #e65100) 6%, transparent);

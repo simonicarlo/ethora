@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
-from app.engine.moderator import CandidateEntry, deduplicate_candidates
+from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response
 from app.engine.prompts.loader import (
     render_candidate_proposal,
     render_continuation_nudge,
@@ -113,6 +113,16 @@ async def run_council_session(
                 db.add(msg)
                 await db.flush()
 
+                # Moderator summarization
+                summary = await summarize_agent_response(
+                    agent_name=agent.name,
+                    agent_response=agent_response.content,
+                    input_claim=session.input_claim,
+                )
+                if summary is not None:
+                    msg.summary = summary
+                    await db.flush()
+
                 history.append((agent.name, agent.id, agent_response.content))
 
                 yield format_sse("agent_message", {
@@ -121,6 +131,7 @@ async def run_council_session(
                     "round": round_num,
                     "content": agent_response.content,
                     "references": refs_json or [],
+                    "summary": msg.summary,
                 })
 
             yield format_sse("round_complete", {"round": round_num})

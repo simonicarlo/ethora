@@ -111,6 +111,21 @@ def render_moderator_deduplicate(
     })
 
 
+def render_moderator_summarize(
+    *,
+    input_claim: str,
+    agent_name: str,
+    agent_response: str,
+) -> str:
+    """Render the moderator summarization prompt."""
+    template = load_template("moderator_summarize.txt")
+    return _render(template, {
+        "input_claim": input_claim,
+        "agent_name": agent_name,
+        "agent_response": agent_response,
+    })
+
+
 def render_continuation_nudge() -> str:
     """Return the continuation nudge text."""
     return load_template("continuation_nudge.txt").strip()

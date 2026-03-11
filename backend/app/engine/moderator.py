@@ -11,8 +11,8 @@ from typing import TypedDict
 
 from app.core.config import settings
 from app.engine.agent import call_with_tool
-from app.engine.prompts.loader import render_moderator_deduplicate
-from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL
+from app.engine.prompts.loader import render_moderator_deduplicate, render_moderator_summarize
+from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL, SUMMARIZE_RESPONSE_TOOL
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +67,34 @@ async def deduplicate_candidates(
     except Exception:
         logger.warning("Moderator LLM call failed, falling back to exact-match dedup", exc_info=True)
         return _fallback_dedup(raw_candidates)
+
+
+async def summarize_agent_response(
+    agent_name: str,
+    agent_response: str,
+    input_claim: str,
+) -> str | None:
+    """Use the moderator LLM to produce a 1-2 sentence summary of an agent's response.
+
+    Returns None on failure — the frontend falls back to showing full content.
+    """
+    prompt = render_moderator_summarize(
+        input_claim=input_claim,
+        agent_name=agent_name,
+        agent_response=agent_response,
+    )
+
+    try:
+        parsed = await call_with_tool(
+            model=settings.MODERATOR_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            system_prompt="You are a neutral session moderator.",
+            tool=SUMMARIZE_RESPONSE_TOOL,
+        )
+        return parsed.get("summary")
+    except Exception:
+        logger.warning("Moderator summarization failed for agent %s", agent_name, exc_info=True)
+        return None
 
 
 def _fallback_dedup(raw_candidates: list[CandidateEntry]) -> ModeratorResult:

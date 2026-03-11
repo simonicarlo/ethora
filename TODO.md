@@ -178,17 +178,22 @@ Stream B (CRUD) ─────────┘
 
 ---
 
-## 12. Stream E — Dual Response Format (Answer + Summary)
+## 12. Stream E — Moderator-Driven Chat Summarization
 
 > **Priority 2 · Depends on: Stream A**
 
-- [ ] Update system prompt template: instruct agents to end responses with `---SUMMARY---` block — **`prompts/deliberation_system.txt`**
-- [ ] Parse agent responses to extract `content` and `summary` — **`council.py`**
-- [ ] Add `summary: Mapped[str | None]` to `Message` model + Alembic migration — **`models.py`**
-- [ ] Update SSE `agent_message` event to include `summary` field — **`council.py`**
-- [ ] Update `MessageResponse` schema — **`schemas.py`**
-- [ ] Frontend: show summary by default in debate panel cards, expand on hover/click — **`debate-panel/`**
-- [ ] Frontend: update `Message` interface — **`models.ts`**
+- [x] Add `summary: Mapped[str | None]` to `Message` model + Alembic migration (`006`) — **`models.py`**
+- [x] Add `SUMMARIZE_RESPONSE_TOOL` tool schema — **`tools.py`**
+- [x] Add moderator summarization prompt template — **`prompts/moderator_summarize.txt`**
+- [x] Add `render_moderator_summarize()` to prompt loader — **`prompts/loader.py`**
+- [x] Add `summarize_agent_response()` moderator function — **`moderator.py`**
+- [x] Integrate moderator summarization into council orchestrator (after message flush, before SSE emit) — **`council.py`**
+- [x] Update `MessageResponse` and `MessageWithContext` schemas with `summary` field — **`schemas.py`**
+- [x] Update cold-load endpoint to include `summary` — **`sessions.py`**
+- [x] Update SSE `agent_message` event to include `summary` field — **`council.py`**
+- [x] Frontend: add `summary` to `SseAgentMessage` and `MessageWithContext` — **`models.ts`**
+- [x] Frontend: pass `summary` through SSE handler and history loader — **`session-view.ts`**
+- [x] Frontend: show summary by default in debate panel cards, expand/collapse on click — **`debate-panel/`**
 
 ---
 

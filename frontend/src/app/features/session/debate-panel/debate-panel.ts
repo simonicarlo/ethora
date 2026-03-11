@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
@@ -18,12 +19,13 @@ export interface DebateMessage {
   message_type?: MessageType;
   round: number;
   content: string;
+  summary?: string | null;
   references?: Reference[];
 }
 
 @Component({
   selector: 'app-debate-panel',
-  imports: [MatCardModule, MatIconModule, MatDividerModule, MarkdownPipe],
+  imports: [MatButtonModule, MatCardModule, MatIconModule, MatDividerModule, MarkdownPipe],
   templateUrl: './debate-panel.html',
   styleUrl: './debate-panel.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +36,25 @@ export class DebatePanel {
   readonly currentRound = input<number>(0);
   readonly inputClaim = input<string>('');
   readonly activeToolUse = input<ToolActivity | null>(null);
+
+  readonly expandedMessages = signal<Set<string>>(new Set());
+
+  toggleExpanded(roundNum: number, index: number): void {
+    const key = `${roundNum}-${index}`;
+    this.expandedMessages.update((set) => {
+      const next = new Set(set);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  isExpanded(roundNum: number, index: number): boolean {
+    return this.expandedMessages().has(`${roundNum}-${index}`);
+  }
 
   readonly agentMap = computed(() => {
     const map = new Map<string, Agent>();
