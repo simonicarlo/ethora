@@ -147,6 +147,16 @@ async def run_council_session(
                     "candidates": agent_candidates,
                 })
 
+                # Persist proposal message for session history replay
+                proposal_msg = Message(
+                    round_id=db_round.id,
+                    agent_id=agent.id,
+                    message_type="proposal",
+                    content=json.dumps({"candidates": agent_candidates}),
+                )
+                db.add(proposal_msg)
+                await db.flush()
+
                 yield format_sse("candidate_proposed", {
                     "agent_id": str(agent.id),
                     "agent_name": agent.name,
@@ -159,6 +169,19 @@ async def run_council_session(
                 input_claim=session.input_claim,
             )
             finalized_candidates = moderator_result.candidates
+
+            # Persist moderator message for session history replay
+            moderator_msg = Message(
+                round_id=db_round.id,
+                agent_id=None,
+                message_type="moderator",
+                content=json.dumps({
+                    "explanation": moderator_result.explanation,
+                    "candidates": moderator_result.candidates,
+                }),
+            )
+            db.add(moderator_msg)
+            await db.flush()
 
             yield format_sse("moderator_action", {
                 "action": moderator_result.action,
@@ -351,6 +374,9 @@ async def _load_history_from_db(
 
     history: list[tuple[str, uuid.UUID | None, str]] = []
     for msg in messages:
+        # Skip non-debate messages — agents should only see debate + human input
+        if msg.message_type in ("moderator", "proposal"):
+            continue
         if msg.agent_id is None:
             history.append(("Human", None, msg.content))
         else:

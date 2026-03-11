@@ -139,6 +139,7 @@ class MessageWithContext(BaseModel):
     round_number: int
     agent_id: uuid.UUID | None = None
     agent_name: str | None = None
+    message_type: str = "agent"
     content: str
     created_at: datetime
 

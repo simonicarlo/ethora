@@ -3,11 +3,12 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { Agent } from '../../../core/models';
+import { Agent, MessageType } from '../../../core/models';
 
 export interface DebateMessage {
   agent_id: string | null;
   agent_name?: string;
+  message_type?: MessageType;
   round: number;
   content: string;
 }
@@ -38,20 +39,24 @@ export class DebatePanel {
     if (msgs.length === 0) return [];
 
     const maxRound = Math.max(...msgs.map((m) => m.round));
-    const rounds: { round: number; messages: (DebateMessage & { agentName: string; isHuman: boolean })[] }[] = [];
+    const rounds: { round: number; messages: (DebateMessage & { agentName: string; isHuman: boolean; isModerator: boolean; icon: string })[] }[] = [];
 
     for (let r = 1; r <= maxRound; r++) {
       rounds.push({
         round: r,
         messages: msgs
           .filter((m) => m.round === r)
-          .map((m) => ({
-            ...m,
-            isHuman: m.agent_id === null,
-            agentName: m.agent_id === null
-              ? (m.agent_name ?? 'Human')
-              : (this.agentMap().get(m.agent_id)?.name ?? m.agent_name ?? 'Unknown Agent'),
-          })),
+          .map((m) => {
+            const isModerator = m.message_type === 'moderator';
+            const isHuman = m.message_type === 'human' || (!m.message_type && m.agent_id === null);
+            const icon = isModerator ? 'shield' : isHuman ? 'person' : 'smart_toy';
+            const agentName = isModerator
+              ? 'Moderator'
+              : isHuman
+                ? (m.agent_name ?? 'Human')
+                : (m.agent_id ? (this.agentMap().get(m.agent_id)?.name ?? m.agent_name ?? 'Unknown Agent') : (m.agent_name ?? 'Unknown Agent'));
+            return { ...m, isHuman, isModerator, icon, agentName };
+          }),
       });
     }
     return rounds;

@@ -87,17 +87,23 @@ async def get_session_messages(
     )
     votes = vote_result.scalars().all()
 
-    msg_list: list[dict[str, object]] = [
-        {
+    msg_list: list[dict[str, object]] = []
+    for msg, round_number in rows:
+        if msg.agent:
+            agent_name = msg.agent.name
+        elif msg.message_type == "moderator":
+            agent_name = "Moderator"
+        else:
+            agent_name = "Human"
+        msg_list.append({
             "id": msg.id,
             "round_number": round_number,
             "agent_id": msg.agent_id,
-            "agent_name": msg.agent.name if msg.agent else "Human",
+            "agent_name": agent_name,
+            "message_type": msg.message_type,
             "content": msg.content,
             "created_at": msg.created_at,
-        }
-        for msg, round_number in rows
-    ]
+        })
 
     return {"messages": msg_list, "votes": votes}
 
@@ -160,10 +166,11 @@ async def submit_human_turn(
     if latest_round is None:
         raise HTTPException(status_code=409, detail="No rounds exist for this session")
 
-    # Store human message (agent_id=None marks it as human-authored)
+    # Store human message (agent_id=None + message_type="human")
     msg = Message(
         round_id=latest_round.id,
         agent_id=None,
+        message_type="human",
         content=payload.content,
     )
     db.add(msg)

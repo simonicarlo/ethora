@@ -214,6 +214,7 @@ Stream B (CRUD) ─────────┘
 - [ ] Include file contents in agent context (text files inline, PDFs via `pypdf`) — **`council.py`**
 - [ ] Frontend: file upload component in start-session dialog (drag-and-drop + picker) — **`start-session-dialog/`**
 - [ ] Frontend: show uploaded files in session view header — **`session-view/`**
+- [ ] Add support for links to resources aswell
 
 ---
 
@@ -225,6 +226,7 @@ Stream B (CRUD) ─────────┘
 - [ ] Collect proposed edits, present to all agents for consensus voting — **`council.py`**
 - [ ] Apply edits on consensus; track versions with `FileVersion` model — **`models.py`**
 - [ ] Frontend: show file diffs in session view — **`session-view/`**
+- [ ] Agents can add links to sources and reference them in their answers.
 
 ---
 

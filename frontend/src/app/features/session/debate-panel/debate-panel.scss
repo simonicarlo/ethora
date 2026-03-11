@@ -53,6 +53,11 @@
     line-height: 1.6;
     margin: 0;
   }
+
+  &.moderator-card {
+    border-left: 4px solid var(--mat-sys-tertiary, #e65100);
+    background: color-mix(in srgb, var(--mat-sys-tertiary, #e65100) 6%, transparent);
+  }
 }
 
 mat-divider {

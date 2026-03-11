@@ -35,6 +35,7 @@ export type CouncilUpdate = Partial<CouncilCreate>;
 export type VotingMechanism = 'majority' | 'weighted' | 'consensus' | 'human_in_loop';
 export type QuestionType = 'binary' | 'open';
 export type SessionStatus = 'pending' | 'running' | 'proposing' | 'voting' | 'awaiting_human_turn' | 'complete' | 'error';
+export type MessageType = 'agent' | 'human' | 'moderator' | 'proposal';
 
 export interface Session {
   id: string;
@@ -94,6 +95,7 @@ export interface MessageWithContext {
   round_number: number;
   agent_id: string | null;
   agent_name: string | null;
+  message_type: MessageType;
   content: string;
   created_at: string;
 }
