@@ -25,6 +25,10 @@ class TestLoadTemplate:
         with pytest.raises(FileNotFoundError):
             load_template("nonexistent.txt")
 
+    def test_path_traversal_rejected(self) -> None:
+        with pytest.raises(ValueError, match="path separators"):
+            load_template("../../core/config.py")
+
 
 class TestRenderDeliberationSystem:
     def test_contains_all_context(self) -> None:

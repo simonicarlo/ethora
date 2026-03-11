@@ -10,6 +10,7 @@ format().
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 _TEMPLATES_DIR = Path(__file__).parent
 _cache: dict[str, str] = {}
@@ -25,12 +26,19 @@ _OPEN_VOTE_FORMAT = (
 
 def load_template(name: str) -> str:
     """Load a template file by name, caching the result."""
+    if "/" in name or "\\" in name:
+        raise ValueError(f"Template name must not contain path separators: {name}")
     if name not in _cache:
         path = _TEMPLATES_DIR / name
         if not path.is_file():
             raise FileNotFoundError(f"Template not found: {path}")
         _cache[name] = path.read_text(encoding="utf-8")
     return _cache[name]
+
+
+def _clear_cache() -> None:
+    """Clear the template cache. For testing only."""
+    _cache.clear()
 
 
 def _render(template: str, variables: dict[str, str]) -> str:
@@ -66,7 +74,7 @@ def render_voting_prompt(
     *,
     input_claim: str,
     debate_text: str,
-    question_type: str = "binary",
+    question_type: Literal["binary", "open"] = "binary",
 ) -> str:
     """Render the voting prompt with the appropriate vote format."""
     template = load_template("voting_prompt.txt")
