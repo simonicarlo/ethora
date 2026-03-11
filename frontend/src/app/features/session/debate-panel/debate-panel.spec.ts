@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
 import { DebatePanel, DebateMessage, ToolActivity } from './debate-panel';
-import { Agent } from '../../../core/models';
+import { Agent, StageSetData } from '../../../core/models';
 
 const mockAgents: Agent[] = [
   { id: 'a1', name: 'Analyst', system_prompt: '', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
@@ -24,6 +24,7 @@ const mockMessages: DebateMessage[] = [
       [agents]="agents()"
       [currentRound]="currentRound()"
       [inputClaim]="inputClaim()"
+      [stageSet]="stageSet()"
       [activeToolUse]="activeToolUse()" />
   `,
 })
@@ -32,6 +33,7 @@ class TestHost {
   agents = signal<Agent[]>(mockAgents);
   currentRound = signal(0);
   inputClaim = signal('');
+  stageSet = signal<StageSetData | null>(null);
   activeToolUse = signal<ToolActivity | null>(null);
 }
 
@@ -211,5 +213,85 @@ describe('DebatePanel', () => {
 
     const refList = fixture.nativeElement.querySelector('.references-list');
     expect(refList).toBeFalsy();
+  });
+
+  describe('stage-set card', () => {
+    const mockStageSet: StageSetData = {
+      council_name: 'Ethics Board',
+      input_claim: 'Is AI ethical?',
+      agents: [
+        { id: 'a1', name: 'Analyst', icon: 'smart_toy', description: 'Analytical expert' },
+        { id: 'a2', name: 'Critic', icon: 'psychology', description: 'Critical thinker' },
+      ],
+      rounds: 3,
+      voting_mechanism: 'weighted',
+      question_type: 'binary',
+      intro_text: null,
+    };
+
+    it('should show stage-set card when stageSet is provided', () => {
+      host.stageSet.set(mockStageSet);
+      fixture.detectChanges();
+
+      const card = fixture.nativeElement.querySelector('.stage-set-card');
+      expect(card).toBeTruthy();
+      expect(card.textContent).toContain('Is AI ethical?');
+    });
+
+    it('should show agent names in stage-set card', () => {
+      host.stageSet.set(mockStageSet);
+      fixture.detectChanges();
+
+      const agentNames = fixture.nativeElement.querySelectorAll('.stage-agent-name');
+      expect(agentNames.length).toBe(2);
+      expect(agentNames[0].textContent.trim()).toBe('Analyst');
+      expect(agentNames[1].textContent.trim()).toBe('Critic');
+    });
+
+    it('should show metadata chips', () => {
+      host.stageSet.set(mockStageSet);
+      fixture.detectChanges();
+
+      const chips = fixture.nativeElement.querySelectorAll('.meta-chip');
+      expect(chips.length).toBe(3);
+      expect(chips[0].textContent).toContain('3');
+      expect(chips[0].textContent).toContain('rounds');
+      expect(chips[1].textContent).toContain('Weighted');
+    });
+
+    it('should not show intro text when null', () => {
+      host.stageSet.set(mockStageSet);
+      fixture.detectChanges();
+
+      const intro = fixture.nativeElement.querySelector('.stage-intro');
+      expect(intro).toBeFalsy();
+    });
+
+    it('should show intro text when provided', () => {
+      host.stageSet.set({ ...mockStageSet, intro_text: 'Welcome to the deliberation.' });
+      fixture.detectChanges();
+
+      const intro = fixture.nativeElement.querySelector('.stage-intro');
+      expect(intro).toBeTruthy();
+      expect(intro.textContent).toContain('Welcome to the deliberation.');
+    });
+
+    it('should hide claim card when stageSet is provided', () => {
+      host.inputClaim.set('Is AI ethical?');
+      host.stageSet.set(mockStageSet);
+      fixture.detectChanges();
+
+      const claimCard = fixture.nativeElement.querySelector('.claim-card');
+      expect(claimCard).toBeFalsy();
+    });
+
+    it('should fall back to claim card when stageSet is null', () => {
+      host.inputClaim.set('Is AI ethical?');
+      host.stageSet.set(null);
+      fixture.detectChanges();
+
+      const claimCard = fixture.nativeElement.querySelector('.claim-card');
+      expect(claimCard).toBeTruthy();
+    });
   });
 });

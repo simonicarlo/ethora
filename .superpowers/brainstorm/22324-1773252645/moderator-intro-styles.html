@@ -1,0 +1,158 @@
+<h2>Moderator Intro Card — Styling Options</h2>
+<p class="subtitle">How should the "stage-setting" message look at the top of the debate timeline?</p>
+
+<div class="cards">
+  <!-- Option A: Integrated moderator card -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #1c1b1f;">
+      <!-- Mockup of the debate panel -->
+      <div style="font-family: system-ui, sans-serif; color: #e6e1e5;">
+        <!-- Claim card -->
+        <div style="background: rgba(255,255,255,0.06); border-left: 4px solid #d0bcff; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; margin-bottom: 6px;">Deliberation Topic</div>
+          <div style="font-size: 14px;">"Is remote work more productive than office work?"</div>
+        </div>
+
+        <!-- Moderator intro card -->
+        <div style="background: rgba(255,255,255,0.06); border-left: 4px solid #e65100; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <div style="width: 32px; height: 32px; background: rgba(230,81,0,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px;">&#x1f6e1;</div>
+            <div>
+              <div style="font-weight: 600; font-size: 14px;">Moderator</div>
+              <div style="font-size: 11px; opacity: 0.5;">Setting the stage</div>
+            </div>
+          </div>
+          <!-- Metadata chips -->
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
+            <span style="background: rgba(208,188,255,0.12); color: #d0bcff; padding: 4px 10px; border-radius: 16px; font-size: 11px;">3 Rounds</span>
+            <span style="background: rgba(208,188,255,0.12); color: #d0bcff; padding: 4px 10px; border-radius: 16px; font-size: 11px;">Weighted Vote</span>
+            <span style="background: rgba(208,188,255,0.12); color: #d0bcff; padding: 4px 10px; border-radius: 16px; font-size: 11px;">3 Agents</span>
+          </div>
+          <!-- LLM intro text -->
+          <div style="font-size: 13px; line-height: 1.7; opacity: 0.85;">
+            Welcome to today's deliberation. Three experts will examine this question from different angles — <strong>Dr. Sarah Chen</strong> (Workplace Psychologist), <strong>Marcus Webb</strong> (Business Strategist), and <strong>Ava Morales</strong> (Data Analyst). Each will present their perspective across 3 rounds of debate, with the opportunity to challenge and refine each other's arguments. The final verdict will be determined by a weighted vote based on each agent's confidence.
+          </div>
+        </div>
+
+        <!-- Round 1 header hint -->
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.3; margin-bottom: 8px;">Round 1</div>
+        <div style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; opacity: 0.3;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 24px; height: 24px; background: rgba(98,91,168,0.3); border-radius: 50%;"></div>
+            <span style="font-size: 13px;">Dr. Sarah Chen is thinking...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A: Moderator Card Style</h3>
+      <p>Uses the existing moderator card styling (orange left border). Feels like part of the debate — a moderator "speaking" before round 1. The metadata chips and LLM intro sit inside one cohesive card.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Hero/banner style -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #1c1b1f;">
+      <div style="font-family: system-ui, sans-serif; color: #e6e1e5;">
+        <!-- Combined hero banner -->
+        <div style="background: linear-gradient(135deg, rgba(208,188,255,0.08), rgba(230,81,0,0.06)); border: 1px solid rgba(208,188,255,0.15); border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+          <!-- Topic -->
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; opacity: 0.4; margin-bottom: 6px;">Deliberation Topic</div>
+          <div style="font-size: 16px; font-weight: 500; margin-bottom: 16px;">"Is remote work more productive than office work?"</div>
+
+          <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.08); margin: 0 0 16px 0;">
+
+          <!-- Agent avatars row -->
+          <div style="display: flex; gap: 16px; margin-bottom: 16px;">
+            <div style="text-align: center;">
+              <div style="width: 40px; height: 40px; background: rgba(98,91,168,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; font-size: 20px;">&#x1f9e0;</div>
+              <div style="font-size: 11px; opacity: 0.7;">Dr. Chen</div>
+              <div style="font-size: 9px; opacity: 0.4;">Psychologist</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="width: 40px; height: 40px; background: rgba(186,175,211,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; font-size: 20px;">&#x1f4bc;</div>
+              <div style="font-size: 11px; opacity: 0.7;">M. Webb</div>
+              <div style="font-size: 9px; opacity: 0.4;">Strategist</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="width: 40px; height: 40px; background: rgba(219,172,195,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 4px; font-size: 20px;">&#x1f4ca;</div>
+              <div style="font-size: 11px; opacity: 0.7;">A. Morales</div>
+              <div style="font-size: 9px; opacity: 0.4;">Data Analyst</div>
+            </div>
+          </div>
+
+          <!-- Metadata row -->
+          <div style="display: flex; gap: 20px; font-size: 11px; opacity: 0.5; margin-bottom: 14px;">
+            <span>&#x1f504; 3 Rounds</span>
+            <span>&#x2696; Weighted Vote</span>
+          </div>
+
+          <!-- LLM intro -->
+          <div style="font-size: 13px; line-height: 1.7; opacity: 0.8; font-style: italic;">
+            Three experts will examine this question from different angles. Each will present their perspective across 3 rounds of structured debate, challenging and refining each other's arguments. The final verdict will be determined by a weighted vote based on confidence.
+          </div>
+        </div>
+
+        <!-- Round 1 hint -->
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.3; margin-bottom: 8px;">Round 1</div>
+        <div style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; opacity: 0.3;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 24px; height: 24px; background: rgba(98,91,168,0.3); border-radius: 50%;"></div>
+            <span style="font-size: 13px;">Dr. Sarah Chen is thinking...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B: Hero Banner Style</h3>
+      <p>Replaces the separate claim card with a unified hero banner. Merges topic, agent introductions (with avatars), metadata, and LLM intro into one prominent section. Feels like a "title card" for the session.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Separate sections -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 20px; background: #1c1b1f;">
+      <div style="font-family: system-ui, sans-serif; color: #e6e1e5;">
+        <!-- Existing claim card unchanged -->
+        <div style="background: rgba(255,255,255,0.06); border-left: 4px solid #d0bcff; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+          <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; margin-bottom: 6px;">Deliberation Topic</div>
+          <div style="font-size: 14px;">"Is remote work more productive than office work?"</div>
+        </div>
+
+        <!-- Structured metadata bar -->
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 12px; font-size: 12px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="opacity: 0.4;">Agents:</span>
+            <div style="display: flex; gap: -4px;">
+              <div style="width: 22px; height: 22px; background: rgba(98,91,168,0.3); border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center;">&#x1f9e0;</div>
+              <div style="width: 22px; height: 22px; background: rgba(186,175,211,0.3); border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; margin-left: -4px;">&#x1f4bc;</div>
+              <div style="width: 22px; height: 22px; background: rgba(219,172,195,0.3); border-radius: 50%; font-size: 12px; display: flex; align-items: center; justify-content: center; margin-left: -4px;">&#x1f4ca;</div>
+            </div>
+          </div>
+          <span style="opacity: 0.15;">|</span>
+          <span style="opacity: 0.5;">3 Rounds</span>
+          <span style="opacity: 0.15;">|</span>
+          <span style="opacity: 0.5;">Weighted Vote</span>
+        </div>
+
+        <!-- LLM intro as subtle system message -->
+        <div style="padding: 12px 16px; font-size: 12px; line-height: 1.7; opacity: 0.6; font-style: italic; border-left: 2px solid rgba(255,255,255,0.1); margin-bottom: 16px;">
+          Three experts will examine this question — Dr. Sarah Chen (Workplace Psychologist), Marcus Webb (Business Strategist), and Ava Morales (Data Analyst). Over 3 rounds they'll debate and challenge each other before a weighted vote determines the verdict.
+        </div>
+
+        <!-- Round 1 -->
+        <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.3; margin-bottom: 8px;">Round 1</div>
+        <div style="background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px; opacity: 0.3;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="width: 24px; height: 24px; background: rgba(98,91,168,0.3); border-radius: 50%;"></div>
+            <span style="font-size: 13px;">Dr. Sarah Chen is thinking...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C: Layered Sections</h3>
+      <p>Keeps the existing claim card, adds a compact metadata bar below it, then a subtle italic LLM intro. Each piece is its own element — minimal, modular, and doesn't compete with the debate messages for attention.</p>
+    </div>
+  </div>
+</div>

@@ -95,6 +95,21 @@ CLOSING_STATEMENT_TOOL: dict[str, Any] = {
     },
 }
 
+SET_STAGE_TOOL: dict[str, Any] = {
+    "name": "set_stage",
+    "description": "Write a short introduction to set the stage for the deliberation session.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "intro_text": {
+                "type": "string",
+                "description": "A 1-3 sentence introduction that frames the topic and sets expectations",
+            },
+        },
+        "required": ["intro_text"],
+    },
+}
+
 DEDUPLICATE_CANDIDATES_TOOL: dict[str, Any] = {
     "name": "deduplicate_candidates",
     "description": "Merge semantically equivalent candidates and return the normalized list.",

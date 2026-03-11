@@ -5,7 +5,7 @@ import uuid
 
 import pytest
 
-from app.engine.council import _build_agent_messages
+from app.engine.council import _build_agent_messages, _extract_role_summary
 from app.models.models import Agent
 
 
@@ -144,3 +144,33 @@ class TestBuildAgentMessagesHumanTurns:
         for m in msgs:
             if "Human" in m.get("content", ""):
                 assert m["role"] == "user"
+
+
+# -- _extract_role_summary --
+
+
+class TestExtractRoleSummary:
+    def test_first_sentence_extracted(self) -> None:
+        prompt = "You are a critical analyst. You focus on logical flaws."
+        assert _extract_role_summary(prompt) == "You are a critical analyst."
+
+    def test_truncation_at_max_chars(self) -> None:
+        prompt = "A" * 200
+        result = _extract_role_summary(prompt, max_chars=80)
+        assert len(result) <= 80
+        assert result.endswith("\u2026")
+
+    def test_short_prompt_returned_as_is(self) -> None:
+        prompt = "Expert debater."
+        assert _extract_role_summary(prompt) == "Expert debater."
+
+    def test_empty_prompt(self) -> None:
+        assert _extract_role_summary("") == ""
+
+    def test_exclamation_sentence_boundary(self) -> None:
+        prompt = "You are the devil's advocate! Always challenge assumptions."
+        assert _extract_role_summary(prompt) == "You are the devil's advocate!"
+
+    def test_newline_sentence_boundary(self) -> None:
+        prompt = "You are a synthesizer.\nCombine all viewpoints into one."
+        assert _extract_role_summary(prompt) == "You are a synthesizer."

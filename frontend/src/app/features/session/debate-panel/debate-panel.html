@@ -1,4 +1,46 @@
-@if (inputClaim(); as claim) {
+@if (stageSet(); as stage) {
+  <div class="stage-set-card">
+    <div class="stage-topic">
+      <mat-icon>gavel</mat-icon>
+      <div class="stage-topic-text" [innerHTML]="stage.input_claim | markdown"></div>
+    </div>
+
+    <mat-divider />
+
+    <div class="stage-meta">
+      <div class="stage-agents">
+        @for (agent of stage.agents; track agent.id) {
+          <div class="stage-agent">
+            <mat-icon>{{ agent.icon }}</mat-icon>
+            <div class="stage-agent-info">
+              <span class="stage-agent-name">{{ agent.name }}</span>
+              <span class="stage-agent-role">{{ agent.description }}</span>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="stage-chips">
+        <span class="meta-chip">
+          <mat-icon>repeat</mat-icon>
+          {{ stage.rounds }} {{ stage.rounds === 1 ? 'round' : 'rounds' }}
+        </span>
+        <span class="meta-chip">
+          <mat-icon>how_to_vote</mat-icon>
+          {{ stage.voting_mechanism | titlecase }}
+        </span>
+        <span class="meta-chip">
+          <mat-icon>help_outline</mat-icon>
+          {{ stage.question_type | titlecase }}
+        </span>
+      </div>
+    </div>
+
+    @if (stage.intro_text) {
+      <mat-divider />
+      <div class="stage-intro">{{ stage.intro_text }}</div>
+    }
+  </div>
+} @else if (inputClaim(); as claim) {
   <mat-card class="claim-card" appearance="outlined">
     <mat-card-header>
       <mat-icon matCardAvatar>gavel</mat-icon>
@@ -10,7 +52,7 @@
   </mat-card>
 }
 
-@if (messages().length === 0 && !inputClaim()) {
+@if (messages().length === 0 && !inputClaim() && !stageSet()) {
   <div class="empty-state">
     <mat-icon>forum</mat-icon>
     <p>Waiting for deliberation to begin...</p>

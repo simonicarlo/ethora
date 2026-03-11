@@ -11,8 +11,8 @@ from typing import TypedDict
 
 from app.core.config import settings
 from app.engine.agent import call_with_tool
-from app.engine.prompts.loader import render_moderator_deduplicate, render_moderator_summarize, render_research_synthesis
-from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL, SUMMARIZE_RESPONSE_TOOL
+from app.engine.prompts.loader import render_moderator_deduplicate, render_moderator_summarize, render_research_synthesis, render_stage_set
+from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL, SET_STAGE_TOOL, SUMMARIZE_RESPONSE_TOOL
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +133,39 @@ async def synthesize_closing_statements(
         logger.warning("Moderator synthesis failed, falling back to concatenation", exc_info=True)
         fallback_lines = [f"- **{name}**: {stmt}" for name, stmt in statements]
         return "## Closing Statement Summary\n\n" + "\n\n".join(fallback_lines)
+
+
+async def generate_stage_intro(
+    *,
+    council_name: str,
+    input_claim: str,
+    agent_descriptions: str,
+    rounds: int,
+    voting_mechanism: str,
+) -> str | None:
+    """Use the moderator LLM to generate a short stage-setting intro.
+
+    Returns None on failure — the frontend renders the card without the intro text.
+    """
+    prompt = render_stage_set(
+        council_name=council_name,
+        input_claim=input_claim,
+        agent_descriptions=agent_descriptions,
+        rounds=rounds,
+        voting_mechanism=voting_mechanism,
+    )
+
+    try:
+        parsed = await call_with_tool(
+            model=settings.MODERATOR_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            system_prompt=MODERATOR_SYSTEM_PROMPT,
+            tool=SET_STAGE_TOOL,
+        )
+        return parsed.get("intro_text")
+    except Exception:
+        logger.warning("Stage intro generation failed", exc_info=True)
+        return None
 
 
 def _fallback_dedup(raw_candidates: list[CandidateEntry]) -> ModeratorResult:

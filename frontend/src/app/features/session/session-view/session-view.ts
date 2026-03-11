@@ -22,6 +22,7 @@ import {
   SseError,
   SseRateLimited,
   SseModeratorAction,
+  StageSetData,
   SseRoundComplete,
   SseSummaryReady,
   SseToolUse,
@@ -73,6 +74,7 @@ export class SessionView implements OnInit {
   readonly votingInProgress = signal(false);
   readonly closingStatements = signal<{agent_id: string; agent_name: string; statement: string}[]>([]);
   readonly retryAfter = signal<number | null>(null);
+  readonly stageSet = signal<StageSetData | null>(null);
   private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(() => {
@@ -160,6 +162,21 @@ export class SessionView implements OnInit {
         next: (council: Council) => {
           this.agents.set(council.agents);
           this.votingMechanism.set(council.voting_mechanism);
+          // Build synthetic stage-set from council metadata (LLM intro unavailable on cold load)
+          this.stageSet.set({
+            council_name: council.name,
+            input_claim: this.inputClaim(),
+            agents: council.agents.map((a) => ({
+              id: a.id,
+              name: a.name,
+              icon: a.icon || 'smart_toy',
+              description: a.system_prompt.split(/[.!]\s/)[0]?.slice(0, 80) || a.name,
+            })),
+            rounds: council.rounds,
+            voting_mechanism: council.voting_mechanism,
+            question_type: this.questionType(),
+            intro_text: null,
+          });
           this.loading.set(false);
           this.handleInitialStatus(sessionId);
         },
@@ -319,6 +336,17 @@ export class SessionView implements OnInit {
     }
 
     switch (event.type) {
+      case 'stage_set': {
+        this.stageSet.set(raw as StageSetData);
+        break;
+      }
+      case 'stage_set_intro': {
+        const data = raw as { intro_text: string };
+        this.stageSet.update((prev) =>
+          prev ? { ...prev, intro_text: data.intro_text } : prev,
+        );
+        break;
+      }
       case 'agent_message': {
         const data = raw as SseAgentMessage;
         this.sessionStatus.set('running');

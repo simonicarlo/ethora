@@ -153,6 +153,25 @@ def render_research_synthesis(
     })
 
 
+def render_stage_set(
+    *,
+    council_name: str,
+    input_claim: str,
+    agent_descriptions: str,
+    rounds: int,
+    voting_mechanism: str,
+) -> str:
+    """Render the stage-set intro prompt for the moderator."""
+    template = load_template("stage_set.txt")
+    return _render(template, {
+        "council_name": council_name,
+        "input_claim": input_claim,
+        "agent_descriptions": agent_descriptions,
+        "rounds": str(rounds),
+        "voting_mechanism": voting_mechanism,
+    })
+
+
 def render_continuation_nudge() -> str:
     """Return the continuation nudge text."""
     return load_template("continuation_nudge.txt").strip()
