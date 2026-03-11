@@ -82,6 +82,7 @@ export interface Message {
   round_id: string;
   agent_id: string | null;
   content: string;
+  summary?: string | null;
   references: Reference[];
   created_at: string;
 }
@@ -149,6 +150,7 @@ export interface SseAgentMessage {
   agent_name: string;
   round: number;
   content: string;
+  summary?: string | null;
   references: Reference[];
 }
 
@@ -180,10 +182,13 @@ export interface SseRoundComplete {
 export interface SseVotingCast {
   agent_id: string;
   agent_name: string;
-  vote?: string;
-  value?: string;
+  vote: string;
   confidence: number;
   reasoning: string | null;
+}
+
+export interface SseVotingStarted {
+  message: string;
 }
 
 export interface SseVerdict {

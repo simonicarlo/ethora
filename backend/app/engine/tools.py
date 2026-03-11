@@ -6,6 +6,10 @@ tool_choice={"type": "tool", "name": ...}, eliminating fragile JSON parsing.
 Also defines agent tools (web_search, code_execution) that agents can use during
 deliberation when tools_enabled is true on the council. code_execution is an
 Anthropic server-side tool required by the web_search dynamic filtering feature.
+
+Tool definitions use dict[str, Any] because the Anthropic SDK tool wire format
+contains nested heterogeneous structures (input_schema with properties, types,
+constraints) that don't have a stable TypedDict shape.
 """
 from __future__ import annotations
 

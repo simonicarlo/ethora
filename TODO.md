@@ -47,14 +47,14 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 2 — Align frontend/backend types and fix SPEC drift**
 
-- [ ] **Update SPEC.md** — Add 6 missing SSE events (`agent_typing`, `summary_ready`, `voting_started`, `closing_statement`, `moderator_action`, `rate_limited`), 3 missing statuses (`proposing`, `closing_statements`, `rate_limited`), `research` question type, and updated `agent_message` shape
-- [ ] **Add `summary` field to frontend `Message` interface** — Backend `MessageResponse` includes it, but base `Message` type omits it — **`frontend/src/app/core/models.ts:80-87`**
-- [ ] **Fix `voting_cast` SSE field mismatch** — Backend sends `vote`, frontend has dual `vote?`/`value?` workaround. Pick one field name and align both sides — **`council.py:528`, `models.ts:183`**
-- [ ] **Remove `$any()` from templates** — Replace with typed helper methods or template refs in `human-turn-input.html:14`, `human-vote-form.html:34`, `tool-registry.html:38,42`
-- [ ] **Type `let row` in MatTable** — Implicit `any` in `error-log-viewer.html:22-47` circumvents strict templates
-- [ ] **Use `Literal` type for `MessageWithContext.message_type`** on backend — Currently untyped `str` — **`backend/app/schemas/schemas.py:156`**
-- [ ] **Add `SseVotingStarted` interface** — Event is handled but has no type definition — **`frontend/src/app/core/models.ts`**
-- [ ] **Replace `Any` usages with TypedDicts** — `agent.py:41,72,81`, `tools.py:16,26,49`, `emitter.py:7` — add required comments or replace with typed alternatives
+- [x] **Update SPEC.md** — Added 6 missing SSE events (`agent_typing`, `summary_ready`, `voting_started`, `closing_statement`, `moderator_action`, `rate_limited`), 3 missing statuses (`proposing`, `closing_statements`, `rate_limited`), `research` question type, and updated `agent_message` shape
+- [x] **Add `summary` field to frontend `Message` interface** — Added `summary?: string | null` to `Message` and `SseAgentMessage` — **`frontend/src/app/core/models.ts`**
+- [x] **Fix `voting_cast` SSE field mismatch** — Standardized on `vote` field, removed `value?` workaround — **`models.ts`, `session-view.ts`**
+- [x] **Remove `$any()` from templates** — Replaced with typed `getInputValue()` helper in `human-turn-input.ts`, `human-vote-form.ts`, `tool-registry.ts`
+- [x] **Type `let row` in MatTable** — Already resolved by Angular 17+ strict template inference from typed `ErrorLogEntry[]` dataSource
+- [x] **Use `Literal` type for `MessageWithContext.message_type`** — Added `MessageType = Literal[...]` — **`backend/app/schemas/schemas.py`**
+- [x] **Add `SseVotingStarted` interface** — Added interface and typed cast in session-view — **`frontend/src/app/core/models.ts`**
+- [x] **Replace `Any` usages with justified comments** — Added explicit `# Any:` comments to `agent.py`, `tools.py`, `emitter.py` explaining why `Any` is necessary (Anthropic SDK wire format)
 
 ---
 

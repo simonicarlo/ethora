@@ -30,6 +30,10 @@ export class HumanTurnInput {
   readonly submitting = signal(false);
   readonly error = signal('');
 
+  protected getInputValue(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
   onSubmit(): void {
     if (!this.content().trim()) return;
 

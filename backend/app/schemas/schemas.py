@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 VotingMechanism = Literal["majority", "weighted", "consensus", "human_in_loop"]
 QuestionType = Literal["binary", "open", "research"]
 SessionStatus = Literal["pending", "running", "proposing", "voting", "closing_statements", "awaiting_human_turn", "complete", "error", "rate_limited"]
+MessageType = Literal["agent", "human", "moderator", "proposal"]
 
 
 # -- Agents ------------------------------------------------------------------
@@ -153,7 +154,7 @@ class MessageWithContext(BaseModel):
     round_number: int
     agent_id: uuid.UUID | None = None
     agent_name: str | None = None
-    message_type: str = "agent"
+    message_type: MessageType = "agent"
     content: str
     summary: str | None = None
     references: list[ReferenceResponse] = []

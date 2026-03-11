@@ -28,6 +28,7 @@ import {
   SseSummaryReady,
   SseToolUse,
   SseVotingCast,
+  SseVotingStarted,
   Verdict,
   Vote,
   VotingMechanism,
@@ -421,6 +422,7 @@ export class SessionView implements OnInit {
         break;
       }
       case 'voting_started': {
+        const _data = raw as SseVotingStarted;
         this.sessionStatus.set('voting');
         this.votingInProgress.set(true);
         this.typingAgent.set(null);
@@ -477,7 +479,7 @@ export class SessionView implements OnInit {
     return {
       id: '',
       agent_id: data.agent_id,
-      value: data.vote ?? data.value ?? '',
+      value: data.vote,
       confidence: data.confidence,
       reasoning: data.reasoning,
     };

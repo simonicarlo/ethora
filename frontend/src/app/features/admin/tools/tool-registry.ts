@@ -41,6 +41,10 @@ export class ToolRegistry {
     this.paramValues.set(defaults);
   }
 
+  protected getInputValue(event: Event): string {
+    return (event.target as HTMLInputElement).value;
+  }
+
   selectTool(tool: ToolDefinition): void {
     this.selectedTool.set(tool);
   }

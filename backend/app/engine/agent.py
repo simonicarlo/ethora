@@ -37,7 +37,7 @@ class ToolInvocation:
     """Record of a tool the agent invoked during its turn."""
 
     tool_name: str
-    tool_input: dict[str, Any]
+    tool_input: dict[str, Any]  # Any: Anthropic SDK tool_use input is untyped
 
 
 @dataclass
@@ -69,7 +69,7 @@ async def call_agent(
     agent: Agent,
     messages: list[dict[str, str]],
     system_prompt: str,
-    tools: list[dict[str, Any]] | None = None,
+    tools: list[dict[str, Any]] | None = None,  # Any: Anthropic SDK tool definition wire format
 ) -> AgentResponse:
     """Calls Claude API for a single agent turn and returns the complete response.
 
@@ -78,7 +78,7 @@ async def call_agent(
     """
     try:
         client = get_client()
-        kwargs: dict[str, Any] = {
+        kwargs: dict[str, Any] = {  # Any: building MessageCreateParams dynamically
             "model": agent.model,
             "max_tokens": 4096,
             "system": system_prompt,
