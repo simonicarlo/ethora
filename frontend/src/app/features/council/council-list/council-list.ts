@@ -53,6 +53,19 @@ export class CouncilList {
     return mechanism.replace(/_/g, ' ');
   }
 
+  deleteCouncil(council: Council): void {
+    if (!confirm(`Delete council "${council.name}"? This cannot be undone.`)) return;
+
+    this.api.deleteCouncil(council.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => {
+        this.councils.update(councils => councils.filter(c => c.id !== council.id));
+      },
+      error: (err) => {
+        this.error.set(err?.error?.detail ?? 'Failed to delete council');
+      },
+    });
+  }
+
   startSession(council: Council): void {
     const ref = this.dialog.open(StartSessionDialog, {
       data: council,
