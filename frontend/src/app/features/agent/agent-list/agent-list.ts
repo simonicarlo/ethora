@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -21,16 +22,18 @@ import { Agent } from '../../../core/models';
   ],
   templateUrl: './agent-list.html',
   styleUrl: './agent-list.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgentList {
   private readonly api = inject(ApiService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly agents = signal<Agent[]>([]);
   readonly loading = signal(true);
   readonly error = signal<string | null>(null);
 
   constructor() {
-    this.api.getAgents().subscribe({
+    this.api.getAgents().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (agents) => {
         this.agents.set(agents);
         this.loading.set(false);

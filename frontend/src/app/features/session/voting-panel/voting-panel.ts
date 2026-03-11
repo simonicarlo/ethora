@@ -1,10 +1,11 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { Agent, Vote, VotingMechanism } from '../../../core/models';
+import { confidencePercent, voteColorClass } from '../../../shared/utils/vote-display.utils';
 
 @Component({
   selector: 'app-voting-panel',
@@ -16,6 +17,7 @@ import { Agent, Vote, VotingMechanism } from '../../../core/models';
   ],
   templateUrl: './voting-panel.html',
   styleUrl: './voting-panel.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VotingPanel {
   readonly votes = input.required<Vote[]>();
@@ -30,14 +32,6 @@ export class VotingPanel {
     return map;
   });
 
-  confidencePercent(confidence: number | null): number {
-    return confidence != null ? Math.round(confidence * 100) : 0;
-  }
-
-  voteColor(value: string): string {
-    const lower = value.toLowerCase();
-    if (lower === 'true' || lower === 'yes' || lower === 'agree') return 'affirm';
-    if (lower === 'false' || lower === 'no' || lower === 'disagree') return 'oppose';
-    return 'neutral';
-  }
+  readonly confidencePercent = confidencePercent;
+  readonly voteColor = voteColorClass;
 }

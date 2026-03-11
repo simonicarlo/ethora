@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SlicePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -32,11 +33,13 @@ import { Agent, VotingMechanism } from '../../../core/models';
   ],
   templateUrl: './council-create.html',
   styleUrl: './council-create.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CouncilCreate {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly agents = signal<Agent[]>([]);
   readonly loadingAgents = signal(true);
@@ -59,7 +62,7 @@ export class CouncilCreate {
   });
 
   constructor() {
-    this.api.getAgents().subscribe({
+    this.api.getAgents().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (agents) => {
         this.agents.set(agents);
         this.loadingAgents.set(false);
@@ -83,7 +86,7 @@ export class CouncilCreate {
     this.submitting.set(true);
     this.error.set(null);
 
-    this.api.createCouncil(this.form.getRawValue()).subscribe({
+    this.api.createCouncil(this.form.getRawValue()).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.router.navigate(['/councils']);
       },

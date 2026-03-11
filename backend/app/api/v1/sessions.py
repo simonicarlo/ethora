@@ -5,9 +5,11 @@ from collections.abc import AsyncGenerator
 
 import uuid
 
+import anthropic
 from fastapi import APIRouter, HTTPException
-from starlette.responses import StreamingResponse
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+from starlette.responses import StreamingResponse
 
 from app.api.v1.deps import DBSession, get_or_404
 from app.core.database import async_session_factory
@@ -15,6 +17,7 @@ from app.engine.council import run_council_session
 from app.models.models import Council, Message, Round, Session, Verdict
 from app.schemas.schemas import (
     HumanTurnRequest,
+    HumanTurnResponse,
     HumanVoteRequest,
     SessionCreate,
     SessionResponse,
@@ -59,7 +62,7 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
             try:
                 async for event in run_council_session(session_id, engine_db):
                     yield event
-            except Exception:
+            except (anthropic.APIError, SQLAlchemyError):
                 logger.exception("Stream error for session %s", session_id)
                 await engine_db.rollback()
                 yield format_sse("error", {"message": "Stream error"})
@@ -69,12 +72,12 @@ async def stream_session(session_id: uuid.UUID, db: DBSession) -> StreamingRespo
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 
-@router.post("/sessions/{session_id}/human-turn", status_code=202)
+@router.post("/sessions/{session_id}/human-turn", response_model=HumanTurnResponse, status_code=202)
 async def submit_human_turn(
     session_id: uuid.UUID,
     payload: HumanTurnRequest,
     db: DBSession,
-) -> dict[str, str]:
+) -> HumanTurnResponse:
     session = await get_or_404(db, Session, session_id, "Session not found")
 
     if session.status != "awaiting_human_turn":
@@ -113,7 +116,7 @@ async def submit_human_turn(
     session.status = "pending"
     await db.flush()
 
-    return {"status": "accepted"}
+    return HumanTurnResponse(status="accepted")
 
 
 @router.post("/sessions/{session_id}/human-vote", response_model=VerdictResponse, status_code=201)

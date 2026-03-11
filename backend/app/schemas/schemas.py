@@ -52,7 +52,7 @@ class CouncilResponse(BaseModel):
 
 class SessionCreate(BaseModel):
     council_id: uuid.UUID
-    input_claim: str = Field(min_length=1)
+    input_claim: str = Field(min_length=1, max_length=5000)
 
 
 class SessionResponse(BaseModel):
@@ -106,6 +106,10 @@ class VerdictResponse(BaseModel):
 
 class HumanTurnRequest(BaseModel):
     content: str = Field(min_length=1)
+
+
+class HumanTurnResponse(BaseModel):
+    status: str
 
 
 class HumanVoteRequest(BaseModel):

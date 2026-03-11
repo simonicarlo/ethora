@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, switchMap, tap } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -8,6 +8,9 @@ import {
   Agent,
   Council,
   SessionStatus,
+  SseAgentMessage,
+  SseRoundComplete,
+  SseVotingCast,
   Verdict,
   Vote,
   VotingMechanism,
@@ -23,6 +26,7 @@ import { VerdictCard } from '../verdict-card/verdict-card';
   imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatProgressSpinnerModule],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SessionView implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -141,33 +145,40 @@ export class SessionView implements OnInit {
   }
 
   private handleSseEvent(event: MessageEvent): void {
-    let data: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+    let raw: unknown;
     try {
-      data = JSON.parse(event.data);
+      raw = JSON.parse(event.data);
     } catch {
       return;
     }
 
     switch (event.type) {
-      case 'agent_message':
+      case 'agent_message': {
+        const data = raw as SseAgentMessage;
         this.sessionStatus.set('running');
         this.messages.update((m) => [...m, data as DebateMessage]);
         this.currentRound.set(data.round);
         break;
-      case 'round_complete':
+      }
+      case 'round_complete': {
+        const data = raw as SseRoundComplete;
         this.currentRound.set(data.round);
         break;
-      case 'voting_cast':
+      }
+      case 'voting_cast': {
+        const data = raw as SseVotingCast;
         this.sessionStatus.set('voting');
         this.votes.update((v) => [
           ...v,
-          { ...data, value: data.vote ?? data.value } as Vote,
+          { ...data, value: data.vote ?? data.value ?? '' } as unknown as Vote,
         ]);
         break;
-      case 'verdict':
-        this.verdict.set(data as Verdict);
+      }
+      case 'verdict': {
+        this.verdict.set(raw as Verdict);
         this.sessionStatus.set('complete');
         break;
+      }
       case 'awaiting_human_turn':
         this.sessionStatus.set('awaiting_human_turn');
         this.waitingForHuman.set(true);

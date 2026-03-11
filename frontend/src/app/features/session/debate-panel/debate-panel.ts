@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
@@ -16,6 +16,7 @@ export interface DebateMessage {
   imports: [MatCardModule, MatIconModule, MatDividerModule],
   templateUrl: './debate-panel.html',
   styleUrl: './debate-panel.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DebatePanel {
   readonly messages = input.required<DebateMessage[]>();

@@ -68,3 +68,44 @@ export interface Verdict {
   summary: string | null;
   created_at: string;
 }
+
+// -- SSE event payloads ---------------------------------------------------
+
+export interface SseAgentMessage {
+  agent_id: string;
+  agent_name: string;
+  round: number;
+  content: string;
+}
+
+export interface SseRoundComplete {
+  round: number;
+}
+
+export interface SseVotingCast {
+  agent_id: string;
+  agent_name: string;
+  vote?: string;
+  value?: string;
+  confidence: number;
+  reasoning: string | null;
+}
+
+export interface SseVerdict {
+  decision: string;
+  confidence: number | null;
+  summary: string | null;
+}
+
+export interface SseAwaitingHumanTurn {
+  round: number;
+  message: string;
+}
+
+export interface SseAwaitingHumanVote {
+  message: string;
+}
+
+export interface SseError {
+  message: string;
+}

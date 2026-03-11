@@ -1,4 +1,4 @@
-import { Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,6 +16,7 @@ import { ApiService } from '../../../core/api.service';
   ],
   templateUrl: './human-turn-input.html',
   styleUrl: './human-turn-input.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HumanTurnInput {
   readonly sessionId = input.required<string>();
