@@ -73,7 +73,10 @@ export class SessionView implements OnInit {
     () => this.sessionStatus() === 'awaiting_human_turn',
   );
   readonly showHumanForm = computed(
-    () => this.waitingForHuman() && this.votingMechanism() === 'human_in_loop',
+    () =>
+      this.waitingForHuman() &&
+      this.votingMechanism() === 'human_in_loop' &&
+      this.sessionStatus() === 'voting',
   );
   readonly isComplete = computed(() => this.sessionStatus() === 'complete');
 
@@ -146,8 +149,19 @@ export class SessionView implements OnInit {
           this.waitingForHuman.set(true);
         });
         break;
+      case 'voting':
+        // If human_in_loop, the SSE stream already ended — just show the vote form.
+        // Otherwise, reconnect SSE to continue receiving voting_cast events.
+        this.loadHistoricalState(sessionId, () => {
+          if (this.votingMechanism() === 'human_in_loop') {
+            this.waitingForHuman.set(true);
+          } else {
+            this.connectSse(sessionId);
+          }
+        });
+        break;
       default:
-        // pending, running, voting — load history then connect SSE for live updates
+        // pending, running — load history then connect SSE for live updates
         this.loadHistoricalState(sessionId, () => this.connectSse(sessionId));
         break;
     }
@@ -190,9 +204,10 @@ export class SessionView implements OnInit {
         next: (event) => this.handleSseEvent(event),
         error: () => {
           // Only set error if session isn't in a valid terminal/paused state.
-          // SSE fires onerror on connection loss — but not on clean server close
-          // (handled via complete below after the readyState fix in SseService).
-          if (this.sessionStatus() !== 'complete' && this.sessionStatus() !== 'awaiting_human_turn') {
+          // SSE fires onerror on connection close — this includes normal closes
+          // after awaiting_human_turn, awaiting_human_vote (status='voting'), or verdict.
+          const status = this.sessionStatus();
+          if (status !== 'complete' && status !== 'awaiting_human_turn' && status !== 'voting') {
             this.sessionStatus.set('error');
           }
         },

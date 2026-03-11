@@ -188,6 +188,31 @@ describe('SessionView', () => {
       expect(humanInput).toBeTruthy();
     });
 
+    it('should show human vote form when reconnecting to voting session with human_in_loop', () => {
+      const humanCouncil = { ...mockCouncil, voting_mechanism: 'human_in_loop' };
+      const mockVotes = [
+        { id: 'v1', agent_id: 'a1', value: 'true', confidence: 0.9, reasoning: 'Yes' },
+        { id: 'v2', agent_id: 'a2', value: 'false', confidence: 0.8, reasoning: 'No' },
+      ];
+
+      fixture.detectChanges();
+
+      const sessionReq = httpMock.expectOne('/api/v1/sessions/sess-1');
+      sessionReq.flush({ ...mockSession, status: 'voting' });
+
+      const councilReq = httpMock.expectOne('/api/v1/councils/council-1');
+      councilReq.flush(humanCouncil);
+      fixture.detectChanges();
+
+      const messagesReq = httpMock.expectOne('/api/v1/sessions/sess-1/messages');
+      messagesReq.flush({ messages: [], votes: mockVotes });
+      fixture.detectChanges();
+
+      expect(component.sessionStatus()).toBe('voting');
+      expect(component.waitingForHuman()).toBe(true);
+      expect(component.showHumanForm()).toBe(true);
+    });
+
     it('should store inputClaim from session response', () => {
       fixture.detectChanges();
       flushInitRequests({ status: 'pending', input_claim: 'Is Earth flat?' });
@@ -321,11 +346,56 @@ describe('SessionView', () => {
       expect(component.sessionStatus()).toBe('awaiting_human_turn');
     });
 
+    it('should not set error on SSE connection loss during voting phase', () => {
+      component.sessionStatus.set('voting');
+      sseSubject.error(new Error('SSE connection lost'));
+
+      expect(component.sessionStatus()).toBe('voting');
+    });
+
     it('should not change status on SSE stream completion', () => {
       component.sessionStatus.set('awaiting_human_turn');
       sseSubject.complete();
 
       expect(component.sessionStatus()).toBe('awaiting_human_turn');
+    });
+
+    it('should not show human vote form during awaiting_human_turn even with human_in_loop', () => {
+      component.votingMechanism.set('human_in_loop');
+
+      sseSubject.next(new MessageEvent('awaiting_human_turn', {
+        data: JSON.stringify({ round: 1, message: 'Waiting for human input' }),
+      }));
+
+      expect(component.sessionStatus()).toBe('awaiting_human_turn');
+      expect(component.waitingForHuman()).toBe(true);
+      // Human vote form must NOT show between rounds
+      expect(component.showHumanForm()).toBe(false);
+      // Human turn input should show instead
+      expect(component.showHumanTurnInput()).toBe(true);
+    });
+
+    it('should show human vote form only after awaiting_human_vote during voting phase', () => {
+      component.votingMechanism.set('human_in_loop');
+
+      // All agents vote
+      sseSubject.next(new MessageEvent('voting_cast', {
+        data: JSON.stringify({ agent_id: 'a1', vote: 'affirm', confidence: 0.8 }),
+      }));
+      sseSubject.next(new MessageEvent('voting_cast', {
+        data: JSON.stringify({ agent_id: 'a2', vote: 'oppose', confidence: 0.7 }),
+      }));
+
+      expect(component.showHumanForm()).toBe(false);
+
+      // Backend signals human vote needed
+      sseSubject.next(new MessageEvent('awaiting_human_vote', {
+        data: JSON.stringify({ message: 'Waiting for human to cast deciding vote' }),
+      }));
+
+      expect(component.sessionStatus()).toBe('voting');
+      expect(component.waitingForHuman()).toBe(true);
+      expect(component.showHumanForm()).toBe(true);
     });
 
     it('should append human message on human turn submitted', () => {
