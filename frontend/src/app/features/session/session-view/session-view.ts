@@ -357,6 +357,7 @@ export class SessionView implements OnInit {
       case 'voting_cast': {
         const data = raw as SseVotingCast;
         this.sessionStatus.set('voting');
+        this.votingInProgress.set(false);
         this.votes.update((v) => [
           ...v,
           { ...data, value: data.vote ?? data.value ?? '' } as unknown as Vote,

@@ -243,6 +243,8 @@ async def run_council_session(
                 return
 
         # -- Signal voting phase early for binary questions (no proposal phase) --
+        # Emitted *before* summary gather so the UI shows instant feedback;
+        # open-ended questions emit after candidate finalization instead (below).
         if session.question_type != "open":
             yield format_sse("voting_started", {
                 "message": "Agents are casting their votes",

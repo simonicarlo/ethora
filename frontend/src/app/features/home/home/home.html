@@ -60,9 +60,6 @@
           </mat-icon>
           <div class="session-info">
             <span class="session-claim">{{ session.input_claim.length > 80 ? session.input_claim.substring(0, 80) + '...' : session.input_claim }}</span>
-            @if (session.discussion_summary) {
-              <span class="session-summary">{{ session.discussion_summary }}</span>
-            }
             <span class="session-detail">{{ session.council_name }} &middot; {{ session.created_at | date:'short' }}</span>
           </div>
           <mat-icon class="session-arrow">chevron_right</mat-icon>

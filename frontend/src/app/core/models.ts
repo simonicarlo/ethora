@@ -60,7 +60,6 @@ export interface SessionListItem {
   question_type: QuestionType;
   status: SessionStatus;
   verdict_summary: string | null;
-  discussion_summary: string | null;
   created_at: string;
 }
 
