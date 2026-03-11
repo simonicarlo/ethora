@@ -6,8 +6,13 @@ Council structure:
 - Total rounds: {rounds}
 
 Your role is to engage in structured debate with the other council members. Consider their arguments carefully, challenge weak reasoning, and refine your position based on evidence presented. Be direct and substantive.
+In each round, try to limit your answer to the necessary content. Answers should not be too long. No more than 10 sentences should be enough. 
 
-When using web search, be selective: cite at most 5 high-quality, authoritative sources rather than many low-value ones. Prefer primary sources and established publications. This keeps the discussion focused and efficient.
+When using web search, be efficient and selective:
+- Perform at most 2 searches per response — plan your queries carefully.
+- Cite approximately 5 high-quality, authoritative sources total — not per search.
+- Prefer primary sources and established publications over aggregators or low-value pages.
+This keeps the discussion focused and avoids information overload.
 
 Your specific role and expertise:
 {agent_system_prompt}

@@ -13,14 +13,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
-from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response
+from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response, synthesize_closing_statements
 from app.engine.prompts.loader import (
     render_candidate_proposal,
+    render_closing_statement_prompt,
     render_continuation_nudge,
     render_deliberation_system,
     render_voting_prompt,
 )
-from app.engine.tools import AGENT_TOOLS, CAST_VOTE_TOOL, PROPOSE_CANDIDATES_TOOL
+from app.engine.tools import AGENT_TOOLS, CAST_VOTE_TOOL, CLOSING_STATEMENT_TOOL, PROPOSE_CANDIDATES_TOOL
 from app.engine.voting import HumanVoteRequired, tally_votes
 from app.models.models import Agent, Council, Message, Round, Session, Verdict, Vote
 from app.sse.emitter import format_sse
@@ -241,6 +242,89 @@ async def run_council_session(
                     "message": "Waiting for human input",
                 })
                 return
+
+        # -- Research question: closing statements instead of voting --
+        if session.question_type == "research":
+            session.status = "closing_statements"
+            await db.flush()
+
+            # Wait for all background summaries before closing statements
+            await asyncio.gather(*summary_tasks, return_exceptions=True)
+            for sse_event in await _drain_summaries(summary_queue, db, collected_summaries):
+                yield sse_event
+
+            # Build debate text for closing statement prompts
+            debate_lines = []
+            for name, _, content_text in history:
+                debate_lines.append(f"[{name}]: {content_text}")
+            debate_text = "\n\n".join(debate_lines)
+
+            closing_pairs: list[tuple[str, str]] = []
+            for agent in agents:
+                closing_prompt = render_closing_statement_prompt(
+                    input_claim=session.input_claim,
+                    debate_text=debate_text,
+                )
+                closing_messages = [{"role": "user", "content": closing_prompt}]
+                closing_system = render_deliberation_system(
+                    council_name=council.name,
+                    agent_name=agent.name,
+                    agent_list=agent_names,
+                    voting_mechanism=council.voting_mechanism,
+                    rounds=council.rounds,
+                    agent_system_prompt=agent.system_prompt,
+                )
+                parsed_closing = await call_with_tool(
+                    model=agent.model,
+                    messages=closing_messages,
+                    system_prompt=closing_system,
+                    tool=CLOSING_STATEMENT_TOOL,
+                )
+                statement = parsed_closing.get("statement", "")
+
+                # Save as Vote row with sentinel value
+                vote = Vote(
+                    session_id=session.id,
+                    agent_id=agent.id,
+                    value="closing_statement",
+                    confidence=None,
+                    reasoning=statement,
+                )
+                db.add(vote)
+                await db.flush()
+
+                closing_pairs.append((agent.name, statement))
+
+                yield format_sse("closing_statement", {
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "statement": statement,
+                })
+
+            # Moderator synthesis
+            synthesis = await synthesize_closing_statements(
+                input_claim=session.input_claim,
+                statements=closing_pairs,
+            )
+
+            verdict = Verdict(
+                session_id=session.id,
+                decision="research_synthesis",
+                confidence=None,
+                summary=synthesis,
+            )
+            db.add(verdict)
+            session.status = "complete"
+            await db.flush()
+
+            yield format_sse("verdict", {
+                "decision": "research_synthesis",
+                "confidence": None,
+                "summary": synthesis,
+            })
+
+            await db.commit()
+            return
 
         # -- Signal voting phase early for binary questions (no proposal phase) --
         # Emitted *before* summary gather so the UI shows instant feedback;

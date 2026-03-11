@@ -127,6 +127,32 @@ def render_moderator_summarize(
 
 
 
+def render_closing_statement_prompt(
+    *,
+    input_claim: str,
+    debate_text: str,
+) -> str:
+    """Render the closing statement prompt for research questions."""
+    template = load_template("closing_statement_prompt.txt")
+    return _render(template, {
+        "input_claim": input_claim,
+        "debate_text": debate_text,
+    })
+
+
+def render_research_synthesis(
+    *,
+    input_claim: str,
+    closing_statements: str,
+) -> str:
+    """Render the research synthesis prompt for the moderator."""
+    template = load_template("research_synthesis.txt")
+    return _render(template, {
+        "input_claim": input_claim,
+        "closing_statements": closing_statements,
+    })
+
+
 def render_continuation_nudge() -> str:
     """Return the continuation nudge text."""
     return load_template("continuation_nudge.txt").strip()

@@ -14,17 +14,14 @@ from typing import Any
 # -- Agent tools (used during deliberation when tools_enabled=True) -----------
 
 WEB_SEARCH_TOOL: dict[str, Any] = {
-    "type": "web_search_20260209",
+    "type": "web_search_20250305",
     "name": "web_search",
-    "max_uses": 3,
+    "max_uses": 2,
 }
 
-CODE_EXECUTION_TOOL: dict[str, Any] = {
-    "type": "code_execution_20250522",
-    "name": "code_execution",
-}
-
-AGENT_TOOLS: list[dict[str, Any]] = [WEB_SEARCH_TOOL, CODE_EXECUTION_TOOL]
+# code_execution is auto-injected by the API when web_search uses dynamic
+# filtering — passing it explicitly causes a duplicate-tool-name 400 error.
+AGENT_TOOLS: list[dict[str, Any]] = [WEB_SEARCH_TOOL]
 
 CAST_VOTE_TOOL: dict[str, Any] = {
     "name": "cast_vote",
@@ -60,7 +57,7 @@ PROPOSE_CANDIDATES_TOOL: dict[str, Any] = {
                 "items": {"type": "string"},
                 "minItems": 1,
                 "maxItems": 3,
-                "description": "List of concise, distinct candidate answers",
+                "description": "List of concise candidate verdicts. Prefer up to 3 words. No more than a short sentence.",
             },
         },
         "required": ["candidates"],
@@ -82,6 +79,21 @@ SUMMARIZE_RESPONSE_TOOL: dict[str, Any] = {
     },
 }
 
+
+CLOSING_STATEMENT_TOOL: dict[str, Any] = {
+    "name": "closing_statement",
+    "description": "Provide your closing statement summarizing your final position.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "statement": {
+                "type": "string",
+                "description": "Your structured closing statement with key findings and conclusions",
+            },
+        },
+        "required": ["statement"],
+    },
+}
 
 DEDUPLICATE_CANDIDATES_TOOL: dict[str, Any] = {
     "name": "deduplicate_candidates",

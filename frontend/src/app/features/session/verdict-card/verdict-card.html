@@ -1,20 +1,22 @@
 <mat-card class="verdict-card" [class]="decisionClass()" appearance="outlined">
   <mat-card-header>
-    <mat-icon mat-card-avatar>{{ decisionIcon() }}</mat-icon>
-    <mat-card-title>Verdict</mat-card-title>
+    <mat-icon mat-card-avatar>{{ isResearch() ? 'library_books' : decisionIcon() }}</mat-icon>
+    <mat-card-title>{{ isResearch() ? 'Synthesis' : 'Verdict' }}</mat-card-title>
     <mat-card-subtitle>{{ verdict().created_at | date:'medium' }}</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <div class="decision-text" [innerHTML]="verdict().decision | markdown"></div>
+    @if (!isResearch()) {
+      <div class="decision-text" [innerHTML]="verdict().decision | markdown"></div>
 
-    <div class="confidence-row">
-      <span class="confidence-label">Confidence</span>
-      <span class="confidence-value">{{ confidencePercent() }}%</span>
-    </div>
-    <mat-progress-bar
-      mode="determinate"
-      [value]="confidencePercent()">
-    </mat-progress-bar>
+      <div class="confidence-row">
+        <span class="confidence-label">Confidence</span>
+        <span class="confidence-value">{{ confidencePercent() }}%</span>
+      </div>
+      <mat-progress-bar
+        mode="determinate"
+        [value]="confidencePercent()">
+      </mat-progress-bar>
+    }
 
     @if (verdict().summary) {
       <div class="summary" [innerHTML]="verdict().summary | markdown"></div>

@@ -51,6 +51,11 @@
     color: var(--mat-sys-on-secondary-container, #6a1b9a);
   }
 
+  &.closing_statements {
+    background-color: var(--mat-sys-tertiary-container, #fff3e0);
+    color: var(--mat-sys-on-tertiary-container, #e65100);
+  }
+
   &.proposing {
     background-color: var(--mat-sys-tertiary-container, #fff3e0);
     color: var(--mat-sys-on-tertiary-container, #e65100);
@@ -178,6 +183,30 @@
       &:nth-child(2) { animation-delay: 0.2s; }
       &:nth-child(3) { animation-delay: 0.4s; }
     }
+  }
+}
+
+.closing-statements-section {
+  @include glass-panel;
+  border-radius: 12px;
+  padding: 20px;
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 1.1rem;
+  }
+}
+
+.statement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.statement-card {
+  mat-card-content p {
+    margin: 0;
+    white-space: pre-wrap;
   }
 }
 

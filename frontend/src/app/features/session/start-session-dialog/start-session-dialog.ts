@@ -38,15 +38,16 @@ import { Council, QuestionType } from '../../../core/models';
         >
           <mat-button-toggle value="binary">Binary</mat-button-toggle>
           <mat-button-toggle value="open">Open-ended</mat-button-toggle>
+          <mat-button-toggle value="research">Research</mat-button-toggle>
         </mat-button-toggle-group>
       </div>
       <mat-form-field class="claim-field">
-        <mat-label>{{ questionType() === 'binary' ? 'Claim to evaluate' : 'Question to answer' }}</mat-label>
+        <mat-label>{{ questionType() === 'binary' ? 'Claim to evaluate' : questionType() === 'research' ? 'Topic to discuss' : 'Question to answer' }}</mat-label>
         <textarea
           matInput
           rows="3"
           required
-          [placeholder]="questionType() === 'binary' ? 'Enter a claim for the council to evaluate...' : 'Enter a question for the council to answer...'"
+          [placeholder]="questionType() === 'binary' ? 'Enter a claim for the council to evaluate...' : questionType() === 'research' ? 'Enter a topic for the council to research and discuss...' : 'Enter a question for the council to answer...'"
           [ngModel]="claim()"
           (ngModelChange)="claim.set($event)"
         ></textarea>
