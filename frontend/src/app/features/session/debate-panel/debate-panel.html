@@ -1,4 +1,16 @@
-@if (messages().length === 0) {
+@if (inputClaim(); as claim) {
+  <mat-card class="claim-card" appearance="outlined">
+    <mat-card-header>
+      <mat-icon matCardAvatar>gavel</mat-icon>
+      <mat-card-title>Deliberation Topic</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="message-content">{{ claim }}</p>
+    </mat-card-content>
+  </mat-card>
+}
+
+@if (messages().length === 0 && !inputClaim()) {
   <div class="empty-state">
     <mat-icon>forum</mat-icon>
     <p>Waiting for deliberation to begin...</p>
@@ -11,7 +23,7 @@
       @for (msg of round.messages; track $index) {
         <mat-card class="message-card" appearance="outlined">
           <mat-card-header>
-            <mat-icon matCardAvatar>smart_toy</mat-icon>
+            <mat-icon matCardAvatar>{{ msg.isHuman ? 'person' : 'smart_toy' }}</mat-icon>
             <mat-card-title>{{ msg.agentName }}</mat-card-title>
             <mat-card-subtitle>Round {{ msg.round }}</mat-card-subtitle>
           </mat-card-header>

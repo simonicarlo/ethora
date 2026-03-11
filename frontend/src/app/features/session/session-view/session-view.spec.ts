@@ -33,6 +33,7 @@ describe('SessionView', () => {
     allow_human_turns: false,
     agents: [
       { id: 'a1', name: 'Agent 1', system_prompt: 'prompt', model: 'claude' },
+      { id: 'a2', name: 'Agent 2', system_prompt: 'prompt', model: 'claude' },
     ],
   };
 
@@ -186,6 +187,13 @@ describe('SessionView', () => {
       const humanInput = fixture.nativeElement.querySelector('app-human-turn-input');
       expect(humanInput).toBeTruthy();
     });
+
+    it('should store inputClaim from session response', () => {
+      fixture.detectChanges();
+      flushInitRequests({ status: 'pending', input_claim: 'Is Earth flat?' });
+
+      expect(component.inputClaim()).toBe('Is Earth flat?');
+    });
   });
 
   describe('historical state cold-loading', () => {
@@ -195,18 +203,20 @@ describe('SessionView', () => {
     ];
     const mockVotes = [
       { id: 'v1', agent_id: 'a1', value: 'true', confidence: 0.9, reasoning: 'Agreed' },
+      { id: 'v2', agent_id: 'a2', value: 'true', confidence: 0.8, reasoning: 'Concur' },
     ];
 
-    it('should load historical messages on awaiting_human_turn init', () => {
+    it('should load historical messages including human messages on awaiting_human_turn init', () => {
       fixture.detectChanges();
       flushInitRequests(
         { status: 'awaiting_human_turn' },
         { messages: mockMessages, votes: [] },
       );
 
-      // Human messages are filtered out — only agent messages appear
-      expect(component.messages().length).toBe(1);
+      // Human messages are now included
+      expect(component.messages().length).toBe(2);
       expect(component.messages()[0].agent_id).toBe('a1');
+      expect(component.messages()[1].agent_id).toBeNull();
       expect(component.currentRound()).toBe(1);
       expect(component.waitingForHuman()).toBe(true);
     });
@@ -218,8 +228,8 @@ describe('SessionView', () => {
         { messages: mockMessages, votes: mockVotes },
       );
 
-      expect(component.messages().length).toBe(1);
-      expect(component.votes().length).toBe(1);
+      expect(component.messages().length).toBe(2);
+      expect(component.votes().length).toBe(2);
 
       const verdictReq = httpMock.expectOne('/api/v1/sessions/sess-1/verdict');
       verdictReq.flush(mockVerdict);
@@ -234,7 +244,7 @@ describe('SessionView', () => {
       expect(component.isVotingPhase()).toBe(false);
     });
 
-    it('should show voting panel when votes are loaded', () => {
+    it('should show voting panel when all agents have voted on complete', () => {
       fixture.detectChanges();
       flushInitRequests(
         { status: 'complete' },
@@ -259,6 +269,27 @@ describe('SessionView', () => {
       expect(component.votes().length).toBe(1);
       expect(component.votes()[0].value).toBe('affirm');
       expect(component.sessionStatus()).toBe('voting');
+    });
+
+    it('should not show voting panel when only some agents have voted', () => {
+      sseSubject.next(new MessageEvent('voting_cast', {
+        data: JSON.stringify({ agent_id: 'a1', vote: 'affirm', confidence: 0.8 }),
+      }));
+
+      // Only 1 of 2 agents voted
+      expect(component.isVotingPhase()).toBe(false);
+    });
+
+    it('should show voting panel when all agents have voted', () => {
+      sseSubject.next(new MessageEvent('voting_cast', {
+        data: JSON.stringify({ agent_id: 'a1', vote: 'affirm', confidence: 0.8 }),
+      }));
+      sseSubject.next(new MessageEvent('voting_cast', {
+        data: JSON.stringify({ agent_id: 'a2', vote: 'oppose', confidence: 0.7 }),
+      }));
+
+      // Both agents voted
+      expect(component.isVotingPhase()).toBe(true);
     });
 
     it('should set verdict on verdict event', () => {
@@ -295,6 +326,22 @@ describe('SessionView', () => {
       sseSubject.complete();
 
       expect(component.sessionStatus()).toBe('awaiting_human_turn');
+    });
+
+    it('should append human message on human turn submitted', () => {
+      // Simulate some existing messages
+      sseSubject.next(new MessageEvent('agent_message', {
+        data: JSON.stringify({ agent_id: 'a1', round: 1, content: 'Agent speaks' }),
+      }));
+
+      expect(component.messages().length).toBe(1);
+
+      component.onHumanTurnSubmitted('My human input');
+
+      expect(component.messages().length).toBe(2);
+      expect(component.messages()[1].agent_id).toBeNull();
+      expect(component.messages()[1].content).toBe('My human input');
+      expect(component.messages()[1].agent_name).toBe('You');
     });
   });
 });

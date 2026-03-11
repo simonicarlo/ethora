@@ -22,13 +22,15 @@ const mockMessages: DebateMessage[] = [
     <app-debate-panel
       [messages]="messages()"
       [agents]="agents()"
-      [currentRound]="currentRound()" />
+      [currentRound]="currentRound()"
+      [inputClaim]="inputClaim()" />
   `,
 })
 class TestHost {
   messages = signal<DebateMessage[]>([]);
   agents = signal<Agent[]>(mockAgents);
   currentRound = signal(0);
+  inputClaim = signal('');
 }
 
 describe('DebatePanel', () => {
@@ -50,7 +52,7 @@ describe('DebatePanel', () => {
     expect(panel).toBeTruthy();
   });
 
-  it('should show empty state when no messages', () => {
+  it('should show empty state when no messages and no claim', () => {
     fixture.detectChanges();
     const empty = fixture.nativeElement.querySelector('.empty-state');
     expect(empty).toBeTruthy();
@@ -114,5 +116,42 @@ describe('DebatePanel', () => {
     fixture.detectChanges();
     const dividers = fixture.nativeElement.querySelectorAll('mat-divider');
     expect(dividers.length).toBe(1);
+  });
+
+  it('should show claim card when inputClaim is provided', () => {
+    host.inputClaim.set('Is climate change accelerating?');
+    fixture.detectChanges();
+    const claimCard = fixture.nativeElement.querySelector('.claim-card');
+    expect(claimCard).toBeTruthy();
+    expect(claimCard.textContent).toContain('Deliberation Topic');
+    expect(claimCard.textContent).toContain('Is climate change accelerating?');
+  });
+
+  it('should not show claim card when inputClaim is empty', () => {
+    fixture.detectChanges();
+    const claimCard = fixture.nativeElement.querySelector('.claim-card');
+    expect(claimCard).toBeFalsy();
+  });
+
+  it('should display human messages with person icon', () => {
+    host.messages.set([
+      { agent_id: 'a1', round: 1, content: 'Agent says hello.' },
+      { agent_id: null, agent_name: 'You', round: 1, content: 'Human responds.' },
+    ]);
+    fixture.detectChanges();
+
+    const icons = fixture.nativeElement.querySelectorAll('mat-card-header mat-icon');
+    const iconTexts = Array.from(icons).map((i: any) => i.textContent.trim());
+    expect(iconTexts).toEqual(['smart_toy', 'person']);
+
+    const titles = fixture.nativeElement.querySelectorAll('mat-card-title');
+    expect(titles[1].textContent.trim()).toBe('You');
+  });
+
+  it('should not show empty state when inputClaim is provided but no messages', () => {
+    host.inputClaim.set('Test claim');
+    fixture.detectChanges();
+    const empty = fixture.nativeElement.querySelector('.empty-state');
+    expect(empty).toBeFalsy();
   });
 });
