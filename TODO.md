@@ -85,7 +85,18 @@
 
 ---
 
-## 7. Future (Phase 2)
+## 7. Code Quality (deferred from codebase audit)
+
+- [ ] **Replace global Anthropic client with DI** (`backend/app/engine/agent.py`) — Module-level singleton couples agent module to client lifecycle; use FastAPI dependency injection instead
+- [ ] **Use SQLAlchemy Enum for status/voting fields** (`backend/app/models/models.py`) — `voting_mechanism` and `status` are plain `String` columns; convert to `Enum` type with migration for DB-level constraint
+- [ ] **Global HTTP error interceptor** (frontend) — Each component handles errors independently; add centralized `HttpInterceptor` for consistent error handling
+- [ ] **Centralized `SessionStateService`** (frontend) — Session state is managed inline in `SessionView`; extract to a dedicated service for reuse and testability
+- [ ] **Optimize ORM eager loading** (`backend/app/models/models.py`) — All relationships use `lazy="selectin"` globally; profile and switch to `lazy="select"` where eager loading is unnecessary
+- [ ] **Add tests for `ThemeService` and `app.routes.ts`** (frontend) — These files lack test coverage
+
+---
+
+## 8. Future (Phase 2)
 
 - [ ] **Fact Checker wrapper** — Preconfigured council with Source Critic, Logical Analyst, Devil's Advocate, Synthesizer agents
 - [ ] **Graph visualization panel** — Deferred from PoC
