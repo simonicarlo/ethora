@@ -16,7 +16,7 @@ from typing import Any
 WEB_SEARCH_TOOL: dict[str, Any] = {
     "type": "web_search_20250305",
     "name": "web_search",
-    "max_uses": 3,
+    "max_uses": 2,
 }
 
 # code_execution is auto-injected by the API when web_search uses dynamic
@@ -57,7 +57,7 @@ PROPOSE_CANDIDATES_TOOL: dict[str, Any] = {
                 "items": {"type": "string"},
                 "minItems": 1,
                 "maxItems": 3,
-                "description": "List of concise, distinct candidate answers",
+                "description": "List of concise candidate verdicts. Prefer up to 3 words. No more than a short sentence.",
             },
         },
         "required": ["candidates"],
