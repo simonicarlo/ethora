@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass, field
 from typing import Any
 
 import anthropic
@@ -9,6 +10,35 @@ from app.core.config import settings
 from app.models.models import Agent
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Reference:
+    """A source reference extracted from tool results (e.g., web search)."""
+
+    url: str
+    title: str | None = None
+    snippet: str | None = None
+
+    def to_dict(self) -> dict[str, str | None]:
+        return {"url": self.url, "title": self.title, "snippet": self.snippet}
+
+
+@dataclass
+class ToolInvocation:
+    """Record of a tool the agent invoked during its turn."""
+
+    tool_name: str
+    tool_input: dict[str, Any]
+
+
+@dataclass
+class AgentResponse:
+    """Full response from an agent call, including tool-use metadata."""
+
+    content: str
+    references: list[Reference] = field(default_factory=list)
+    tool_invocations: list[ToolInvocation] = field(default_factory=list)
 
 # Lazy singleton: avoids creating the client at import time, when the API key
 # may not yet be loaded from .env (e.g. during test collection or module scanning).
@@ -31,16 +61,24 @@ async def call_agent(
     agent: Agent,
     messages: list[dict[str, str]],
     system_prompt: str,
-) -> str:
-    """Calls Claude API for a single agent turn and returns the complete response."""
+    tools: list[dict[str, Any]] | None = None,
+) -> AgentResponse:
+    """Calls Claude API for a single agent turn and returns the complete response.
+
+    When tools are provided (e.g., web_search), the API may execute them server-side.
+    References and tool invocations are extracted from the response content blocks.
+    """
     try:
         client = get_client()
-        response = await client.messages.create(
-            model=agent.model,
-            max_tokens=4096,
-            system=system_prompt,
-            messages=messages,
-        )
+        kwargs: dict[str, Any] = {
+            "model": agent.model,
+            "max_tokens": 4096,
+            "system": system_prompt,
+            "messages": messages,
+        }
+        if tools:
+            kwargs["tools"] = tools
+        response = await client.messages.create(**kwargs)
     except anthropic.APIStatusError as exc:
         logger.error("Anthropic API error (%s): %s", exc.status_code, exc.message)
         raise RuntimeError(exc.message) from exc
@@ -49,8 +87,47 @@ async def call_agent(
         raise RuntimeError(
             "Unable to connect to the Anthropic API. Check your network connection."
         ) from exc
-    # Claude API returns a list of content blocks; the first block is the text response.
-    return response.content[0].text
+
+    return _parse_agent_response(response)
+
+
+def _parse_agent_response(response: anthropic.types.Message) -> AgentResponse:
+    """Extract text content, references, and tool invocations from a Claude response.
+
+    Handles:
+    - TextBlock → concatenated into content
+    - ToolUseBlock → recorded as tool invocations (e.g., web_search queries)
+    - ServerToolResult with web_search_results → extracted as references
+    """
+    text_parts: list[str] = []
+    references: list[Reference] = []
+    tool_invocations: list[ToolInvocation] = []
+
+    for block in response.content:
+        if block.type == "text":
+            text_parts.append(block.text)
+        elif block.type == "tool_use":
+            tool_invocations.append(
+                ToolInvocation(tool_name=block.name, tool_input=block.input)  # type: ignore[arg-type]
+            )
+        elif block.type == "web_search_tool_result":
+            # Server-side web search results contain search entries
+            for entry in block.content:  # type: ignore[union-attr]
+                if getattr(entry, "type", None) == "web_search_result":
+                    references.append(
+                        Reference(
+                            url=getattr(entry, "url", ""),
+                            title=getattr(entry, "title", None),
+                            snippet=getattr(entry, "page_snippet", None),
+                        )
+                    )
+
+    content = "\n\n".join(text_parts) if text_parts else ""
+    return AgentResponse(
+        content=content,
+        references=references,
+        tool_invocations=tool_invocations,
+    )
 
 
 async def call_with_tool(

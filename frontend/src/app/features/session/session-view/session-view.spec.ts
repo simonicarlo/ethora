@@ -31,6 +31,7 @@ describe('SessionView', () => {
     rounds: 3,
     voting_mechanism: 'majority',
     allow_human_turns: false,
+    tools_enabled: false,
     agents: [
       { id: 'a1', name: 'Agent 1', system_prompt: 'prompt', model: 'claude' },
       { id: 'a2', name: 'Agent 2', system_prompt: 'prompt', model: 'claude' },

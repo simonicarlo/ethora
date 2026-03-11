@@ -17,12 +17,13 @@ import {
   SseError,
   SseModeratorAction,
   SseRoundComplete,
+  SseToolUse,
   SseVotingCast,
   Verdict,
   Vote,
   VotingMechanism,
 } from '../../../core/models';
-import { DebatePanel, DebateMessage } from '../debate-panel/debate-panel';
+import { DebatePanel, DebateMessage, ToolActivity } from '../debate-panel/debate-panel';
 import { VotingPanel } from '../voting-panel/voting-panel';
 import { HumanVoteForm } from '../human-vote-form/human-vote-form';
 import { HumanTurnInput } from '../human-turn-input/human-turn-input';
@@ -58,6 +59,7 @@ export class SessionView implements OnInit {
   readonly candidates = signal<string[]>([]);
   readonly proposedCandidates = signal<{agent_id: string; agent_name: string; candidates: string[]}[]>([]);
   readonly moderatorExplanation = signal<string | null>(null);
+  readonly activeToolUse = signal<ToolActivity | null>(null);
   private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(() => {
@@ -179,6 +181,7 @@ export class SessionView implements OnInit {
             message_type: m.message_type,
             round: m.round_number,
             content: m.content,
+            references: m.references ?? [],
           }));
         this.messages.set(debateMessages);
 
@@ -264,8 +267,24 @@ export class SessionView implements OnInit {
       case 'agent_message': {
         const data = raw as SseAgentMessage;
         this.sessionStatus.set('running');
-        this.messages.update((m) => [...m, data as DebateMessage]);
+        this.activeToolUse.set(null);
+        this.messages.update((m) => [...m, {
+          agent_id: data.agent_id,
+          agent_name: data.agent_name,
+          round: data.round,
+          content: data.content,
+          references: data.references ?? [],
+        }]);
         this.currentRound.set(data.round);
+        break;
+      }
+      case 'tool_use': {
+        const data = raw as SseToolUse;
+        this.activeToolUse.set({
+          agent_id: data.agent_id,
+          agent_name: data.agent_name,
+          tool_name: data.tool_name,
+        });
         break;
       }
       case 'round_complete': {

@@ -63,3 +63,50 @@
 mat-divider {
   margin: $space-6 0;
 }
+
+.references-list {
+  margin-top: $space-3;
+  padding-top: $space-3;
+  border-top: 1px solid color-mix(in srgb, var(--mat-sys-on-surface) 12%, transparent);
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  align-items: center;
+
+  .references-label {
+    font-size: 0.8rem;
+    font-weight: $weight-semibold;
+    opacity: 0.6;
+  }
+
+  .reference-link {
+    font-size: 0.8rem;
+    color: var(--mat-sys-primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.tool-use-indicator {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-4;
+  margin-top: $space-4;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--mat-sys-primary) 8%, transparent);
+  color: var(--mat-sys-primary);
+  font-size: 0.9rem;
+
+  .spinning {
+    animation: spin 1.5s linear infinite;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -102,6 +102,7 @@ async def create_council(payload: CouncilCreate, db: DBSession) -> Council:
         rounds=payload.rounds,
         voting_mechanism=payload.voting_mechanism,
         allow_human_turns=payload.allow_human_turns,
+        tools_enabled=payload.tools_enabled,
         agents=agents,
     )
     db.add(council)

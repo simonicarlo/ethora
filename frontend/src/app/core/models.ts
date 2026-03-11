@@ -19,6 +19,7 @@ export interface Council {
   rounds: number;
   voting_mechanism: VotingMechanism;
   allow_human_turns: boolean;
+  tools_enabled: boolean;
   agents: Agent[];
 }
 
@@ -27,6 +28,7 @@ export interface CouncilCreate {
   rounds?: number;
   voting_mechanism?: VotingMechanism;
   allow_human_turns?: boolean;
+  tools_enabled?: boolean;
   agent_ids: string[];
 }
 
@@ -63,11 +65,18 @@ export interface SessionCreate {
   question_type?: QuestionType;
 }
 
+export interface Reference {
+  url: string;
+  title: string | null;
+  snippet: string | null;
+}
+
 export interface Message {
   id: string;
   round_id: string;
   agent_id: string;
   content: string;
+  references: Reference[];
   created_at: string;
 }
 
@@ -97,6 +106,7 @@ export interface MessageWithContext {
   agent_name: string | null;
   message_type: MessageType;
   content: string;
+  references: Reference[];
   created_at: string;
 }
 
@@ -112,6 +122,14 @@ export interface SseAgentMessage {
   agent_name: string;
   round: number;
   content: string;
+  references: Reference[];
+}
+
+export interface SseToolUse {
+  agent_id: string;
+  agent_name: string;
+  tool_name: string;
+  tool_input: Record<string, unknown>;
 }
 
 export interface SseRoundComplete {

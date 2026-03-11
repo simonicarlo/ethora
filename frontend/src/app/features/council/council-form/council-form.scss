@@ -37,8 +37,10 @@
   }
 }
 
-.human-turns-checkbox {
-  display: block;
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
   margin-bottom: $space-6;
 }
 

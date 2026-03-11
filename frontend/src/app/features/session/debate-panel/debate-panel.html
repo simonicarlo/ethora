@@ -29,6 +29,16 @@
           </mat-card-header>
           <mat-card-content>
             <p class="message-content">{{ msg.content }}</p>
+            @if (msg.references && msg.references.length > 0) {
+              <div class="references-list">
+                <span class="references-label">Sources:</span>
+                @for (ref of msg.references; track ref.url; let i = $index) {
+                  <a class="reference-link" [href]="ref.url" target="_blank" rel="noopener noreferrer">
+                    [{{ i + 1 }}] {{ ref.title || ref.url }}
+                  </a>
+                }
+              </div>
+            }
           </mat-card-content>
         </mat-card>
       }
@@ -37,5 +47,12 @@
     @if (!$last) {
       <mat-divider />
     }
+  }
+
+  @if (activeToolUse(); as toolUse) {
+    <div class="tool-use-indicator">
+      <mat-icon class="spinning">travel_explore</mat-icon>
+      <span>{{ toolUse.agent_name }} is searching the web…</span>
+    </div>
   }
 }

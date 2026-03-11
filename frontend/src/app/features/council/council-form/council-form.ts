@@ -63,6 +63,7 @@ export class CouncilForm implements OnInit {
     rounds: [3, [Validators.required, Validators.min(1), Validators.max(20)]],
     voting_mechanism: ['majority' as VotingMechanism, Validators.required],
     allow_human_turns: [false],
+    tools_enabled: [false],
     agent_ids: [[] as string[], Validators.required],
   });
 
@@ -91,6 +92,7 @@ export class CouncilForm implements OnInit {
             rounds: council.rounds,
             voting_mechanism: council.voting_mechanism,
             allow_human_turns: council.allow_human_turns,
+            tools_enabled: council.tools_enabled,
             agent_ids: council.agents.map(a => a.id),
           });
           this.loading.set(false);

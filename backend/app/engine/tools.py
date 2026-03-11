@@ -2,10 +2,23 @@
 
 Each tool schema forces Claude to return data in a guaranteed format via
 tool_choice={"type": "tool", "name": ...}, eliminating fragile JSON parsing.
+
+Also defines agent tools (web_search) that agents can use during deliberation
+when tools_enabled is true on the council.
 """
 from __future__ import annotations
 
 from typing import Any
+
+# -- Agent tools (used during deliberation when tools_enabled=True) -----------
+
+WEB_SEARCH_TOOL: dict[str, Any] = {
+    "type": "web_search_20250305",
+    "name": "web_search",
+    "max_uses": 5,
+}
+
+AGENT_TOOLS: list[dict[str, Any]] = [WEB_SEARCH_TOOL]
 
 CAST_VOTE_TOOL: dict[str, Any] = {
     "name": "cast_vote",
