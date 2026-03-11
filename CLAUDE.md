@@ -209,8 +209,8 @@ ng serve --proxy-config proxy.conf.json
 | `Verdict` | `id`, `session_id`, `decision`, `confidence`, `summary`, `created_at`  |
 
 ### Migrations
-- For PoC: `Base.metadata.create_all()` on startup is acceptable
-- For production: use Alembic (`alembic init alembic`, generate revisions)
+- **Every schema change requires an Alembic migration.** When adding/removing/altering columns or tables, always create a new migration file in `backend/alembic/versions/` following the existing numbering convention (e.g., `004_description.py`). `create_all()` does not alter existing tables — the migration is the only way the live database gets updated.
+- Run migrations: `docker compose exec backend alembic upgrade head`
 
 ---
 
