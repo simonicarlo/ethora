@@ -12,7 +12,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.core.database import async_session_factory
 from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
 from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response, summarize_session
 from app.engine.prompts.loader import (
@@ -45,11 +44,10 @@ async def _summarize_in_background(
     round_num: int,
     queue: asyncio.Queue[dict[str, object]],
 ) -> None:
-    """Fire-and-forget: summarize an agent response and persist to DB.
+    """Fire-and-forget: summarize an agent response and enqueue the result.
 
-    Uses async_session_factory() directly (not the request-scoped session)
-    because this runs as an independent background task after the request
-    handler has returned control to the SSE generator.
+    DB persistence happens in _drain_summaries, which runs in the main session
+    where the Message row is already in the identity map.
     """
     try:
         summary = await summarize_agent_response(
@@ -59,11 +57,6 @@ async def _summarize_in_background(
         )
         if summary is None:
             return
-        async with async_session_factory() as db:
-            msg = await db.get(Message, message_id)
-            if msg is not None:
-                msg.summary = summary
-                await db.commit()
         await queue.put({
             "message_id": str(message_id),
             "agent_id": str(agent_id),
@@ -77,11 +70,15 @@ async def _summarize_in_background(
         )
 
 
-def _drain_summaries(
+async def _drain_summaries(
     queue: asyncio.Queue[dict[str, object]],
+    db: AsyncSession,
     collector: list[tuple[str, str]] | None = None,
 ) -> list[str]:
     """Non-blocking drain of summary_ready SSE events from the queue.
+
+    Persists each summary to the Message row via the main DB session
+    (the message is already in its identity map from the earlier flush).
 
     If collector is provided, appends (agent_name, summary) tuples for
     session-level summary generation.
@@ -91,6 +88,10 @@ def _drain_summaries(
         try:
             data = queue.get_nowait()
             events.append(format_sse("summary_ready", data))
+            # Persist summary in the main session (message is in identity map)
+            msg = await db.get(Message, uuid.UUID(str(data["message_id"])))
+            if msg is not None:
+                msg.summary = str(data["summary"])
             if collector is not None:
                 collector.append((str(data["agent_name"]), str(data["summary"])))
         except asyncio.QueueEmpty:
@@ -222,13 +223,13 @@ async def run_council_session(
                 })
 
                 # Drain any completed summaries
-                for sse_event in _drain_summaries(summary_queue, collected_summaries):
+                for sse_event in await _drain_summaries(summary_queue, db, collected_summaries):
                     yield sse_event
 
             yield format_sse("round_complete", {"round": round_num})
 
             # Drain summaries after round
-            for sse_event in _drain_summaries(summary_queue, collected_summaries):
+            for sse_event in await _drain_summaries(summary_queue, db, collected_summaries):
                 yield sse_event
 
             # -- Human turn pause (skip last round so voting can proceed) --
@@ -243,7 +244,7 @@ async def run_council_session(
 
         # -- Wait for all background summaries before voting --
         await asyncio.gather(*summary_tasks, return_exceptions=True)
-        for sse_event in _drain_summaries(summary_queue, collected_summaries):
+        for sse_event in await _drain_summaries(summary_queue, db, collected_summaries):
             yield sse_event
 
         # -- Generate session-level discussion summary --
