@@ -1,0 +1,11 @@
+The council has finished deliberating on the following claim:
+
+"{input_claim}"
+
+Here is the full debate:
+
+{debate_text}
+
+Based on the deliberation, please cast your vote. Respond with ONLY a JSON object in this exact format:
+{vote_format}
+Do not include any other text outside the JSON.
