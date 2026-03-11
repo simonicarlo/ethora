@@ -20,4 +20,5 @@ export const routes: Routes = [
   { path: 'agents', redirectTo: '/admin/agents', pathMatch: 'full' },
   { path: 'sessions', loadComponent: () => import('./features/session/session-list/session-list').then(m => m.SessionList) },
   { path: 'sessions/:id', loadComponent: () => import('./features/session/session-view/session-view').then(m => m.SessionView) },
+  { path: '**', loadComponent: () => import('./shared/components/not-found/not-found').then(m => m.NotFound) },
 ];

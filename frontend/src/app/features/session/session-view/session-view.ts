@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, switchMap, tap } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -157,6 +158,7 @@ export class SessionView implements OnInit {
           this.questionType.set(session.question_type ?? 'binary');
         }),
         switchMap((session) => this.api.getCouncil(session.council_id)),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
         next: (council: Council) => {
@@ -192,7 +194,7 @@ export class SessionView implements OnInit {
     switch (this.sessionStatus()) {
       case 'complete':
         this.loadHistoricalState(sessionId, () => {
-          this.api.getVerdict(sessionId).subscribe((verdict) => {
+          this.api.getVerdict(sessionId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((verdict) => {
             this.verdict.set(verdict);
           });
         });
@@ -225,7 +227,7 @@ export class SessionView implements OnInit {
   }
 
   private loadHistoricalState(sessionId: string, onComplete?: () => void): void {
-    this.api.getSessionMessages(sessionId).subscribe({
+    this.api.getSessionMessages(sessionId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (state) => {
         // Filter out proposal/moderator messages from debate timeline
         const debateMessages: DebateMessage[] = state.messages

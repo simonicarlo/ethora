@@ -31,7 +31,7 @@
       <canvas baseChart
         type="doughnut"
         [data]="statusChartData()"
-        [options]="statusChartOptions">
+        [options]="statusChartOptions()">
       </canvas>
     </div>
     <div class="chart-panel glass-panel">
@@ -39,7 +39,7 @@
       <canvas baseChart
         type="line"
         [data]="timelineChartData()"
-        [options]="timelineChartOptions">
+        [options]="timelineChartOptions()">
       </canvas>
     </div>
   </div>

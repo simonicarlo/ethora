@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +29,9 @@ import { Verdict } from '../../../core/models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HumanVoteForm {
+  private readonly api = inject(ApiService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly sessionId = input.required<string>();
   readonly voted = output<Verdict>();
 
@@ -36,8 +40,6 @@ export class HumanVoteForm {
   readonly reasoning = signal('');
   readonly submitting = signal(false);
   readonly error = signal('');
-
-  constructor(private readonly api: ApiService) {}
 
   onSubmit(): void {
     if (!this.decision()) return;
@@ -51,6 +53,7 @@ export class HumanVoteForm {
         confidence: this.confidence(),
         reasoning: this.reasoning() || undefined,
       })
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (verdict) => {
           this.submitting.set(false);

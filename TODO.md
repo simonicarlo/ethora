@@ -36,10 +36,10 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 2 — Stability and correctness**
 
-- [ ] **Add `takeUntilDestroyed()` to unprotected subscriptions** — `session-view.ts:161,195,228`, `human-turn-input.ts:38`, `human-vote-form.ts:54`, `admin-settings.ts:93-126`, `agent-test-bench.ts:48`
-- [ ] **Add SSE reconnection with exponential backoff** — Currently SSE drops terminate the Observable with no recovery path — **`frontend/src/app/core/sse.service.ts`**
-- [ ] **Add wildcard 404 route** — No `{ path: '**' }` catch-all; invalid URLs show blank page — **`frontend/src/app/app.routes.ts`**
-- [ ] **Fix chart colors for light theme** — Hardcoded `rgba(255,255,255,...)` makes charts invisible on light theme — **`frontend/src/app/features/admin/stats/stats-dashboard.ts:51-64`**
+- [x] **Add `takeUntilDestroyed()` to unprotected subscriptions** — `session-view.ts:161,195,228`, `human-turn-input.ts:38`, `human-vote-form.ts:54`, `admin-settings.ts:93-126`, `agent-test-bench.ts:48`
+- [x] **Add SSE reconnection with exponential backoff** — Currently SSE drops terminate the Observable with no recovery path — **`frontend/src/app/core/sse.service.ts`**
+- [x] **Add wildcard 404 route** — No `{ path: '**' }` catch-all; invalid URLs show blank page — **`frontend/src/app/app.routes.ts`**
+- [x] **Fix chart colors for light theme** — Hardcoded `rgba(255,255,255,...)` makes charts invisible on light theme — **`frontend/src/app/features/admin/stats/stats-dashboard.ts:51-64`**
 
 ---
 

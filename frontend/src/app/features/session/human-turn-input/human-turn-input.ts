@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,14 +20,15 @@ import { ApiService } from '../../../core/api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HumanTurnInput {
+  private readonly api = inject(ApiService);
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly sessionId = input.required<string>();
   readonly submitted = output<string>();
 
   readonly content = signal('');
   readonly submitting = signal(false);
   readonly error = signal('');
-
-  constructor(private readonly api: ApiService) {}
 
   onSubmit(): void {
     if (!this.content().trim()) return;
@@ -35,7 +37,7 @@ export class HumanTurnInput {
     this.error.set('');
 
     const trimmed = this.content().trim();
-    this.api.sendHumanTurn(this.sessionId(), trimmed).subscribe({
+    this.api.sendHumanTurn(this.sessionId(), trimmed).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.submitting.set(false);
         this.content.set('');
