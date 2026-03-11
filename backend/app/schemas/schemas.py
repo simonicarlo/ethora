@@ -7,8 +7,8 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 VotingMechanism = Literal["majority", "weighted", "consensus", "human_in_loop"]
-QuestionType = Literal["binary", "open"]
-SessionStatus = Literal["pending", "running", "proposing", "voting", "awaiting_human_turn", "complete", "error", "rate_limited"]
+QuestionType = Literal["binary", "open", "research"]
+SessionStatus = Literal["pending", "running", "proposing", "voting", "closing_statements", "awaiting_human_turn", "complete", "error", "rate_limited"]
 
 
 # -- Agents ------------------------------------------------------------------

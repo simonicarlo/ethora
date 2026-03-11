@@ -1,0 +1,16 @@
+You have been participating in a research discussion on the following topic:
+
+**Topic:** {input_claim}
+
+Here is the full discussion so far:
+
+{debate_text}
+
+The discussion rounds are now complete. Please provide your closing statement summarizing your final position on this topic. Your closing statement should:
+
+1. Summarize the key findings and insights from the discussion
+2. State your final position or conclusions
+3. Note any areas of agreement or disagreement with other participants
+4. Highlight any remaining open questions or uncertainties
+
+Use the closing_statement tool to submit your response.

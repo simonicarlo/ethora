@@ -83,6 +83,21 @@ SUMMARIZE_RESPONSE_TOOL: dict[str, Any] = {
 }
 
 
+CLOSING_STATEMENT_TOOL: dict[str, Any] = {
+    "name": "closing_statement",
+    "description": "Provide your closing statement summarizing your final position.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "statement": {
+                "type": "string",
+                "description": "Your structured closing statement with key findings and conclusions",
+            },
+        },
+        "required": ["statement"],
+    },
+}
+
 DEDUPLICATE_CANDIDATES_TOOL: dict[str, Any] = {
     "name": "deduplicate_candidates",
     "description": "Merge semantically equivalent candidates and return the normalized list.",

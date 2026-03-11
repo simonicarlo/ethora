@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnIni
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, switchMap, tap } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ApiService } from '../../../core/api.service';
@@ -17,6 +18,7 @@ import {
   SseAwaitingHumanVote,
   SseCandidateProposed,
   SseCandidatesFinalized,
+  SseClosingStatement,
   SseError,
   SseRateLimited,
   SseModeratorAction,
@@ -37,7 +39,7 @@ import { MeshBackground } from '../../../shared/components/mesh-background/mesh-
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatIconModule, MatProgressSpinnerModule, MeshBackground],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MeshBackground],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,10 +70,12 @@ export class SessionView implements OnInit {
   readonly activeToolUse = signal<ToolActivity | null>(null);
   readonly typingAgent = signal<{ agent_id: string; agent_name: string } | null>(null);
   readonly votingInProgress = signal(false);
+  readonly closingStatements = signal<{agent_id: string; agent_name: string; statement: string}[]>([]);
   readonly retryAfter = signal<number | null>(null);
   private sseSub: Subscription | null = null;
 
   readonly isVotingPhase = computed(() => {
+    if (this.questionType() === 'research') return false;
     const status = this.sessionStatus();
     const voteCount = this.votes().length;
     const agentCount = this.agents().length;
@@ -214,7 +218,24 @@ export class SessionView implements OnInit {
         }
 
         if (state.votes.length > 0) {
-          this.votes.set(state.votes);
+          // Split closing statements from regular votes
+          const closingVotes = state.votes.filter((v) => v.value === 'closing_statement');
+          const regularVotes = state.votes.filter((v) => v.value !== 'closing_statement');
+
+          if (closingVotes.length > 0) {
+            const agentsList = this.agents();
+            this.closingStatements.set(
+              closingVotes.map((v) => ({
+                agent_id: v.agent_id,
+                agent_name: agentsList.find((a) => a.id === v.agent_id)?.name ?? 'Unknown Agent',
+                statement: v.reasoning ?? '',
+              })),
+            );
+          }
+
+          if (regularVotes.length > 0) {
+            this.votes.set(regularVotes);
+          }
         }
 
         // Reconstruct proposal and moderator state from persisted messages
@@ -345,6 +366,16 @@ export class SessionView implements OnInit {
       case 'moderator_action': {
         const data = raw as SseModeratorAction;
         this.moderatorExplanation.set(data.explanation);
+        break;
+      }
+      case 'closing_statement': {
+        const data = raw as SseClosingStatement;
+        this.sessionStatus.set('closing_statements');
+        this.closingStatements.update((s) => [...s, {
+          agent_id: data.agent_id,
+          agent_name: data.agent_name,
+          statement: data.statement,
+        }]);
         break;
       }
       case 'voting_started': {

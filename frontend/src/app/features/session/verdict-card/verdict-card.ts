@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
-import { Verdict } from '../../../core/models';
+import { QuestionType, Verdict } from '../../../core/models';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { confidencePercent, voteColorClass } from '../../../shared/utils/vote-display.utils';
 
@@ -17,7 +17,9 @@ import { confidencePercent, voteColorClass } from '../../../shared/utils/vote-di
 })
 export class VerdictCard {
   readonly verdict = input.required<Verdict>();
+  readonly questionType = input<QuestionType>('binary');
 
+  readonly isResearch = computed(() => this.questionType() === 'research');
   readonly confidencePercent = computed(() => confidencePercent(this.verdict().confidence));
 
   readonly decisionClass = computed(() => voteColorClass(this.verdict().decision));
