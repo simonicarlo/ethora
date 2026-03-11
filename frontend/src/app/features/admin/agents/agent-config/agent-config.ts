@@ -16,6 +16,12 @@ import { Agent } from '../../../../core/models';
 import { AgentTestBench } from '../agent-test-bench/agent-test-bench';
 import { AgentTemplates } from '../agent-templates/agent-templates';
 
+export const AGENT_ICONS = [
+  'smart_toy', 'psychology', 'gavel', 'science', 'search', 'visibility',
+  'balance', 'school', 'security', 'lightbulb', 'engineering', 'local_library',
+  'fact_check', 'analytics', 'record_voice_over', 'hub', 'auto_awesome',
+] as const;
+
 @Component({
   selector: 'app-agent-config',
   imports: [
@@ -54,10 +60,13 @@ export class AgentConfig {
     { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
   ] as const;
 
+  readonly iconOptions = AGENT_ICONS;
+
   readonly form = this.fb.nonNullable.group({
     name: ['', Validators.required],
     system_prompt: ['', Validators.required],
     model: ['claude-sonnet-4-20250514'],
+    icon: ['smart_toy'],
   });
 
   constructor() {
@@ -85,6 +94,7 @@ export class AgentConfig {
       name: agent.name,
       system_prompt: agent.system_prompt,
       model: agent.model,
+      icon: agent.icon || 'smart_toy',
     });
   }
 
@@ -92,7 +102,7 @@ export class AgentConfig {
     this.selectedAgent.set(null);
     this.isCreateMode.set(true);
     this.error.set(null);
-    this.form.reset({ name: '', system_prompt: '', model: 'claude-sonnet-4-20250514' });
+    this.form.reset({ name: '', system_prompt: '', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' });
   }
 
   onSave(): void {

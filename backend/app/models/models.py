@@ -33,6 +33,7 @@ class Agent(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     system_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     model: Mapped[str] = mapped_column(String, default="claude-sonnet-4-20250514")
+    icon: Mapped[str | None] = mapped_column(String, default="smart_toy")
 
 
 class Council(Base):

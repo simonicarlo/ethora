@@ -35,6 +35,7 @@ export class AgentTemplates {
       name: template.name,
       system_prompt: template.system_prompt,
       model: template.model,
+      icon: template.icon,
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (agent) => {
         this.cloned.emit(agent);

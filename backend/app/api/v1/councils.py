@@ -32,6 +32,7 @@ async def create_agent(payload: AgentCreate, db: DBSession) -> Agent:
         name=payload.name,
         system_prompt=payload.system_prompt,
         model=payload.model,
+        icon=payload.icon,
     )
     db.add(agent)
     # flush() (not commit): writes to DB to populate generated IDs, but defers
@@ -100,7 +101,7 @@ async def test_agent(agent_id: uuid.UUID, payload: AgentTestRequest, db: DBSessi
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=f"LLM call failed: {exc}") from exc
-    return AgentTestResponse(response=response_text)
+    return AgentTestResponse(response=response_text.content)
 
 
 # ── Councils ────────────────────────────────────────────────────────────────

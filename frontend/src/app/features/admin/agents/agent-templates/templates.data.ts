@@ -3,6 +3,7 @@ export interface AgentTemplate {
   description: string;
   system_prompt: string;
   model: string;
+  icon: string;
 }
 
 export const AGENT_TEMPLATES: AgentTemplate[] = [
@@ -16,6 +17,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
       'their positions rigorously. You are not contrarian for its own sake — ' +
       'you genuinely want the strongest possible conclusion to emerge.',
     model: 'claude-sonnet-4-20250514',
+    icon: 'gavel',
   },
   {
     name: 'Fact Checker',
@@ -26,6 +28,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
       'between established facts, reasonable inferences, and speculation. You are ' +
       'precise and methodical, and you never let a dubious claim pass unchallenged.',
     model: 'claude-sonnet-4-20250514',
+    icon: 'fact_check',
   },
   {
     name: 'Synthesizer',
@@ -37,6 +40,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
       "coherent whole. You are diplomatic but intellectually honest — you won't " +
       'paper over genuine disagreements.',
     model: 'claude-sonnet-4-20250514',
+    icon: 'hub',
   },
   {
     name: 'Source Critic',
@@ -48,6 +52,7 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
       'logically sound. You are skeptical but fair — you acknowledge strong ' +
       'evidence when you see it.',
     model: 'claude-sonnet-4-20250514',
+    icon: 'search',
   },
   {
     name: 'Logical Analyst',
@@ -58,5 +63,6 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
       'conclusions follow from premises, flag circular reasoning, and test arguments ' +
       'against edge cases. You are precise and systematic in your analysis.',
     model: 'claude-sonnet-4-20250514',
+    icon: 'analytics',
   },
 ];

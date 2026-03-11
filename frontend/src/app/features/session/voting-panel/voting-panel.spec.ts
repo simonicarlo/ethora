@@ -8,8 +8,8 @@ describe('VotingPanel', () => {
   let component: VotingPanel;
 
   const mockAgents: Agent[] = [
-    { id: 'a1', name: 'Source Critic', system_prompt: 'Prompt 1', model: 'claude-sonnet-4-20250514' },
-    { id: 'a2', name: 'Logical Analyst', system_prompt: 'Prompt 2', model: 'claude-sonnet-4-20250514' },
+    { id: 'a1', name: 'Source Critic', system_prompt: 'Prompt 1', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
+    { id: 'a2', name: 'Logical Analyst', system_prompt: 'Prompt 2', model: 'claude-sonnet-4-20250514', icon: 'smart_toy' },
   ];
 
   const mockVotes: Vote[] = [
