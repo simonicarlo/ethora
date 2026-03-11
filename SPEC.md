@@ -99,6 +99,14 @@ All endpoints are prefixed with `/api/v1`.
 | `GET`  | `/agents` | — | `AgentResponse[]` | 200 |
 | `PUT`  | `/agents/{id}` | `AgentUpdate` | `AgentResponse` | 200 |
 | `DELETE` | `/agents/{id}` | — | 204 | 204 |
+| `POST` | `/agents/{id}/test` | `AgentTestRequest` | `AgentTestResponse` | 200 |
+
+**AgentTestRequest**
+```json
+{ "message": "string" }
+```
+- `message`: min 1 char. Sent to the agent's LLM with its system prompt. Returns `{ "response": "string" }`.
+- Errors: `404` agent not found, `502` LLM call failed.
 
 **AgentCreate**
 ```json
@@ -364,9 +372,9 @@ Fallback on parse failure: `{ "value": "abstain", "confidence": 0.0, "reasoning"
 | `/councils` | `CouncilList` | Card grid of existing councils |
 | `/councils/new` | `CouncilCreate` | Form to create a council (select existing agents) |
 | `/councils/:id/edit` | `CouncilEdit` | Form to edit a council |
-| `/agents` | `AgentList` | List/manage agents |
-| `/agents/new` | `AgentCreate` | Form to create an agent |
-| `/agents/:id/edit` | `AgentEdit` | Form to edit an agent |
+| `/admin` | `AdminDashboard` | Admin shell with sidebar navigation |
+| `/admin/agents` | `AgentConfig` | Agent management (master-detail panel) |
+| `/agents` | _(redirect)_ | Redirects to `/admin/agents` |
 | `/sessions/:id` | `SessionView` | Live debate view with panels |
 
 ### Navigation flow for starting a session

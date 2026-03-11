@@ -13,9 +13,10 @@
       <mat-icon>groups</mat-icon>
       Councils
     </a>
-    <a mat-button routerLink="/agents" routerLinkActive="active-link">
-      <mat-icon>smart_toy</mat-icon>
-      Agents
+    <a mat-button routerLink="/admin" routerLinkActive="active-link"
+       [routerLinkActiveOptions]="{ exact: true }">
+      <mat-icon>admin_panel_settings</mat-icon>
+      Admin
     </a>
     <a mat-button routerLink="/sessions" routerLinkActive="active-link">
       <mat-icon>history</mat-icon>

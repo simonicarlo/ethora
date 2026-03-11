@@ -264,14 +264,14 @@ Stream B (CRUD) ─────────┘
 
 ### Overview
 
-- [ ] **Create `/admin` route and `AdminDashboard` component** — Top-level admin page with tabbed sections — **`features/admin/`**
-- [ ] **Add "Admin" link to toolbar** — Visible in main navigation — **`app.component.ts`**
+- [x] **Create `/admin` route and `AdminDashboard` component** — Top-level admin page with sidebar navigation — **`features/admin/`**
+- [x] **Add "Admin" link to toolbar** — Visible in main navigation — **`app.component.ts`**
 
 ### Agent Management
 
-- [ ] **Agent configuration panel** — Full CRUD for agents with inline editing of system prompts, model selection, and preview — **`features/admin/agents/`**
-- [ ] **Agent test bench** — Send a test message to an agent and see the response without creating a session — **`features/admin/agents/`**
-- [ ] **Agent templates library** — Pre-built agent personas (Devil's Advocate, Fact Checker, Synthesizer, etc.) that can be cloned — **`features/admin/agents/`**
+- [x] **Agent configuration panel** — Full CRUD for agents with inline editing of system prompts, model selection, and preview — **`features/admin/agents/`**
+- [x] **Agent test bench** — Send a test message to an agent and see the response without creating a session — **`features/admin/agents/`**
+- [x] **Agent templates library** — Pre-built agent personas (Devil's Advocate, Fact Checker, Synthesizer, etc.) that can be cloned — **`features/admin/agents/`**
 
 ### Tooling Configuration
 

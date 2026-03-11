@@ -1,0 +1,23 @@
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <h2 class="sidebar-title">Admin</h2>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/admin/agents" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>smart_toy</mat-icon>
+        <span matListItemTitle>Agents</span>
+      </a>
+      <mat-list-item disabled>
+        <mat-icon matListItemIcon>bar_chart</mat-icon>
+        <span matListItemTitle>Statistics</span>
+      </mat-list-item>
+      <mat-list-item disabled>
+        <mat-icon matListItemIcon>settings</mat-icon>
+        <span matListItemTitle>Settings</span>
+      </mat-list-item>
+    </mat-nav-list>
+  </aside>
+
+  <section class="admin-content">
+    <router-outlet />
+  </section>
+</div>

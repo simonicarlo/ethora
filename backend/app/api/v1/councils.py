@@ -8,9 +8,12 @@ from sqlalchemy.orm import selectinload
 
 from app.api.v1.deps import DBSession, build_session_list, get_or_404
 from app.models.models import Agent, Council, Session, council_agents
+from app.engine.agent import call_agent
 from app.schemas.schemas import (
     AgentCreate,
     AgentResponse,
+    AgentTestRequest,
+    AgentTestResponse,
     AgentUpdate,
     CouncilCreate,
     CouncilResponse,
@@ -84,6 +87,20 @@ async def delete_agent(agent_id: uuid.UUID, db: DBSession) -> Response:
     await db.delete(agent)
     await db.flush()
     return Response(status_code=204)
+
+
+@router.post("/agents/{agent_id}/test", response_model=AgentTestResponse)
+async def test_agent(agent_id: uuid.UUID, payload: AgentTestRequest, db: DBSession) -> AgentTestResponse:
+    agent = await get_or_404(db, Agent, agent_id, "Agent not found")
+    try:
+        response_text = await call_agent(
+            agent=agent,
+            messages=[{"role": "user", "content": payload.message}],
+            system_prompt=agent.system_prompt,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"LLM call failed: {exc}") from exc
+    return AgentTestResponse(response=response_text)
 
 
 # ── Councils ────────────────────────────────────────────────────────────────

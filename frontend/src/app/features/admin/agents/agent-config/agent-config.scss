@@ -1,0 +1,140 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+:host {
+  display: block;
+}
+
+.center {
+  @include flex-center;
+  padding: $space-12;
+}
+
+.master-detail {
+  display: flex;
+  gap: $space-6;
+  min-height: 500px;
+}
+
+.agent-list-pane {
+  @include glass-panel;
+  width: 240px;
+  flex-shrink: 0;
+  border-radius: $radius-lg;
+  padding: $space-2 0;
+  display: flex;
+  flex-direction: column;
+  @include custom-scrollbar;
+  overflow-y: auto;
+
+  mat-nav-list {
+    padding: 0 $space-3;
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  ::ng-deep .mat-mdc-list-item {
+    height: 36px !important;
+    font-size: 0.875rem !important;
+    border-radius: $radius-sm !important;
+    border: 1px solid var(--ac-glass-border);
+
+    .mdc-list-item__primary-text {
+      font-size: 0.875rem !important;
+    }
+  }
+
+  .selected {
+    background: var(--ac-glass-bg);
+  }
+}
+
+.new-agent-action {
+  padding: $space-3 $space-4;
+  margin-top: auto;
+}
+
+.detail-pane {
+  flex: 1;
+  min-width: 0;
+
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      border-bottom: none;
+      padding: 0 $space-2;
+    }
+
+    .mat-mdc-tab-label-container {
+      gap: $space-2;
+    }
+
+    .mdc-tab {
+      min-width: auto !important;
+      padding: 0 $space-5 !important;
+      height: 32px !important;
+      border-radius: $radius-xs !important;
+      border: 1px solid var(--ac-glass-border);
+    }
+
+    .mdc-tab-indicator {
+      display: none;
+    }
+
+    .mdc-tab--active {
+      background: var(--ac-glass-bg);
+    }
+
+    .mat-mdc-tab-labels {
+      gap: $space-2;
+    }
+  }
+}
+
+.tab-content {
+  padding: $space-6 $space-4;
+
+  h3 {
+    margin: 0 0 $space-6;
+    font-size: 1.25rem;
+    font-weight: $weight-semibold;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.error-text {
+  color: var(--mat-sys-error);
+  margin: $space-4 0;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  margin-top: $space-6;
+  gap: $space-2;
+
+  .spacer {
+    flex: 1;
+  }
+
+  mat-spinner {
+    display: inline-block;
+  }
+}
+
+.empty-detail {
+  @include flex-center;
+  flex-direction: column;
+  padding: $space-12;
+  opacity: 0.5;
+
+  mat-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: $space-4;
+  }
+}

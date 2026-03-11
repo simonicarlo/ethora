@@ -13,6 +13,10 @@ export interface AgentCreate {
 
 export type AgentUpdate = Partial<AgentCreate>;
 
+export interface AgentTestResponse {
+  response: string;
+}
+
 export interface Council {
   id: string;
   name: string;

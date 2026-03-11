@@ -1,0 +1,102 @@
+@if (loading()) {
+  <div class="center">
+    <mat-spinner diameter="48"></mat-spinner>
+  </div>
+} @else {
+  <div class="master-detail">
+    <!-- Left pane: agent list -->
+    <aside class="agent-list-pane">
+      <mat-nav-list>
+        @for (agent of agents(); track agent.id) {
+          <a mat-list-item
+             (click)="selectAgent(agent)"
+             [class.selected]="selectedAgent()?.id === agent.id">
+            <mat-icon matListItemIcon>smart_toy</mat-icon>
+            <span matListItemTitle>{{ agent.name }}</span>
+          </a>
+        }
+      </mat-nav-list>
+      <div class="new-agent-action">
+        <button mat-stroked-button (click)="startCreate()" class="full-width">
+          <mat-icon>add</mat-icon>
+          New Agent
+        </button>
+      </div>
+    </aside>
+
+    <!-- Right pane: tabbed content -->
+    <div class="detail-pane">
+      @if (hasSelection()) {
+        <mat-tab-group>
+          <mat-tab label="Configure">
+            <div class="tab-content">
+              <h3>{{ isCreateMode() ? 'New Agent' : selectedAgent()?.name }}</h3>
+
+              <form [formGroup]="form" (ngSubmit)="onSave()">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Name</mat-label>
+                  <input matInput formControlName="name" placeholder="e.g. Devil's Advocate">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>System Prompt</mat-label>
+                  <textarea matInput formControlName="system_prompt" rows="8"
+                    placeholder="Describe this agent's role, personality, and expertise..."></textarea>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Model</mat-label>
+                  <mat-select formControlName="model">
+                    @for (opt of modelOptions; track opt.value) {
+                      <mat-option [value]="opt.value">{{ opt.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                @if (error()) {
+                  <p class="error-text">{{ error() }}</p>
+                }
+
+                <div class="form-actions">
+                  @if (!isCreateMode()) {
+                    <button mat-button type="button" color="warn" (click)="onDelete()">
+                      <mat-icon>delete</mat-icon>
+                      Delete
+                    </button>
+                  }
+                  <span class="spacer"></span>
+                  <button mat-flat-button type="submit" [disabled]="form.invalid || saving()">
+                    @if (saving()) {
+                      <mat-spinner diameter="20"></mat-spinner>
+                    } @else {
+                      {{ isCreateMode() ? 'Create Agent' : 'Save Changes' }}
+                    }
+                  </button>
+                </div>
+              </form>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Test Bench" [disabled]="isCreateMode()">
+            <div class="tab-content">
+              @if (selectedAgent(); as agent) {
+                <app-agent-test-bench [agent]="agent" />
+              }
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Templates">
+            <div class="tab-content">
+              <app-agent-templates (cloned)="onAgentCloned($event)" />
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      } @else {
+        <div class="empty-detail">
+          <mat-icon>smart_toy</mat-icon>
+          <p>Select an agent from the list or create a new one.</p>
+        </div>
+      }
+    </div>
+  </div>
+}
