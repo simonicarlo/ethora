@@ -102,16 +102,21 @@
 Stream A (Prompts) ─────┬──→ Stream D (Open Voting)
                         └──→ Stream E (Dual Response)
 
-Stream B (CRUD)          (independent)
-Stream C (Human Turn Fix) (independent)
+Stream B (CRUD) ─────────────→ §17 Admin Dashboard
+Stream C (Human Turn Fix) ──→ §16 Session History
 
 Stream F (Tool Use) ─────┐
 Stream G (File Upload) ──┼──→ Stream H (File Editing)
 Stream D (Open Voting) ──┘
+
+§16 Session History ─────┬──→ §17 Admin Dashboard
+Stream B (CRUD) ─────────┘
 ```
 
 **Can start in parallel (no deps):** A, B, C, F, G
 **After Stream A:** D, E
+**After Stream C:** §16 Session History
+**After §16 + B:** §17 Admin Dashboard
 **After D + F + G:** H
 
 ---
@@ -223,7 +228,62 @@ Stream D (Open Voting) ──┘
 
 ---
 
-## 16. Future
+## 16. Session History & Recovery
+
+> **Priority 2 · Depends on: Stream C (messages endpoint)**
+
+### Backend
+
+- [ ] **Add `GET /api/v1/sessions` endpoint** — List all sessions with optional filters (`council_id`, `status`), ordered by `created_at` desc, paginated — **`sessions.py`**
+- [ ] **Implement `GET /api/v1/sessions/{id}/messages`** — Return all messages for a session grouped by round (already in SPEC, not yet implemented) — **`sessions.py`**
+- [ ] **Add `GET /api/v1/councils/{id}/sessions`** — List sessions for a specific council — **`councils.py`**
+- [ ] **Add `DELETE /api/v1/sessions/{id}`** — Delete a session and cascade to rounds/messages/votes/verdict — **`sessions.py`**
+- [ ] **Add `SessionListResponse` schema** with session metadata + council name + verdict summary (if complete) — **`schemas.py`**
+
+### Frontend
+
+- [ ] **Create `SessionList` component** — Table view of past sessions with status badges (running/complete/error/awaiting input), council name, claim preview, date — **`features/session/session-list/`**
+- [ ] **Add `/sessions` route** — Wire `SessionList` into routing and toolbar nav — **`app.routes.ts`**
+- [ ] **Add `listSessions()` and `getMessages()` to `ApiService`** — **`api.service.ts`**
+- [ ] **Load historical messages on session-view init** — Before connecting SSE, call `GET /sessions/{id}/messages` to restore transcript on page reload or re-visit — **`session-view.ts`**
+- [ ] **Add "Recent Sessions" widget to Home page** — Show last 5 sessions with status and link — **`features/home/`**
+- [ ] **Add "View Sessions" link on council cards** — Navigate to `/sessions?council_id={id}` — **`council-list/`**
+- [ ] **Delete session action** — Delete button with confirmation dialog in session list — **`session-list/`**
+
+---
+
+## 17. Admin Dashboard
+
+> **Priority 3 · Depends on: Stream B (CRUD), Session History (section 16)**
+
+### Overview
+
+- [ ] **Create `/admin` route and `AdminDashboard` component** — Top-level admin page with tabbed sections — **`features/admin/`**
+- [ ] **Add "Admin" link to toolbar** — Visible in main navigation — **`app.component.ts`**
+
+### Agent Management
+
+- [ ] **Agent configuration panel** — Full CRUD for agents with inline editing of system prompts, model selection, and preview — **`features/admin/agents/`**
+- [ ] **Agent test bench** — Send a test message to an agent and see the response without creating a session — **`features/admin/agents/`**
+- [ ] **Agent templates library** — Pre-built agent personas (Devil's Advocate, Fact Checker, Synthesizer, etc.) that can be cloned — **`features/admin/agents/`**
+
+### Tooling Configuration
+
+- [ ] **Tool registry panel** — Enable/disable available tools (web search, file edit, etc.) per council — **`features/admin/tools/`**
+- [ ] **API key management** — Configure and rotate LLM API keys from the UI (stored encrypted) — **`features/admin/settings/`**
+- [ ] **Model configuration** — Set default model, temperature, max tokens per agent or council — **`features/admin/settings/`**
+
+### Statistics & Monitoring
+
+- [ ] **Session stats dashboard** — Total sessions, completion rate, avg rounds per session, sessions over time chart — **`features/admin/stats/`**
+- [ ] **Council usage stats** — Most-used councils, sessions per council, avg deliberation time — **`features/admin/stats/`**
+- [ ] **Agent performance metrics** — Response times, avg message length, voting alignment — **`features/admin/stats/`**
+- [ ] **Backend stats endpoints** — `GET /api/v1/admin/stats/sessions`, `GET /api/v1/admin/stats/agents` — **`api/v1/admin.py`**
+- [ ] **Error log viewer** — View recent session errors with stack traces and context — **`features/admin/logs/`**
+
+---
+
+## 18. Future
 
 - [ ] **Fact Checker wrapper** — Preconfigured council with Source Critic, Logical Analyst, Devil's Advocate, Synthesizer agents
 - [ ] **Graph visualization panel** — Deferred from PoC
