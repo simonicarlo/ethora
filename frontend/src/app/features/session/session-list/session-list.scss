@@ -59,43 +59,67 @@
   }
 }
 
-.session-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: $space-6;
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
 }
 
-.session-card {
-  @include glass-card;
-  @include hover-glow;
+.session-row {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-4 $space-5;
+  border-radius: $radius-lg;
+  transition: background 0.2s;
 
-  .claim-link {
-    color: inherit;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
+  &:hover {
+    background: var(--mat-sys-surface-variant);
   }
+}
 
-  .session-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: $space-2;
-  }
+.status-icon {
+  flex-shrink: 0;
+}
 
-  .session-date {
-    font-size: 0.85rem;
-    opacity: 0.7;
-  }
+.session-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
 
-  .verdict-preview {
-    margin-top: $space-3;
-    font-size: 0.9rem;
-    opacity: 0.8;
-    font-style: italic;
+.session-claim {
+  font-weight: $weight-medium;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-detail {
+  font-size: 0.85rem;
+  opacity: 0.6;
+  text-transform: capitalize;
+}
+
+.verdict-preview {
+  font-size: 0.85rem;
+  opacity: 0.5;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actions-trigger {
+  flex-shrink: 0;
+  opacity: 0.5;
+
+  .session-row:hover & {
+    opacity: 1;
   }
 }
 
