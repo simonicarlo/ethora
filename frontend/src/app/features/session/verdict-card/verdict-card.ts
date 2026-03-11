@@ -5,11 +5,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { Verdict } from '../../../core/models';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { confidencePercent, voteColorClass } from '../../../shared/utils/vote-display.utils';
 
 @Component({
   selector: 'app-verdict-card',
-  imports: [DatePipe, MatCardModule, MatIconModule, MatProgressBarModule],
+  imports: [DatePipe, MatCardModule, MatIconModule, MatProgressBarModule, MarkdownPipe],
   templateUrl: './verdict-card.html',
   styleUrl: './verdict-card.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

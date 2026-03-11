@@ -10,6 +10,7 @@ import { DatePipe } from '@angular/common';
 
 import { ApiService } from '../../../core/api.service';
 import { SessionListItem, SessionStatus } from '../../../core/models';
+import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
 
 @Component({
   selector: 'app-session-list',
@@ -21,6 +22,7 @@ import { SessionListItem, SessionStatus } from '../../../core/models';
     MatMenuModule,
     MatProgressSpinnerModule,
     DatePipe,
+    MeshBackground,
   ],
   templateUrl: './session-list.html',
   styleUrl: './session-list.scss',

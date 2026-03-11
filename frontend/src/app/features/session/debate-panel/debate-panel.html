@@ -5,7 +5,7 @@
       <mat-card-title>Deliberation Topic</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p class="message-content">{{ claim }}</p>
+      <div class="message-content" [innerHTML]="claim | markdown"></div>
     </mat-card-content>
   </mat-card>
 }
@@ -28,7 +28,7 @@
             <mat-card-subtitle>{{ msg.isModerator ? 'Moderator Action' : 'Round ' + msg.round }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            <p class="message-content">{{ msg.content }}</p>
+            <div class="message-content" [innerHTML]="msg.content | markdown"></div>
             @if (msg.references && msg.references.length > 0) {
               <div class="references-list">
                 <span class="references-label">Sources:</span>

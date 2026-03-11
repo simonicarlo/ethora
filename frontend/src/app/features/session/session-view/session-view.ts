@@ -30,10 +30,11 @@ import { VotingPanel } from '../voting-panel/voting-panel';
 import { HumanVoteForm } from '../human-vote-form/human-vote-form';
 import { HumanTurnInput } from '../human-turn-input/human-turn-input';
 import { VerdictCard } from '../verdict-card/verdict-card';
+import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatProgressSpinnerModule],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatProgressSpinnerModule, MeshBackground],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

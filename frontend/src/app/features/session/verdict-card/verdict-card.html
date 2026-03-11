@@ -5,7 +5,7 @@
     <mat-card-subtitle>{{ verdict().created_at | date:'medium' }}</mat-card-subtitle>
   </mat-card-header>
   <mat-card-content>
-    <p class="decision-text">{{ verdict().decision }}</p>
+    <div class="decision-text" [innerHTML]="verdict().decision | markdown"></div>
 
     <div class="confidence-row">
       <span class="confidence-label">Confidence</span>
@@ -17,7 +17,7 @@
     </mat-progress-bar>
 
     @if (verdict().summary) {
-      <p class="summary">{{ verdict().summary }}</p>
+      <div class="summary" [innerHTML]="verdict().summary | markdown"></div>
     }
   </mat-card-content>
 </mat-card>

@@ -8,10 +8,11 @@ import { DatePipe } from '@angular/common';
 
 import { ApiService } from '../../../core/api.service';
 import { SessionListItem } from '../../../core/models';
+import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, DatePipe],
+  imports: [RouterLink, MatButtonModule, MatCardModule, MatIconModule, DatePipe, MeshBackground],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

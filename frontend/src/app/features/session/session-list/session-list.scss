@@ -1,5 +1,6 @@
 @use 'variables' as *;
 @use 'mixins' as *;
+@use 'animations' as *;
 
 :host {
   display: block;
@@ -71,10 +72,13 @@
   gap: $space-4;
   padding: $space-4 $space-5;
   border-radius: $radius-lg;
-  transition: background 0.2s;
+  transition: background 0.2s, backdrop-filter 0.2s;
+  animation: ac-card-enter 350ms $easing-decelerate both;
+  @include stagger-children(ac-card-enter, 40ms);
 
   &:hover {
-    background: var(--mat-sys-surface-variant);
+    background: var(--ac-glass-bg);
+    backdrop-filter: blur(var(--ac-glass-blur-heavy));
   }
 }
 
