@@ -36,10 +36,11 @@ import { HumanVoteForm } from '../human-vote-form/human-vote-form';
 import { HumanTurnInput } from '../human-turn-input/human-turn-input';
 import { VerdictCard } from '../verdict-card/verdict-card';
 import { MeshBackground } from '../../../shared/components/mesh-background/mesh-background';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-session-view',
-  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MeshBackground],
+  imports: [DebatePanel, VotingPanel, HumanVoteForm, HumanTurnInput, VerdictCard, MatButtonModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MeshBackground, MarkdownPipe],
   templateUrl: './session-view.html',
   styleUrl: './session-view.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
