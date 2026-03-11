@@ -35,14 +35,14 @@
               [value]="confidencePercent(vote.confidence)">
             </mat-progress-bar>
             @if (vote.reasoning) {
-              <p class="reasoning">{{ vote.reasoning }}</p>
+              <div class="reasoning" [innerHTML]="vote.reasoning | markdown"></div>
             }
           </mat-card-content>
         </mat-card>
       } @else {
         <mat-card class="vote-card pending" appearance="outlined">
           <mat-card-content>
-            <span class="agent-name">{{ agent.name }}</span>
+            <div class="agent-name">{{ agent.name }}</div>
             <div class="pending-row">
               <mat-spinner diameter="24"></mat-spinner>
               <span>Voting…</span>
