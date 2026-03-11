@@ -41,8 +41,8 @@ export class DebatePanel {
 
   readonly expandedMessages = signal<Set<string>>(new Set());
 
-  toggleExpanded(roundNum: number, index: number): void {
-    const key = `${roundNum}-${index}`;
+  toggleExpanded(msg: DebateMessage): void {
+    const key = msg.message_id ?? `${msg.round}-${msg.agent_id}`;
     this.expandedMessages.update((set) => {
       const next = new Set(set);
       if (next.has(key)) {
@@ -54,8 +54,9 @@ export class DebatePanel {
     });
   }
 
-  isExpanded(roundNum: number, index: number): boolean {
-    return this.expandedMessages().has(`${roundNum}-${index}`);
+  isExpanded(msg: DebateMessage): boolean {
+    const key = msg.message_id ?? `${msg.round}-${msg.agent_id}`;
+    return this.expandedMessages().has(key);
   }
 
   readonly agentMap = computed(() => {

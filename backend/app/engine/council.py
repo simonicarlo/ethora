@@ -73,15 +73,15 @@ async def _summarize_in_background(
 async def _drain_summaries(
     queue: asyncio.Queue[dict[str, object]],
     db: AsyncSession,
-    collector: list[tuple[str, str]] | None = None,
+    collector: list[tuple[int, str, str]] | None = None,
 ) -> list[str]:
     """Non-blocking drain of summary_ready SSE events from the queue.
 
     Persists each summary to the Message row via the main DB session
     (the message is already in its identity map from the earlier flush).
 
-    If collector is provided, appends (agent_name, summary) tuples for
-    session-level summary generation.
+    If collector is provided, appends (round_num, agent_name, summary) tuples
+    for session-level summary generation.
     """
     events: list[str] = []
     while True:
@@ -93,7 +93,7 @@ async def _drain_summaries(
             if msg is not None:
                 msg.summary = str(data["summary"])
             if collector is not None:
-                collector.append((str(data["agent_name"]), str(data["summary"])))
+                collector.append((int(data["round"]), str(data["agent_name"]), str(data["summary"])))
         except asyncio.QueueEmpty:
             break
     return events
@@ -119,7 +119,7 @@ async def run_council_session(
 
     summary_queue: asyncio.Queue[dict[str, object]] = asyncio.Queue()
     summary_tasks: list[asyncio.Task[None]] = []
-    collected_summaries: list[tuple[str, str]] = []
+    collected_summaries: list[tuple[int, str, str]] = []  # (round_num, agent_name, summary)
 
     try:
         # -- Mark running --
@@ -249,8 +249,17 @@ async def run_council_session(
 
         # -- Generate session-level discussion summary --
         if collected_summaries:
-            # Use last round's summaries (final positions) for the session summary
-            last_round_summaries = collected_summaries[-len(agents):]
+            # Filter to summaries from the final round (not a positional slice,
+            # since background failures may cause fewer entries than agents)
+            last_round = council.rounds
+            last_round_summaries = [
+                (name, summary)
+                for rnd, name, summary in collected_summaries
+                if rnd == last_round
+            ]
+            # Fall back to all summaries if none survived from the last round
+            if not last_round_summaries:
+                last_round_summaries = [(name, summary) for _, name, summary in collected_summaries]
             discussion_summary = await summarize_session(
                 input_claim=session.input_claim,
                 agent_summaries=last_round_summaries,

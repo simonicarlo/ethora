@@ -28,15 +28,15 @@
             <mat-card-subtitle>{{ msg.isModerator ? 'Moderator Action' : 'Round ' + msg.round }}</mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
-            @if (msg.summary && !isExpanded(round.round, $index)) {
+            @if (msg.summary && !isExpanded(msg)) {
               <div class="message-summary">{{ msg.summary }}</div>
-              <button mat-button class="expand-toggle" (click)="toggleExpanded(round.round, $index)">
+              <button mat-button class="expand-toggle" (click)="toggleExpanded(msg)">
                 <mat-icon>expand_more</mat-icon> Show full response
               </button>
             } @else {
               <div class="message-content" [innerHTML]="msg.content | markdown"></div>
               @if (msg.summary) {
-                <button mat-button class="expand-toggle" (click)="toggleExpanded(round.round, $index)">
+                <button mat-button class="expand-toggle" (click)="toggleExpanded(msg)">
                   <mat-icon>expand_less</mat-icon> Show summary
                 </button>
               }
