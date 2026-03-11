@@ -238,11 +238,15 @@ All endpoints are prefixed with `/api/v1`.
   "agent_id": "uuid|null",
   "content": "string",
   "summary": "string|null",
+  "references": [
+    { "url": "string", "title": "string|null", "snippet": "string|null" }
+  ],
   "created_at": "ISO-8601"
 }
 ```
 - `agent_id` is `null` for human-authored messages
 - `summary` is a 1–2 sentence summary extracted from the agent's response (see Dual Response Format)
+- `references` is a list of source links gathered from tool use (e.g., web search results); empty array if none
 
 **SessionFileResponse**
 ```json
@@ -276,7 +280,7 @@ Precondition: session must be in `pending` status (returns 409 otherwise).
 
 | Event name | Data fields | When emitted |
 |------------|-------------|-------------|
-| `agent_message` | `agent_id`, `agent_name`, `round`, `content`, `summary` | After each agent completes its response |
+| `agent_message` | `agent_id`, `agent_name`, `round`, `content`, `summary`, `references` | After each agent completes its response |
 | `round_complete` | `round` | After all agents in a round have responded |
 | `awaiting_human_turn` | `round`, `message` | After a round when `allow_human_turns` is enabled (not last round) |
 | `tool_use` | `agent_id`, `agent_name`, `tool_name`, `tool_input` | When an agent invokes a tool (e.g., web search) |
@@ -480,9 +484,30 @@ When `tools_enabled` is true on a council, agents can use tools during deliberat
 4. Loop continues until agent produces a final text response
 5. Each tool invocation emits a `tool_use` SSE event
 
+### References and citations
+
+When agents use tools like `web_search`, the engine captures structured references from tool results and attaches them to the agent's message.
+
+**Reference shape:**
+```json
+{ "url": "string", "title": "string|null", "snippet": "string|null" }
+```
+
+- `url`: the source URL from the tool result
+- `title`: page title or result heading (if available)
+- `snippet`: short excerpt or description from the source
+
+**How references work:**
+1. During tool execution, the engine extracts URLs, titles, and snippets from tool results (e.g., web search hits)
+2. References are stored as a JSON array on the `Message` model (`references` column)
+3. Agents are encouraged (via system prompt) to cite sources inline using numbered markers (e.g., `[1]`, `[2]`) that correspond to the references array
+4. The `agent_message` SSE event and `MessageResponse` both include the `references` array
+
 ### Frontend display
 
 - While an agent is using tools, the debate panel shows an activity indicator (e.g., "Searching the web…")
+- References are rendered as clickable citation links below the agent's message
+- Inline citation markers (e.g., `[1]`) can be linked to the corresponding reference
 - Tool results may optionally be shown inline (e.g., search result snippets)
 
 ---

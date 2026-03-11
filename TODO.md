@@ -199,8 +199,12 @@ Stream B (CRUD) ─────────┘
 - [ ] Define tool schemas for Anthropic API `tools` parameter (start with `web_search`) — **`agent.py`**
 - [ ] Update `call_agent()` to handle `tool_use` blocks: execute tools, send `tool_result`, loop until final text — **`agent.py`**
 - [ ] Add `tools_enabled: Mapped[bool]` to Council model + migration — **`models.py`**
+- [ ] Add `references` JSON column to `Message` model + migration — **`models.py`**
+- [ ] Extract references (url, title, snippet) from `web_search` tool results and attach to agent message — **`agent.py`**
+- [ ] Include `references` array in `agent_message` SSE event and `MessageResponse` schema — **`council.py`, `schemas.py`**
 - [ ] Emit `tool_use` SSE events during tool execution — **`council.py`**
 - [ ] Frontend: tool-use indicator in debate panel ("Searching the web…") — **`debate-panel/`**
+- [ ] Frontend: render references as clickable citation links below agent messages — **`debate-panel/`**
 - [ ] Frontend: toggle for tools in council create/edit form — **`council-create/`**
 
 ---
