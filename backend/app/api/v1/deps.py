@@ -3,11 +3,12 @@ from __future__ import annotations
 import uuid
 from typing import Annotated, TypeVar
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Header, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm.strategy_options import Load
 
+from app.core.config import settings
 from app.core.database import Base, get_db
 from app.models.models import Council, Session, Verdict
 from app.schemas.schemas import SessionListItem
@@ -78,4 +79,22 @@ async def build_session_list(
     ]
 
 
-__all__ = ["DBSession", "get_db", "get_or_404", "build_session_list"]
+async def verify_admin_key(
+    x_admin_key: str | None = Header(default=None),
+) -> str:
+    """Validate X-Admin-Key header against ADMIN_API_KEY setting.
+
+    If ADMIN_API_KEY is not configured (empty string), auth is skipped (dev mode).
+    """
+    configured = settings.ADMIN_API_KEY
+    if not configured:
+        return ""
+    if not x_admin_key or x_admin_key != configured:
+        raise HTTPException(status_code=403, detail="Invalid or missing admin API key")
+    return x_admin_key
+
+
+AdminKey = Annotated[str, Depends(verify_admin_key)]
+
+
+__all__ = ["DBSession", "AdminKey", "get_db", "get_or_404", "build_session_list", "verify_admin_key"]
