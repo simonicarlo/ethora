@@ -9,8 +9,20 @@
   width: 100%;
 }
 
-button {
-  margin-bottom: $space-6;
+.send-action {
+  margin-bottom: $space-4;
+
+  .btn-content {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-1;
+
+    mat-icon {
+      font-size: 1.125rem;
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+  }
 
   mat-spinner {
     display: inline-block;

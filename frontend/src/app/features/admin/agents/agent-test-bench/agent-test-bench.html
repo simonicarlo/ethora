@@ -10,12 +10,11 @@
     (keydown.control.enter)="send()"></textarea>
 </mat-form-field>
 
-<button mat-flat-button (click)="send()" [disabled]="!testMessage.trim() || sending()">
+<button mat-flat-button class="send-action" (click)="send()" [disabled]="!testMessage.trim() || sending()">
   @if (sending()) {
     <mat-spinner diameter="20"></mat-spinner>
   } @else {
-    <mat-icon>send</mat-icon>
-    Send
+    <span class="btn-content"><mat-icon>send</mat-icon> Send</span>
   }
 </button>
 

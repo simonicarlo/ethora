@@ -27,6 +27,24 @@
   @include custom-scrollbar;
   overflow-y: auto;
 
+  mat-nav-list {
+    padding: 0 $space-3;
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  ::ng-deep .mat-mdc-list-item {
+    height: 36px !important;
+    font-size: 0.875rem !important;
+    border-radius: $radius-sm !important;
+    border: 1px solid var(--ac-glass-border);
+
+    .mdc-list-item__primary-text {
+      font-size: 0.875rem !important;
+    }
+  }
+
   .selected {
     background: var(--ac-glass-bg);
   }
@@ -40,6 +58,37 @@
 .detail-pane {
   flex: 1;
   min-width: 0;
+
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      border-bottom: none;
+      padding: 0 $space-2;
+    }
+
+    .mat-mdc-tab-label-container {
+      gap: $space-2;
+    }
+
+    .mdc-tab {
+      min-width: auto !important;
+      padding: 0 $space-5 !important;
+      height: 32px !important;
+      border-radius: $radius-xs !important;
+      border: 1px solid var(--ac-glass-border);
+    }
+
+    .mdc-tab-indicator {
+      display: none;
+    }
+
+    .mdc-tab--active {
+      background: var(--ac-glass-bg);
+    }
+
+    .mat-mdc-tab-labels {
+      gap: $space-2;
+    }
+  }
 }
 
 .tab-content {
