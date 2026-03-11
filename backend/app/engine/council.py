@@ -563,7 +563,8 @@ async def run_council_session(
         logger.warning("Council session %s rate-limited: %s", session_id, exc)
         await db.rollback()
         session = await db.get(Session, session_id)
-        assert session is not None
+        if session is None:
+            raise RuntimeError(f"Session {session_id} not found after rollback")
         session.status = "rate_limited"
         await db.commit()
         yield format_sse("rate_limited", {

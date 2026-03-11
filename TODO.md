@@ -62,15 +62,15 @@ Sections 1–6, 8–13, 16–17 from the original TODO are fully complete. See g
 
 > **Priority 2 — Data integrity and robustness**
 
-- [ ] **Use SQLAlchemy Enum for status/voting columns** — `voting_mechanism` and `status` are plain `String`; add DB-level constraint via migration — **`backend/app/models/models.py:45,61`**
-- [ ] **Add ORM cascade deletes** — Add `cascade="all, delete-orphan"` to relationships and `ON DELETE CASCADE` to FKs; remove manual cascade in `sessions.py:248-261` — **`backend/app/models/models.py`**
-- [ ] **Add FK indexes** — `Round.session_id`, `Message.round_id`, `Vote.session_id`, `Vote.agent_id` lack indexes (PostgreSQL doesn't auto-index FKs) — **`backend/app/models/models.py`**
-- [ ] **Replace `assert` with proper guards** — `councils.py:158`, `council.py:566` — `assert` is stripped with `-O` flag
-- [ ] **Narrow moderator exception handling** — `moderator.py:69,97,132,166` catch bare `except Exception`; use specific exceptions — **`backend/app/engine/moderator.py`**
-- [ ] **Validate `council_id` exists on session creation** — Currently FK violation returns 500 instead of 404 — **`backend/app/api/v1/sessions.py:52-60`**
-- [ ] **Return `SessionStateResponse` instance from `get_session_messages`** — Currently returns raw dict, bypassing Pydantic validation — **`backend/app/api/v1/sessions.py:111`**
-- [ ] **Use `TallyResult` TypedDict for `tally_votes` return** — Currently `dict[str, str | float]` is too loose — **`backend/app/engine/voting.py:15`**
-- [ ] **Replace global Anthropic client with DI** — Module-level singleton is not task-safe and ignores runtime key changes — **`backend/app/engine/agent.py:53-65`**
+- [x] **Add CHECK constraints for status/voting columns** — Added DB-level CHECK constraints for `voting_mechanism`, `status`, and `question_type` via migration 011 — **`alembic/versions/011_add_cascades_and_check_constraints.py`**
+- [x] **Add ORM cascade deletes** — Added `cascade="all, delete-orphan"` to 4 relationships + ON DELETE CASCADE on 7 FKs; simplified manual cascade in `sessions.py` — **`models.py`, migration 011**
+- [x] **Add FK indexes** — Already handled in migration 002 (`ix_sessions_council_id`, `ix_rounds_session_id`, `ix_messages_round_id`, `ix_messages_agent_id`, `ix_votes_session_id`, `ix_votes_agent_id`)
+- [x] **Replace `assert` with proper guards** — `councils.py:158` → HTTPException(400), `council.py:566` → RuntimeError with message
+- [x] **Narrow moderator exception handling** — Replaced 4 bare `except Exception` with `except (anthropic.APIError, KeyError, RuntimeError)` — **`moderator.py`**
+- [x] **Validate `council_id` exists on session creation** — Added `get_or_404()` check before creating session — **`sessions.py`**
+- [x] **Return `SessionStateResponse` instance from `get_session_messages`** — Changed raw dict return to `SessionStateResponse(...)` — **`sessions.py`**
+- [x] **Use `TallyResult` TypedDict for `tally_votes` return** — Added `TallyResult` TypedDict, updated all 4 function signatures — **`voting.py`**
+- [x] **Replace global Anthropic client with key-aware caching** — `get_client()` now detects API key changes and recreates client; added `reset_client()` for tests — **`agent.py`**
 
 ---
 

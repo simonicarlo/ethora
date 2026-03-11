@@ -155,7 +155,8 @@ async def update_council(council_id: uuid.UUID, payload: CouncilUpdate, db: DBSe
         setattr(council, field, getattr(payload, field))
     # Handle agent_ids separately — requires DB lookup
     if "agent_ids" in payload.model_fields_set:
-        assert payload.agent_ids is not None  # guaranteed by model_fields_set check
+        if payload.agent_ids is None:
+            raise HTTPException(status_code=400, detail="agent_ids must not be null when provided")
         result = await db.execute(select(Agent).where(Agent.id.in_(payload.agent_ids)))
         agents = list(result.scalars().all())
         if len(agents) != len(payload.agent_ids):
