@@ -9,6 +9,9 @@ import {
   Council,
   SessionStatus,
   SseAgentMessage,
+  SseAwaitingHumanTurn,
+  SseAwaitingHumanVote,
+  SseError,
   SseRoundComplete,
   SseVotingCast,
   Verdict,
@@ -179,17 +182,26 @@ export class SessionView implements OnInit {
         this.sessionStatus.set('complete');
         break;
       }
-      case 'awaiting_human_turn':
+      case 'awaiting_human_turn': {
+        const data = raw as SseAwaitingHumanTurn;
         this.sessionStatus.set('awaiting_human_turn');
+        this.currentRound.set(data.round);
         this.waitingForHuman.set(true);
         break;
-      case 'awaiting_human_vote':
+      }
+      case 'awaiting_human_vote': {
+        const data = raw as SseAwaitingHumanVote;
+        console.log('[SSE] Awaiting human vote:', data.message);
         this.sessionStatus.set('voting');
         this.waitingForHuman.set(true);
         break;
-      case 'error':
+      }
+      case 'error': {
+        const data = raw as SseError;
+        console.error('[SSE] Session error:', data.message);
         this.sessionStatus.set('error');
         break;
+      }
     }
   }
 }
