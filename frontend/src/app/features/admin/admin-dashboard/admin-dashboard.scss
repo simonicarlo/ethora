@@ -1,0 +1,38 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+:host {
+  display: block;
+}
+
+.admin-layout {
+  display: flex;
+  gap: $space-6;
+  min-height: calc(100vh - #{$toolbar-height} - #{$space-6} * 2);
+}
+
+.admin-sidebar {
+  @include glass-panel;
+  width: 220px;
+  flex-shrink: 0;
+  border-radius: $radius-lg;
+  padding: $space-4 0;
+
+  .sidebar-title {
+    font-weight: $weight-semibold;
+    margin: 0 $space-4 $space-3;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+  }
+
+  .active-link {
+    background: var(--ac-glass-bg);
+  }
+}
+
+.admin-content {
+  flex: 1;
+  min-width: 0;
+}
