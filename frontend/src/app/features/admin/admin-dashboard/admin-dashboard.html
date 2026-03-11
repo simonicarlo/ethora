@@ -6,14 +6,22 @@
         <mat-icon matListItemIcon>smart_toy</mat-icon>
         <span matListItemTitle>Agents</span>
       </a>
-      <mat-list-item disabled>
+      <a mat-list-item routerLink="/admin/stats" routerLinkActive="active-link">
         <mat-icon matListItemIcon>bar_chart</mat-icon>
         <span matListItemTitle>Statistics</span>
-      </mat-list-item>
-      <mat-list-item disabled>
+      </a>
+      <a mat-list-item routerLink="/admin/tools" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>build</mat-icon>
+        <span matListItemTitle>Tools</span>
+      </a>
+      <a mat-list-item routerLink="/admin/settings" routerLinkActive="active-link">
         <mat-icon matListItemIcon>settings</mat-icon>
         <span matListItemTitle>Settings</span>
-      </mat-list-item>
+      </a>
+      <a mat-list-item routerLink="/admin/logs" routerLinkActive="active-link">
+        <mat-icon matListItemIcon>error_outline</mat-icon>
+        <span matListItemTitle>Error Logs</span>
+      </a>
     </mat-nav-list>
   </aside>
 

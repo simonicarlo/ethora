@@ -187,3 +187,55 @@ export interface SseModeratorAction {
   action: string;
   explanation: string;
 }
+
+// -- Admin Stats & Settings ---------------------------------------------------
+
+export interface DailyCount {
+  date: string;
+  count: number;
+}
+
+export interface SessionStats {
+  total_sessions: number;
+  sessions_by_status: Record<string, number>;
+  completion_rate: number;
+  avg_rounds_per_session: number;
+  sessions_over_time: DailyCount[];
+}
+
+export interface CouncilUsageItem {
+  council_id: string;
+  council_name: string;
+  session_count: number;
+  avg_deliberation_seconds: number;
+}
+
+export interface CouncilStats {
+  council_usage: CouncilUsageItem[];
+}
+
+export interface AgentMetricItem {
+  agent_id: string;
+  agent_name: string;
+  message_count: number;
+  avg_message_length: number;
+  voting_alignment: number;
+}
+
+export interface AgentStats {
+  agent_metrics: AgentMetricItem[];
+}
+
+export interface ErrorLogEntry {
+  session_id: string;
+  council_name: string;
+  input_claim: string;
+  error_message: string;
+  created_at: string;
+}
+
+export interface AppSetting {
+  key: string;
+  value: string;
+  updated_at: string;
+}

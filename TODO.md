@@ -275,18 +275,18 @@ Stream B (CRUD) ─────────┘
 
 ### Tooling Configuration
 
-- [ ] **Tool registry panel** — Enable/disable available tools (web search, file edit, etc.) per council — **`features/admin/tools/`**
-- [ ] **Tool management**   -  Potentially allow configuration of tools by adjusting parameters. - **`features/admin/tools/`**
-- [ ] **API key management** — Configure and rotate LLM API keys from the UI (stored encrypted) — **`features/admin/settings/`**
-- [ ] **Model configuration** — Set default model, temperature, max tokens per agent or council — **`features/admin/settings/`**
+- [x] **Tool registry panel** — Enable/disable available tools (web search, file edit, etc.) per council — **`features/admin/tools/`**
+- [x] **Tool management**   -  Potentially allow configuration of tools by adjusting parameters. - **`features/admin/tools/`**
+- [x] **API key management** — Configure and rotate LLM API keys from the UI (stored encrypted) — **`features/admin/settings/`**
+- [x] **Model configuration** — Set default model, temperature, max tokens per agent or council — **`features/admin/settings/`**
 
 ### Statistics & Monitoring
 
-- [ ] **Session stats dashboard** — Total sessions, completion rate, avg rounds per session, sessions over time chart — **`features/admin/stats/`**
-- [ ] **Council usage stats** — Most-used councils, sessions per council, avg deliberation time — **`features/admin/stats/`**
-- [ ] **Agent performance metrics** — Response times, avg message length, voting alignment — **`features/admin/stats/`**
-- [ ] **Backend stats endpoints** — `GET /api/v1/admin/stats/sessions`, `GET /api/v1/admin/stats/agents` — **`api/v1/admin.py`**
-- [ ] **Error log viewer** — View recent session errors with stack traces and context — **`features/admin/logs/`**
+- [x] **Session stats dashboard** — Total sessions, completion rate, avg rounds per session, sessions over time chart — **`features/admin/stats/`**
+- [x] **Council usage stats** — Most-used councils, sessions per council, avg deliberation time — **`features/admin/stats/`**
+- [x] **Agent performance metrics** — Response times, avg message length, voting alignment — **`features/admin/stats/`**
+- [x] **Backend stats endpoints** — `GET /api/v1/admin/stats/sessions`, `GET /api/v1/admin/stats/agents` — **`api/v1/admin.py`**
+- [x] **Error log viewer** — View recent session errors with stack traces and context — **`features/admin/logs/`**
 
 ---
 

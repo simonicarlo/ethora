@@ -1,0 +1,100 @@
+@if (loading()) {
+  <div class="center">
+    <mat-spinner diameter="48" />
+  </div>
+} @else if (error(); as err) {
+  <div class="center error-text">{{ err }}</div>
+} @else {
+  <!-- Stat tiles -->
+  <div class="stat-tiles">
+    <div class="stat-tile glass-panel">
+      <mat-icon>forum</mat-icon>
+      <div class="stat-value">{{ totalSessions() }}</div>
+      <div class="stat-label">Total Sessions</div>
+    </div>
+    <div class="stat-tile glass-panel">
+      <mat-icon>check_circle</mat-icon>
+      <div class="stat-value">{{ completionRate() | number:'1.1-1' }}%</div>
+      <div class="stat-label">Completion Rate</div>
+    </div>
+    <div class="stat-tile glass-panel">
+      <mat-icon>replay</mat-icon>
+      <div class="stat-value">{{ avgRounds() | number:'1.1-1' }}</div>
+      <div class="stat-label">Avg Rounds</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-row">
+    <div class="chart-panel glass-panel">
+      <h3>Sessions by Status</h3>
+      <canvas baseChart
+        type="doughnut"
+        [data]="statusChartData()"
+        [options]="statusChartOptions">
+      </canvas>
+    </div>
+    <div class="chart-panel glass-panel">
+      <h3>Sessions Over Time</h3>
+      <canvas baseChart
+        type="line"
+        [data]="timelineChartData()"
+        [options]="timelineChartOptions">
+      </canvas>
+    </div>
+  </div>
+
+  <!-- Council Usage -->
+  <div class="table-panel glass-panel">
+    <h3>Council Usage</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Council</th>
+          <th>Sessions</th>
+          <th>Avg Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of councilUsage(); track c.council_id) {
+          <tr>
+            <td>{{ c.council_name }}</td>
+            <td>{{ c.session_count }}</td>
+            <td>{{ formatDuration(c.avg_deliberation_seconds) }}</td>
+          </tr>
+        }
+        @if (councilUsage().length === 0) {
+          <tr><td colspan="3" class="empty-row">No council data yet</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Agent Performance -->
+  <div class="table-panel glass-panel">
+    <h3>Agent Performance</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Agent</th>
+          <th>Messages</th>
+          <th>Avg Length</th>
+          <th>Voting Alignment</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of agentMetrics(); track a.agent_id) {
+          <tr>
+            <td>{{ a.agent_name }}</td>
+            <td>{{ a.message_count }}</td>
+            <td>{{ a.avg_message_length | number:'1.0-0' }} chars</td>
+            <td>{{ a.voting_alignment | number:'1.1-1' }}%</td>
+          </tr>
+        }
+        @if (agentMetrics().length === 0) {
+          <tr><td colspan="4" class="empty-row">No agent data yet</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

@@ -8,6 +8,7 @@ import os
 # database.py eagerly creates the engine at module level.
 os.environ["DATABASE_URL"] = "sqlite+aiosqlite://"
 os.environ["ANTHROPIC_API_KEY"] = "test-key"
+os.environ["SETTINGS_ENCRYPTION_KEY"] = "RvRPDpMMtqExErLUc0qxlKqtjfJh7IKpLNdNI6tAUAU="
 
 from collections.abc import AsyncGenerator
 

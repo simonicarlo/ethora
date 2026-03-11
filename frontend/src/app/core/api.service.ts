@@ -5,14 +5,19 @@ import { Observable } from 'rxjs';
 import {
   Agent,
   AgentCreate,
+  AgentStats,
   AgentTestResponse,
   AgentUpdate,
+  AppSetting,
   Council,
   CouncilCreate,
+  CouncilStats,
   CouncilUpdate,
+  ErrorLogEntry,
   Session,
   SessionCreate,
   SessionListItem,
+  SessionStats,
   SessionState,
   Verdict,
 } from './models';
@@ -122,5 +127,37 @@ export class ApiService {
     data: { decision: string; confidence: number; reasoning?: string },
   ): Observable<Verdict> {
     return this.post<Verdict>(`/sessions/${sessionId}/human-vote`, data);
+  }
+
+  // -- Admin -----------------------------------------------------------------
+
+  getSessionStats(): Observable<SessionStats> {
+    return this.get<SessionStats>('/admin/stats/sessions');
+  }
+
+  getCouncilStats(): Observable<CouncilStats> {
+    return this.get<CouncilStats>('/admin/stats/councils');
+  }
+
+  getAgentStats(): Observable<AgentStats> {
+    return this.get<AgentStats>('/admin/stats/agents');
+  }
+
+  getErrorLogs(limit = 50): Observable<ErrorLogEntry[]> {
+    return this.http.get<ErrorLogEntry[]>(`${this.basePath}/admin/logs/errors`, {
+      params: { limit: limit.toString() },
+    });
+  }
+
+  getSettings(): Observable<AppSetting[]> {
+    return this.get<AppSetting[]>('/admin/settings');
+  }
+
+  updateSetting(key: string, value: string): Observable<AppSetting> {
+    return this.put<AppSetting>(`/admin/settings/${key}`, { value });
+  }
+
+  deleteSetting(key: string): Observable<void> {
+    return this.delete<void>(`/admin/settings/${key}`);
   }
 }
