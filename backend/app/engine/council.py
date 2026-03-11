@@ -12,6 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.engine.agent import call_agent
+from app.engine.prompts.loader import (
+    render_continuation_nudge,
+    render_deliberation_system,
+    render_voting_prompt,
+)
 from app.engine.voting import HumanVoteRequired, tally_votes
 from app.models.models import Agent, Council, Message, Round, Session, Verdict, Vote
 from app.sse.emitter import format_sse
@@ -35,6 +40,7 @@ async def run_council_session(
     session = result.scalar_one()
     council: Council = session.council
     agents: list[Agent] = council.agents
+    agent_names = ", ".join(a.name for a in agents)
 
     try:
         # -- Mark running --
@@ -64,7 +70,15 @@ async def run_council_session(
 
             for agent in agents:
                 messages = _build_agent_messages(history, agent, session.input_claim)
-                content = await call_agent(agent, messages, agent.system_prompt)
+                system_prompt = render_deliberation_system(
+                    council_name=council.name,
+                    agent_name=agent.name,
+                    agent_list=agent_names,
+                    voting_mechanism=council.voting_mechanism,
+                    rounds=council.rounds,
+                    agent_system_prompt=agent.system_prompt,
+                )
+                content = await call_agent(agent, messages, system_prompt)
 
                 msg = Message(
                     round_id=db_round.id,
@@ -99,11 +113,29 @@ async def run_council_session(
         session.status = "voting"
         await db.flush()
 
+        debate_lines = []
+        for name, _, content_text in history:
+            debate_lines.append(f"[{name}]: {content_text}")
+        debate_text = "\n\n".join(debate_lines)
+
+        voting_prompt = render_voting_prompt(
+            input_claim=session.input_claim,
+            debate_text=debate_text,
+            question_type="binary",
+        )
+
         votes: list[Vote] = []
         for agent in agents:
-            voting_prompt = _build_voting_prompt(session.input_claim, history)
             vote_messages = [{"role": "user", "content": voting_prompt}]
-            raw_vote = await call_agent(agent, vote_messages, agent.system_prompt)
+            vote_system_prompt = render_deliberation_system(
+                council_name=council.name,
+                agent_name=agent.name,
+                agent_list=agent_names,
+                voting_mechanism=council.voting_mechanism,
+                rounds=council.rounds,
+                agent_system_prompt=agent.system_prompt,
+            )
+            raw_vote = await call_agent(agent, vote_messages, vote_system_prompt)
             parsed = _parse_vote(raw_vote)
 
             try:
@@ -200,32 +232,11 @@ def _build_agent_messages(
     if messages and messages[-1]["role"] == "assistant":
         messages.append({
             "role": "user",
-            "content": "Please continue the discussion. Respond to the points raised by other agents.",
+            "content": render_continuation_nudge(),
         })
 
     return messages
 
-
-def _build_voting_prompt(
-    input_claim: str,
-    history: list[tuple[str, uuid.UUID | None, str]],
-) -> str:
-    """Summarizes the debate and asks the agent to vote."""
-    debate_lines = []
-    for name, _, content in history:
-        debate_lines.append(f"[{name}]: {content}")
-
-    debate_text = "\n\n".join(debate_lines)
-
-    return (
-        f"The council has finished deliberating on the following claim:\n\n"
-        f'"{input_claim}"\n\n'
-        f"Here is the full debate:\n\n{debate_text}\n\n"
-        f"Based on the deliberation, please cast your vote. "
-        f"Respond with ONLY a JSON object in this exact format:\n"
-        f'{{"value": "true" or "false", "confidence": 0.0 to 1.0, "reasoning": "your reasoning"}}\n'
-        f"Do not include any other text outside the JSON."
-    )
 
 
 def _parse_vote(raw_text: str) -> dict:

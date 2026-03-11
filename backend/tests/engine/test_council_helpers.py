@@ -6,7 +6,7 @@ import uuid
 
 import pytest
 
-from app.engine.council import _build_agent_messages, _build_voting_prompt, _parse_vote
+from app.engine.council import _build_agent_messages, _parse_vote
 from app.models.models import Agent
 
 
@@ -117,33 +117,6 @@ class TestBuildAgentMessages:
             assert msgs[i]["role"] != msgs[i - 1]["role"], (
                 f"Consecutive same role at index {i}: {msgs[i-1]['role']}"
             )
-
-
-# -- _build_voting_prompt --
-
-
-class TestBuildVotingPrompt:
-    def test_contains_claim(self) -> None:
-        prompt = _build_voting_prompt("Earth is flat", [])
-        assert "Earth is flat" in prompt
-
-    def test_contains_debate_history(self) -> None:
-        history = [
-            ("Alice", uuid.uuid4(), "I think true."),
-            ("Bob", uuid.uuid4(), "I disagree."),
-        ]
-        prompt = _build_voting_prompt("claim", history)
-        assert "[Alice]:" in prompt
-        assert "[Bob]:" in prompt
-        assert "I think true." in prompt
-        assert "I disagree." in prompt
-
-    def test_asks_for_json(self) -> None:
-        prompt = _build_voting_prompt("claim", [])
-        assert "JSON" in prompt
-        assert '"value"' in prompt
-        assert '"confidence"' in prompt
-        assert '"reasoning"' in prompt
 
 
 # -- _parse_vote --
