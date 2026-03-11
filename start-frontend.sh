@@ -45,8 +45,8 @@ echo ""
 
 # --- Install dependencies ---
 cd frontend
-if [ ! -d "node_modules" ]; then
-    echo -e "${BOLD}Installing dependencies${RESET} ${DIM}(first run)${RESET}"
+if [ ! -d "node_modules" ] || [ "package.json" -nt "node_modules/.package-lock.json" ]; then
+    echo -e "${BOLD}Installing dependencies${RESET}"
     npm install
     echo ""
 fi
