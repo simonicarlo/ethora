@@ -1,0 +1,60 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+:host {
+  display: block;
+}
+
+.center {
+  @include flex-center;
+  padding: $space-12;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $space-4;
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: $weight-semibold;
+  }
+}
+
+.empty-state {
+  @include flex-center;
+  flex-direction: column;
+  padding: $space-12;
+  opacity: 0.5;
+
+  mat-icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: $space-4;
+  }
+}
+
+table {
+  width: 100%;
+
+  .claim-cell {
+    max-width: 300px;
+  }
+}
+
+::ng-deep {
+  .mat-mdc-header-cell {
+    font-weight: $weight-semibold;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+  }
+
+  .mat-mdc-row:hover {
+    background: var(--ac-glass-bg);
+  }
+}

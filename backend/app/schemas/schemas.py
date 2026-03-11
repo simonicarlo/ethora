@@ -186,3 +186,64 @@ class AgentTestRequest(BaseModel):
 
 class AgentTestResponse(BaseModel):
     response: str
+
+
+# -- Admin Stats --------------------------------------------------------------
+
+class DailyCount(BaseModel):
+    date: str
+    count: int
+
+
+class SessionStatsResponse(BaseModel):
+    total_sessions: int
+    sessions_by_status: dict[str, int]
+    completion_rate: float
+    avg_rounds_per_session: float
+    sessions_over_time: list[DailyCount]
+
+
+class CouncilUsageItem(BaseModel):
+    council_id: uuid.UUID
+    council_name: str
+    session_count: int
+    avg_deliberation_seconds: float
+
+
+class CouncilStatsResponse(BaseModel):
+    council_usage: list[CouncilUsageItem]
+
+
+class AgentMetricItem(BaseModel):
+    agent_id: uuid.UUID
+    agent_name: str
+    message_count: int
+    avg_message_length: float
+    voting_alignment: float
+
+
+class AgentStatsResponse(BaseModel):
+    agent_metrics: list[AgentMetricItem]
+
+
+class ErrorLogEntry(BaseModel):
+    session_id: uuid.UUID
+    council_name: str
+    input_claim: str
+    error_message: str
+    created_at: datetime
+
+
+# -- Admin Settings -----------------------------------------------------------
+
+SENSITIVE_KEYS: set[str] = {"anthropic_api_key", "settings_encryption_key"}
+
+
+class SettingResponse(BaseModel):
+    key: str
+    value: str
+    updated_at: datetime
+
+
+class SettingUpdate(BaseModel):
+    value: str = Field(min_length=1)

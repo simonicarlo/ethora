@@ -11,6 +11,10 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'agents', pathMatch: 'full' },
       { path: 'agents', loadComponent: () => import('./features/admin/agents/agent-config/agent-config').then(m => m.AgentConfig) },
+      { path: 'stats', loadComponent: () => import('./features/admin/stats/stats-dashboard').then(m => m.StatsDashboard) },
+      { path: 'tools', loadComponent: () => import('./features/admin/tools/tool-registry').then(m => m.ToolRegistry) },
+      { path: 'settings', loadComponent: () => import('./features/admin/settings/admin-settings').then(m => m.AdminSettings) },
+      { path: 'logs', loadComponent: () => import('./features/admin/logs/error-log-viewer').then(m => m.ErrorLogViewer) },
     ],
   },
   { path: 'agents', redirectTo: '/admin/agents', pathMatch: 'full' },
