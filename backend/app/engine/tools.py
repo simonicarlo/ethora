@@ -19,12 +19,9 @@ WEB_SEARCH_TOOL: dict[str, Any] = {
     "max_uses": 3,
 }
 
-CODE_EXECUTION_TOOL: dict[str, Any] = {
-    "type": "code_execution_20250522",
-    "name": "code_execution",
-}
-
-AGENT_TOOLS: list[dict[str, Any]] = [WEB_SEARCH_TOOL, CODE_EXECUTION_TOOL]
+# code_execution is auto-injected by the API when web_search uses dynamic
+# filtering — passing it explicitly causes a duplicate-tool-name 400 error.
+AGENT_TOOLS: list[dict[str, Any]] = [WEB_SEARCH_TOOL]
 
 CAST_VOTE_TOOL: dict[str, Any] = {
     "name": "cast_vote",
