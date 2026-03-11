@@ -132,15 +132,15 @@ Stream D (Open Voting) ──┘
 
 > **Priority 1 · Depends on: nothing**
 
-- [ ] Add `PUT /api/v1/agents/{id}` — update agent (name, system_prompt, model) — **`councils.py`**
-- [ ] Add `DELETE /api/v1/agents/{id}` — cascade-remove from councils; fail 409 if any council would have <2 agents — **`councils.py`**
-- [ ] Add `PUT /api/v1/councils/{id}` — update council (name, rounds, voting_mechanism, allow_human_turns, agent_ids) — **`councils.py`**
-- [ ] Add `DELETE /api/v1/councils/{id}` — fail if active sessions exist — **`councils.py`**
-- [ ] Add `AgentUpdate` and `CouncilUpdate` Pydantic schemas — **`schemas.py`**
-- [ ] Frontend: edit pages for agents and councils (reuse create forms, pre-populate) — **`agent/`, `council/`**
-- [ ] Frontend: delete buttons with confirmation dialogs — **`agent-list/`, `council-list/`**
-- [ ] Frontend: routes `/agents/:id/edit`, `/councils/:id/edit` — **`app.routes.ts`**
-- [ ] Frontend: add edit/delete actions to list views — **`api.service.ts`**
+- [x] Add `PUT /api/v1/agents/{id}` — update agent (name, system_prompt, model) — **`councils.py`**
+- [x] Add `DELETE /api/v1/agents/{id}` — cascade-remove from councils; fail 409 if any council would have <2 agents — **`councils.py`**
+- [x] Add `PUT /api/v1/councils/{id}` — update council (name, rounds, voting_mechanism, allow_human_turns, agent_ids) — **`councils.py`**
+- [x] Add `DELETE /api/v1/councils/{id}` — fail if active sessions exist — **`councils.py`**
+- [x] Add `AgentUpdate` and `CouncilUpdate` Pydantic schemas — **`schemas.py`**
+- [x] Frontend: edit pages for agents and councils (reuse create forms, pre-populate) — **`agent/`, `council/`**
+- [x] Frontend: delete buttons with confirmation dialogs — **`agent-list/`, `council-list/`**
+- [x] Frontend: routes `/agents/:id/edit`, `/councils/:id/edit` — **`app.routes.ts`**
+- [x] Frontend: add edit/delete actions to list views — **`api.service.ts`**
 
 ---
 
