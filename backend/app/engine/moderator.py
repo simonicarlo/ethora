@@ -16,6 +16,8 @@ from app.engine.tools import DEDUPLICATE_CANDIDATES_TOOL, SUMMARIZE_RESPONSE_TOO
 
 logger = logging.getLogger(__name__)
 
+MODERATOR_SYSTEM_PROMPT = "You are a neutral session moderator."
+
 
 class CandidateEntry(TypedDict):
     agent_id: str
@@ -56,7 +58,7 @@ async def deduplicate_candidates(
         parsed = await call_with_tool(
             model=settings.MODERATOR_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            system_prompt="You are a neutral session moderator.",
+            system_prompt=MODERATOR_SYSTEM_PROMPT,
             tool=DEDUPLICATE_CANDIDATES_TOOL,
         )
         return ModeratorResult(
@@ -88,7 +90,7 @@ async def summarize_agent_response(
         parsed = await call_with_tool(
             model=settings.MODERATOR_MODEL,
             messages=[{"role": "user", "content": prompt}],
-            system_prompt="You are a neutral session moderator.",
+            system_prompt=MODERATOR_SYSTEM_PROMPT,
             tool=SUMMARIZE_RESPONSE_TOOL,
         )
         return parsed.get("summary")

@@ -66,5 +66,11 @@
       <mat-icon class="spinning">travel_explore</mat-icon>
       <span>{{ toolUse.agent_name }} is searching the web…</span>
     </div>
+  } @else if (typingAgent(); as typing) {
+    <div class="typing-indicator">
+      <mat-icon>smart_toy</mat-icon>
+      <span>{{ typing.agent_name }} is thinking</span>
+      <span class="typing-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+    </div>
   }
 }

@@ -17,6 +17,7 @@ export interface DebateMessage {
   agent_id: string | null;
   agent_name?: string;
   message_type?: MessageType;
+  message_id?: string;
   round: number;
   content: string;
   summary?: string | null;
@@ -36,6 +37,7 @@ export class DebatePanel {
   readonly currentRound = input<number>(0);
   readonly inputClaim = input<string>('');
   readonly activeToolUse = input<ToolActivity | null>(null);
+  readonly typingAgent = input<{ agent_id: string; agent_name: string } | null>(null);
 
   readonly expandedMessages = signal<Set<string>>(new Set());
 

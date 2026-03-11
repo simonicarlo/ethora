@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import uuid
@@ -11,6 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.database import async_session_factory
 from app.engine.agent import AgentResponse, RateLimitError, call_agent, call_with_tool
 from app.engine.moderator import CandidateEntry, deduplicate_candidates, summarize_agent_response
 from app.engine.prompts.loader import (
@@ -25,6 +27,54 @@ from app.models.models import Agent, Council, Message, Round, Session, Verdict, 
 from app.sse.emitter import format_sse
 
 logger = logging.getLogger(__name__)
+
+
+async def _summarize_in_background(
+    message_id: uuid.UUID,
+    agent_id: uuid.UUID,
+    agent_name: str,
+    agent_response: str,
+    input_claim: str,
+    round_num: int,
+    queue: asyncio.Queue[dict[str, object]],
+) -> None:
+    """Fire-and-forget: summarize an agent response and persist to DB."""
+    try:
+        summary = await summarize_agent_response(
+            agent_name=agent_name,
+            agent_response=agent_response,
+            input_claim=input_claim,
+        )
+        if summary is None:
+            return
+        async with async_session_factory() as db:
+            msg = await db.get(Message, message_id)
+            if msg is not None:
+                msg.summary = summary
+                await db.commit()
+        await queue.put({
+            "message_id": str(message_id),
+            "agent_id": str(agent_id),
+            "agent_name": agent_name,
+            "round": round_num,
+            "summary": summary,
+        })
+    except Exception:
+        logger.warning(
+            "Background summarization failed for message %s", message_id, exc_info=True,
+        )
+
+
+def _drain_summaries(queue: asyncio.Queue[dict[str, object]]) -> list[str]:
+    """Non-blocking drain of summary_ready SSE events from the queue."""
+    events: list[str] = []
+    while True:
+        try:
+            data = queue.get_nowait()
+            events.append(format_sse("summary_ready", data))
+        except asyncio.QueueEmpty:
+            break
+    return events
 
 
 async def run_council_session(
@@ -44,6 +94,9 @@ async def run_council_session(
     council: Council = session.council
     agents: list[Agent] = council.agents
     agent_names = ", ".join(a.name for a in agents)
+
+    summary_queue: asyncio.Queue[dict[str, object]] = asyncio.Queue()
+    summary_tasks: list[asyncio.Task[None]] = []
 
     try:
         # -- Mark running --
@@ -75,6 +128,13 @@ async def run_council_session(
             tools = AGENT_TOOLS if council.tools_enabled else None
 
             for agent in agents:
+                # Typing indicator
+                yield format_sse("agent_typing", {
+                    "agent_id": str(agent.id),
+                    "agent_name": agent.name,
+                    "round": round_num,
+                })
+
                 messages = _build_agent_messages(history, agent, session.input_claim)
                 system_prompt = render_deliberation_system(
                     council_name=council.name,
@@ -113,28 +173,38 @@ async def run_council_session(
                 db.add(msg)
                 await db.flush()
 
-                # Moderator summarization
-                summary = await summarize_agent_response(
+                # Fire-and-forget summarization
+                task = asyncio.create_task(_summarize_in_background(
+                    message_id=msg.id,
+                    agent_id=agent.id,
                     agent_name=agent.name,
                     agent_response=agent_response.content,
                     input_claim=session.input_claim,
-                )
-                if summary is not None:
-                    msg.summary = summary
-                    await db.flush()
+                    round_num=round_num,
+                    queue=summary_queue,
+                ))
+                summary_tasks.append(task)
 
                 history.append((agent.name, agent.id, agent_response.content))
 
                 yield format_sse("agent_message", {
+                    "message_id": str(msg.id),
                     "agent_id": str(agent.id),
                     "agent_name": agent.name,
                     "round": round_num,
                     "content": agent_response.content,
                     "references": refs_json or [],
-                    "summary": msg.summary,
                 })
 
+                # Drain any completed summaries
+                for sse_event in _drain_summaries(summary_queue):
+                    yield sse_event
+
             yield format_sse("round_complete", {"round": round_num})
+
+            # Drain summaries after round
+            for sse_event in _drain_summaries(summary_queue):
+                yield sse_event
 
             # -- Human turn pause (skip last round so voting can proceed) --
             if council.allow_human_turns and round_num < council.rounds:
@@ -145,6 +215,11 @@ async def run_council_session(
                     "message": "Waiting for human input",
                 })
                 return
+
+        # -- Wait for all background summaries before voting --
+        await asyncio.gather(*summary_tasks, return_exceptions=True)
+        for sse_event in _drain_summaries(summary_queue):
+            yield sse_event
 
         # -- Build debate text (shared by proposal + voting) --
         debate_lines = []
@@ -315,6 +390,8 @@ async def run_council_session(
         await db.commit()
 
     except RateLimitError as exc:
+        for t in summary_tasks:
+            t.cancel()
         logger.warning("Council session %s rate-limited: %s", session_id, exc)
         await db.rollback()
         session = await db.get(Session, session_id)
@@ -326,6 +403,8 @@ async def run_council_session(
             "retry_after": exc.retry_after,
         })
     except (anthropic.APIError, SQLAlchemyError) as exc:
+        for t in summary_tasks:
+            t.cancel()
         logger.exception("Council session %s failed", session_id)
         await db.rollback()
         session.status = "error"

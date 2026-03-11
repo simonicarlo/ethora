@@ -123,12 +123,26 @@ export interface SessionState {
 // -- SSE event payloads ---------------------------------------------------
 
 export interface SseAgentMessage {
+  message_id: string;
   agent_id: string;
   agent_name: string;
   round: number;
   content: string;
-  summary?: string | null;
   references: Reference[];
+}
+
+export interface SseSummaryReady {
+  message_id: string;
+  agent_id: string;
+  agent_name: string;
+  round: number;
+  summary: string;
+}
+
+export interface SseAgentTyping {
+  agent_id: string;
+  agent_name: string;
+  round: number;
 }
 
 export interface SseToolUse {
