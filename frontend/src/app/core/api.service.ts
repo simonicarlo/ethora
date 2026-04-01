@@ -46,6 +46,11 @@ export class ApiService {
     return this.http.delete<T>(`${this.basePath}${path}`);
   }
 
+// ----------------------------------------
+//         COUNCIL ENDPOINTS
+// ----------------------------------------
+
+
   getCouncils(): Observable<Council[]> {
     return this.get<Council[]>('/councils');
   }
@@ -65,6 +70,10 @@ export class ApiService {
   deleteCouncil(id: string): Observable<void> {
     return this.delete<void>(`/councils/${id}`);
   }
+
+  // ----------------------------------------
+  //         AGENT ENDPOINTS
+  // ----------------------------------------
 
   getAgents(): Observable<Agent[]> {
     return this.get<Agent[]>('/agents');
@@ -89,6 +98,10 @@ export class ApiService {
   testAgent(id: string, message: string): Observable<AgentTestResponse> {
     return this.post<AgentTestResponse>(`/agents/${id}/test`, { message });
   }
+
+  // ----------------------------------------
+  //         SESSION ENDPOINTS
+  // ----------------------------------------
 
   listSessions(params?: { council_id?: string; status?: string; limit?: number }): Observable<SessionListItem[]> {
     let httpParams = new HttpParams();
@@ -129,7 +142,9 @@ export class ApiService {
     return this.post<Verdict>(`/sessions/${sessionId}/human-vote`, data);
   }
 
-  // -- Admin -----------------------------------------------------------------
+  // ----------------------------------------
+  //         ADMIN ENDPOINTS
+  // ----------------------------------------
 
   getSessionStats(): Observable<SessionStats> {
     return this.get<SessionStats>('/admin/stats/sessions');
